@@ -19,6 +19,7 @@ import ProposalModal from './components/ProposalModal'
 
 // Context
 import { AppProvider } from './context/AppContext'
+import { AuthProvider } from './context/AuthContext'
 
 function App() {
   const location = useLocation()
@@ -64,8 +65,9 @@ function App() {
   const showTabBar = ['/', '/join', '/saved', '/profile'].includes(location.pathname)
 
   return (
-    <AppProvider>
-      <div className="app-container">
+    <AuthProvider>
+      <AppProvider>
+        <div className="app-container">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home onPropose={openProposalModal} />} />
@@ -85,8 +87,9 @@ function App() {
           user={proposalModal.user}
           onClose={closeProposalModal}
         />
-      </div>
-    </AppProvider>
+        </div>
+      </AppProvider>
+    </AuthProvider>
   )
 }
 
