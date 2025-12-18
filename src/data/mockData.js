@@ -1,0 +1,158 @@
+// 모의 유저 데이터 - 실제 서비스 전 테스트용
+export const mockUsers = [
+  {
+    id: 1,
+    name: "민준",
+    age: 28,
+    region: "서울 강남",
+    handicap: "90대 초반",
+    style: ["카트 선호", "여유롭게", "내기 X"],
+    availableTime: "주말 오전",
+    photos: [
+      "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&h=1200&fit=crop",
+    ],
+    intro: "골프 3년차, 같이 편하게 라운딩할 분 찾습니다",
+    roundCount: 12,
+    verified: true,
+  },
+  {
+    id: 2,
+    name: "서연",
+    age: 26,
+    region: "서울 송파",
+    handicap: "100대",
+    style: ["카트 선호", "빠르게", "사진 찍기"],
+    availableTime: "평일 오후",
+    photos: [
+      "https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&h=1200&fit=crop",
+    ],
+    intro: "스크린에서 필드로 넘어온 초보입니다 🏌️‍♀️",
+    roundCount: 5,
+    verified: true,
+  },
+  {
+    id: 3,
+    name: "재현",
+    age: 32,
+    region: "경기 분당",
+    handicap: "80대 후반",
+    style: ["도보 가능", "여유롭게", "맥주 한잔"],
+    availableTime: "주말 전체",
+    photos: [
+      "https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&h=1200&fit=crop",
+    ],
+    intro: "주말마다 필드 나가는 골프광입니다",
+    roundCount: 48,
+    verified: true,
+  },
+  {
+    id: 4,
+    name: "유진",
+    age: 29,
+    region: "서울 마포",
+    handicap: "90대 중반",
+    style: ["카트 선호", "사진 찍기", "초보 환영"],
+    availableTime: "주말 오후",
+    photos: [
+      "https://images.unsplash.com/photo-1622398925373-3f91b1e275f5?w=800&h=1200&fit=crop",
+    ],
+    intro: "함께 성장할 골프메이트 찾아요",
+    roundCount: 8,
+    verified: false,
+  },
+  {
+    id: 5,
+    name: "현우",
+    age: 35,
+    region: "경기 용인",
+    handicap: "80대 초반",
+    style: ["도보 가능", "빠르게", "내기 OK"],
+    availableTime: "평일 오전",
+    photos: [
+      "https://images.unsplash.com/photo-1595429035839-c99c298ffdde?w=800&h=1200&fit=crop",
+    ],
+    intro: "싱글 목표로 열심히 치는 중입니다",
+    roundCount: 120,
+    verified: true,
+  },
+];
+
+// 모의 조인(라운딩 모집) 데이터
+export const mockJoins = [
+  {
+    id: 1,
+    hostId: 3,
+    hostName: "재현",
+    hostPhoto: "https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400&h=400&fit=crop",
+    title: "이번 주 토요일 용인 라운딩",
+    date: "12월 21일 (토)",
+    time: "오전 7시",
+    location: "레이크사이드CC",
+    region: "경기 용인",
+    spotsTotal: 4,
+    spotsFilled: 2,
+    handicapRange: "80~100",
+    style: ["여유롭게", "도보 가능"],
+    description: "편하게 즐기실 분들 모집합니다. 라운딩 후 점심 같이해요!",
+    participants: [
+      { id: 3, name: "재현", photo: "https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=100&h=100&fit=crop" },
+      { id: 1, name: "민준", photo: "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=100&h=100&fit=crop" },
+    ],
+  },
+  {
+    id: 2,
+    hostId: 5,
+    hostName: "현우",
+    hostPhoto: "https://images.unsplash.com/photo-1595429035839-c99c298ffdde?w=400&h=400&fit=crop",
+    title: "평일 아침 가볍게 9홀",
+    date: "12월 19일 (목)",
+    time: "오전 6시 30분",
+    location: "남서울CC",
+    region: "경기 성남",
+    spotsTotal: 2,
+    spotsFilled: 1,
+    handicapRange: "싱글~90대",
+    style: ["빠르게", "내기 OK"],
+    description: "출근 전 빠르게 9홀 돌 분 구합니다",
+    participants: [
+      { id: 5, name: "현우", photo: "https://images.unsplash.com/photo-1595429035839-c99c298ffdde?w=100&h=100&fit=crop" },
+    ],
+  },
+  {
+    id: 3,
+    hostId: 2,
+    hostName: "서연",
+    hostPhoto: "https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=400&h=400&fit=crop",
+    title: "초보끼리 부담없이 라운딩해요",
+    date: "12월 22일 (일)",
+    time: "오후 1시",
+    location: "베어즈베스트 청라",
+    region: "인천 청라",
+    spotsTotal: 4,
+    spotsFilled: 1,
+    handicapRange: "100 이상",
+    style: ["초보 환영", "카트 선호", "사진 찍기"],
+    description: "초보분들 환영! 편하게 치고 사진도 찍어요 📸",
+    participants: [
+      { id: 2, name: "서연", photo: "https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=100&h=100&fit=crop" },
+    ],
+  },
+];
+
+// 현재 로그인한 유저 (프로토타입용)
+export const currentUser = {
+  id: 100,
+  name: "나",
+  age: 30,
+  region: "서울 강남",
+  handicap: "90대 중반",
+  style: ["카트 선호", "여유롭게"],
+  availableTime: "주말 전체",
+  photos: [],
+  intro: "",
+  roundCount: 0,
+  verified: false,
+  liked: [], // 관심 표시한 유저 ID
+  savedJoins: [], // 저장한 조인 ID
+};
+

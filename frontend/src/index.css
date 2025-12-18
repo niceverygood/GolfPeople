@@ -1,0 +1,159 @@
+@import "tailwindcss";
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+/* Theme Configuration */
+@theme {
+  /* 골프피플 브랜드 컬러 */
+  --color-gp-dark: #0a0a0a;
+  --color-gp-darker: #050505;
+  --color-gp-card: #141414;
+  --color-gp-border: #2a2a2a;
+  --color-gp-green: #00D26A;
+  --color-gp-green-dark: #00A854;
+  --color-gp-green-glow: rgba(0, 210, 106, 0.15);
+  --color-gp-accent: #FFD700;
+  --color-gp-red: #FF4757;
+  --color-gp-text: #ffffff;
+  --color-gp-text-secondary: #8a8a8a;
+  --color-gp-text-muted: #5a5a5a;
+  
+  /* 폰트 */
+  --font-family-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  
+  /* 그림자 */
+  --shadow-gp: 0 4px 30px rgba(0, 210, 106, 0.1);
+  --shadow-gp-lg: 0 8px 40px rgba(0, 210, 106, 0.15);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+  
+  /* 애니메이션 */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3a;
+}
+
+/* Utility classes */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 20px rgba(0, 210, 106, 0.5);
+}
+
+.bg-blur {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card 3D effect */
+.card-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Gradient border */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(#141414, #141414) padding-box,
+              linear-gradient(135deg, #00D26A, #00A854) border-box;
+  border: 1px solid transparent;
+}
+
+/* Swipe card animations */
+.swipe-card {
+  touch-action: none;
+  user-select: none;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Background gradients */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+.bg-gp-gradient {
+  background: linear-gradient(180deg, rgba(0,210,106,0.08) 0%, transparent 50%);
+}

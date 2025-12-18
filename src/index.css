@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 글로벌 스타일 */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: #0A0A0A;
+  color: #F5F5F7;
+  overscroll-behavior: none;
+}
+
+/* 스크롤바 숨기기 (모바일 앱 느낌) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 앱 컨테이너 */
+.app-container {
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100%;
+  position: relative;
+  background: #0A0A0A;
+  overflow: hidden;
+}
+
+/* 카드 스와이프 효과 */
+.card-stack {
+  perspective: 1000px;
+}
+
+.swipe-card {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+/* 골드 그라데이션 */
+.gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 50%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 프리미엄 버튼 */
+.btn-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
+  color: #0A0A0A;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-gold:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* 글래스모피즘 */
+.glass {
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* 태그 스타일 */
+.tag {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium;
+  background: rgba(212, 175, 55, 0.15);
+  color: #D4AF37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* 하단 세이프 영역 */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* 상단 세이프 영역 */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+
+/* 이미지 그라데이션 오버레이 */
+.img-overlay {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 40%,
+    rgba(10, 10, 10, 0.3) 60%,
+    rgba(10, 10, 10, 0.8) 80%,
+    rgba(10, 10, 10, 0.95) 100%
+  );
+}
+
+/* 페이지 전환 애니메이션 */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-out;
+}
+
+/* 3D 뒤집기 효과용 */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
