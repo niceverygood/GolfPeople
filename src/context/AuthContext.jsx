@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase, auth, db } from '../lib/supabase'
+import { supabase, auth, db, isConnected } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
@@ -19,6 +19,13 @@ export const AuthProvider = ({ children }) => {
 
   // 세션 체크 및 프로필 로드
   useEffect(() => {
+    // Supabase 미연결 시 데모 모드로 바로 진입
+    if (!isConnected()) {
+      console.log('Running in demo mode (Supabase not connected)')
+      setLoading(false)
+      return
+    }
+
     const initAuth = async () => {
       try {
         // 현재 세션 확인

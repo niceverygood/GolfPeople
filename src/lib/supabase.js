@@ -1,105 +1,103 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables')
+const isMissingEnv = !supabaseUrl || !supabaseAnonKey
+
+if (isMissingEnv) {
+  console.warn('⚠️ Missing Supabase environment variables. App will run in offline/demo mode.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-})
+// 환경변수가 있을 때만 클라이언트 생성
+export const supabase = isMissingEnv 
+  ? null 
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    })
+
+// 에러 없이 빈 결과 반환하는 헬퍼
+const notConnected = () => ({ data: null, error: new Error('Supabase not connected') })
+const notConnectedVoid = () => ({ error: new Error('Supabase not connected') })
 
 // Auth helpers
 export const auth = {
-  // 회원가입
   signUp: async (email, password, metadata = {}) => {
+    if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: metadata,
-      },
+      options: { data: metadata },
     })
     return { data, error }
   },
 
-  // 로그인
   signIn: async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    if (!supabase) return notConnected()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     return { data, error }
   },
 
-  // 소셜 로그인 (카카오)
   signInWithKakao: async () => {
+    if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     return { data, error }
   },
 
-  // 소셜 로그인 (Google)
   signInWithGoogle: async () => {
+    if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     return { data, error }
   },
 
-  // 로그아웃
   signOut: async () => {
+    if (!supabase) return notConnectedVoid()
     const { error } = await supabase.auth.signOut()
     return { error }
   },
 
-  // 현재 사용자
   getUser: async () => {
+    if (!supabase) return { user: null, error: null }
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   },
 
-  // 세션
   getSession: async () => {
+    if (!supabase) return { session: null, error: null }
     const { data: { session }, error } = await supabase.auth.getSession()
     return { session, error }
   },
 
-  // 비밀번호 재설정 이메일
   resetPassword: async (email) => {
+    if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     })
     return { data, error }
   },
 
-  // 비밀번호 업데이트
   updatePassword: async (newPassword) => {
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword,
-    })
+    if (!supabase) return notConnected()
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword })
     return { data, error }
   },
 }
 
 // Database helpers
 export const db = {
-  // 프로필
   profiles: {
     get: async (userId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -109,6 +107,7 @@ export const db = {
     },
     
     update: async (userId, updates) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -119,52 +118,37 @@ export const db = {
     },
     
     getAll: async (filters = {}) => {
+      if (!supabase) return { data: [], error: null }
       let query = supabase.from('profiles').select('*')
-      
-      if (filters.region) {
-        query = query.contains('regions', [filters.region])
-      }
-      if (filters.handicap) {
-        query = query.eq('handicap', filters.handicap)
-      }
-      
+      if (filters.region) query = query.contains('regions', [filters.region])
+      if (filters.handicap) query = query.eq('handicap', filters.handicap)
       const { data, error } = await query
       return { data, error }
     },
   },
 
-  // 조인
   joins: {
     getAll: async () => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('joins')
-        .select(`
-          *,
-          host:profiles!joins_host_id_fkey(id, name, photos),
-          participants:join_participants(
-            user:profiles(id, name, photos)
-          )
-        `)
+        .select(`*, host:profiles!joins_host_id_fkey(id, name, photos), participants:join_participants(user:profiles(id, name, photos))`)
         .order('date', { ascending: true })
       return { data, error }
     },
     
     get: async (joinId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('joins')
-        .select(`
-          *,
-          host:profiles!joins_host_id_fkey(*),
-          participants:join_participants(
-            user:profiles(*)
-          )
-        `)
+        .select(`*, host:profiles!joins_host_id_fkey(*), participants:join_participants(user:profiles(*))`)
         .eq('id', joinId)
         .single()
       return { data, error }
     },
     
     create: async (joinData) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('joins')
         .insert(joinData)
@@ -174,6 +158,7 @@ export const db = {
     },
     
     update: async (joinId, updates) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('joins')
         .update(updates)
@@ -184,14 +169,13 @@ export const db = {
     },
     
     delete: async (joinId) => {
-      const { error } = await supabase
-        .from('joins')
-        .delete()
-        .eq('id', joinId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('joins').delete().eq('id', joinId)
       return { error }
     },
     
     getMyJoins: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('joins')
         .select('*')
@@ -201,47 +185,39 @@ export const db = {
     },
   },
 
-  // 친구 요청
   friendRequests: {
     send: async (fromUserId, toUserId, message = '') => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('friend_requests')
-        .insert({
-          from_user_id: fromUserId,
-          to_user_id: toUserId,
-          message,
-          status: 'pending',
-        })
+        .insert({ from_user_id: fromUserId, to_user_id: toUserId, message, status: 'pending' })
         .select()
         .single()
       return { data, error }
     },
     
     getSent: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('friend_requests')
-        .select(`
-          *,
-          to_user:profiles!friend_requests_to_user_id_fkey(*)
-        `)
+        .select(`*, to_user:profiles!friend_requests_to_user_id_fkey(*)`)
         .eq('from_user_id', userId)
         .order('created_at', { ascending: false })
       return { data, error }
     },
     
     getReceived: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('friend_requests')
-        .select(`
-          *,
-          from_user:profiles!friend_requests_from_user_id_fkey(*)
-        `)
+        .select(`*, from_user:profiles!friend_requests_from_user_id_fkey(*)`)
         .eq('to_user_id', userId)
         .order('created_at', { ascending: false })
       return { data, error }
     },
     
     accept: async (requestId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('friend_requests')
         .update({ status: 'accepted' })
@@ -252,6 +228,7 @@ export const db = {
     },
     
     reject: async (requestId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('friend_requests')
         .update({ status: 'rejected' })
@@ -262,56 +239,45 @@ export const db = {
     },
     
     cancel: async (requestId) => {
-      const { error } = await supabase
-        .from('friend_requests')
-        .delete()
-        .eq('id', requestId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('friend_requests').delete().eq('id', requestId)
       return { error }
     },
   },
 
-  // 조인 신청
   joinApplications: {
     apply: async (joinId, userId, message = '') => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('join_applications')
-        .insert({
-          join_id: joinId,
-          user_id: userId,
-          message,
-          status: 'pending',
-        })
+        .insert({ join_id: joinId, user_id: userId, message, status: 'pending' })
         .select()
         .single()
       return { data, error }
     },
     
     getSent: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('join_applications')
-        .select(`
-          *,
-          join:joins(*)
-        `)
+        .select(`*, join:joins(*)`)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
       return { data, error }
     },
     
     getReceived: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('join_applications')
-        .select(`
-          *,
-          user:profiles(*),
-          join:joins!inner(*)
-        `)
+        .select(`*, user:profiles(*), join:joins!inner(*)`)
         .eq('join.host_id', userId)
         .order('created_at', { ascending: false })
       return { data, error }
     },
     
     accept: async (applicationId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('join_applications')
         .update({ status: 'accepted' })
@@ -322,6 +288,7 @@ export const db = {
     },
     
     reject: async (applicationId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('join_applications')
         .update({ status: 'rejected' })
@@ -332,79 +299,63 @@ export const db = {
     },
   },
 
-  // 좋아요 (관심)
   likes: {
     add: async (userId, likedUserId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('likes')
-        .insert({
-          user_id: userId,
-          liked_user_id: likedUserId,
-        })
+        .insert({ user_id: userId, liked_user_id: likedUserId })
         .select()
         .single()
       return { data, error }
     },
     
     remove: async (userId, likedUserId) => {
-      const { error } = await supabase
-        .from('likes')
-        .delete()
-        .eq('user_id', userId)
-        .eq('liked_user_id', likedUserId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('likes').delete().eq('user_id', userId).eq('liked_user_id', likedUserId)
       return { error }
     },
     
     getAll: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('likes')
-        .select(`
-          *,
-          liked_user:profiles!likes_liked_user_id_fkey(*)
-        `)
+        .select(`*, liked_user:profiles!likes_liked_user_id_fkey(*)`)
         .eq('user_id', userId)
       return { data, error }
     },
   },
 
-  // 저장 (조인)
   savedJoins: {
     add: async (userId, joinId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('saved_joins')
-        .insert({
-          user_id: userId,
-          join_id: joinId,
-        })
+        .insert({ user_id: userId, join_id: joinId })
         .select()
         .single()
       return { data, error }
     },
     
     remove: async (userId, joinId) => {
-      const { error } = await supabase
-        .from('saved_joins')
-        .delete()
-        .eq('user_id', userId)
-        .eq('join_id', joinId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('saved_joins').delete().eq('user_id', userId).eq('join_id', joinId)
       return { error }
     },
     
     getAll: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('saved_joins')
-        .select(`
-          *,
-          join:joins(*)
-        `)
+        .select(`*, join:joins(*)`)
         .eq('user_id', userId)
       return { data, error }
     },
   },
 
-  // 알림
   notifications: {
     getAll: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -414,6 +365,7 @@ export const db = {
     },
     
     markAsRead: async (notificationId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -424,6 +376,7 @@ export const db = {
     },
     
     markAllAsRead: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -434,44 +387,34 @@ export const db = {
     },
     
     delete: async (notificationId) => {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('notifications').delete().eq('id', notificationId)
       return { error }
     },
   },
 
-  // 차단
   blocks: {
     add: async (userId, blockedUserId) => {
+      if (!supabase) return notConnected()
       const { data, error } = await supabase
         .from('blocks')
-        .insert({
-          user_id: userId,
-          blocked_user_id: blockedUserId,
-        })
+        .insert({ user_id: userId, blocked_user_id: blockedUserId })
         .select()
         .single()
       return { data, error }
     },
     
     remove: async (userId, blockedUserId) => {
-      const { error } = await supabase
-        .from('blocks')
-        .delete()
-        .eq('user_id', userId)
-        .eq('blocked_user_id', blockedUserId)
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('blocks').delete().eq('user_id', userId).eq('blocked_user_id', blockedUserId)
       return { error }
     },
     
     getAll: async (userId) => {
+      if (!supabase) return { data: [], error: null }
       const { data, error } = await supabase
         .from('blocks')
-        .select(`
-          *,
-          blocked_user:profiles!blocks_blocked_user_id_fkey(*)
-        `)
+        .select(`*, blocked_user:profiles!blocks_blocked_user_id_fkey(*)`)
         .eq('user_id', userId)
       return { data, error }
     },
@@ -480,17 +423,14 @@ export const db = {
 
 // Storage helpers
 export const storage = {
-  // 프로필 이미지 업로드
   uploadProfileImage: async (userId, file) => {
+    if (!supabase) return { url: null, error: new Error('Supabase not connected') }
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}/${Date.now()}.${fileExt}`
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('profile-images')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+      .upload(fileName, file, { cacheControl: '3600', upsert: false })
     
     if (error) return { url: null, error }
     
@@ -501,56 +441,37 @@ export const storage = {
     return { url: publicUrl, error: null }
   },
   
-  // 이미지 삭제
   deleteImage: async (bucket, path) => {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path])
+    if (!supabase) return notConnectedVoid()
+    const { error } = await supabase.storage.from(bucket).remove([path])
     return { error }
   },
 }
 
 // Realtime subscriptions
 export const realtime = {
-  // 알림 구독
   subscribeToNotifications: (userId, callback) => {
+    if (!supabase) return null
     return supabase
       .channel(`notifications:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, callback)
       .subscribe()
   },
   
-  // 친구 요청 구독
   subscribeToFriendRequests: (userId, callback) => {
+    if (!supabase) return null
     return supabase
       .channel(`friend_requests:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'friend_requests',
-          filter: `to_user_id=eq.${userId}`,
-        },
-        callback
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: `to_user_id=eq.${userId}` }, callback)
       .subscribe()
   },
   
-  // 채널 해제
   unsubscribe: (channel) => {
-    supabase.removeChannel(channel)
+    if (supabase && channel) supabase.removeChannel(channel)
   },
 }
 
-export default supabase
+// 연결 상태 확인
+export const isConnected = () => !!supabase
 
+export default supabase
