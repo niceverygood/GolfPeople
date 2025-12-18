@@ -7,16 +7,51 @@ import {
 import { useApp } from '../context/AppContext'
 
 // 지역 옵션
-const REGIONS = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주']
+const REGIONS = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주', '강원', '충청', '전라', '경상']
 
 // 핸디캡 옵션
 const HANDICAPS = ['100대', '90대 초반', '90대 후반', '80대', '싱글']
 
-// 스타일 옵션
-const STYLE_OPTIONS = ['카트 선호', '도보 가능', '빠르게', '여유롭게', '내기 OK', '내기 X', '초보 환영', '맥주 한잔']
+// 스타일 옵션 (카테고리별로 구성)
+const STYLE_CATEGORIES = [
+  {
+    category: '이동 방식',
+    icon: '🚗',
+    options: ['카트 선호', '도보 가능', '캐디 필수', '셀프 OK']
+  },
+  {
+    category: '플레이 스타일',
+    icon: '⛳',
+    options: ['빠르게', '여유롭게', '18홀', '9홀도 OK', '새벽 티오프']
+  },
+  {
+    category: '분위기',
+    icon: '🎉',
+    options: ['내기 OK', '내기 X', '진지하게', '즐겁게', '조용히']
+  },
+  {
+    category: '라운딩 후',
+    icon: '🍺',
+    options: ['맥주 한잔', '식사까지', '볼만 치고 헤어져요', '사우나 포함']
+  },
+  {
+    category: '대상',
+    icon: '👥',
+    options: ['초보 환영', '중수 이상', '여성 환영', '혼성 선호', '동성 선호']
+  },
+  {
+    category: '기타',
+    icon: '💬',
+    options: ['사진 찍기', '영상 촬영 OK', '비흡연', '흡연 OK', '반려견 동반']
+  }
+]
 
 // 시간 옵션
-const TIME_OPTIONS = ['주말 오전', '주말 오후', '평일 오전', '평일 오후', '상관없음']
+const TIME_OPTIONS = [
+  { category: '주말', options: ['토요일 오전', '토요일 오후', '일요일 오전', '일요일 오후'] },
+  { category: '평일', options: ['평일 오전', '평일 오후', '평일 저녁'] },
+  { category: '기타', options: ['새벽 티오프', '언제든 OK'] },
+]
 
 export default function Profile() {
   const { currentUser, proposals } = useApp()
@@ -261,33 +296,143 @@ export default function Profile() {
 
 // 프로필 수정 모달
 function EditProfileModal({ profile, onClose, onSave }) {
-  const [editedProfile, setEditedProfile] = useState(profile || {
-    photo: '',
-    region: '',
-    handicap: '',
-    styles: [],
-    time: '',
+  const [editedProfile, setEditedProfile] = useState(() => {
+    const base = profile || {
+      photos: [],
+      regions: [],
+      handicap: '',
+      styles: [],
+      times: [],
+    }
+    // 기존 photo를 photos 배열로 변환
+    if (base.photo && !base.photos?.length) {
+      base.photos = [base.photo]
+    }
+    return base
   })
   
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+  
+  // 사진 추가
+  const handlePhotoAdd = (e) => {
+    const files = Array.from(e.target.files)
+    const photos = editedProfile.photos || []
+    
+    if (photos.length + files.length > 6) {
+      alert('최대 6장까지 업로드 가능합니다')
+      return
+    }
+    
+    files.forEach(file => {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setEditedProfile({ ...editedProfile, photo: reader.result })
+        setEditedProfile(prev => ({
+          ...prev,
+          photos: [...(prev.photos || []), reader.result]
+        }))
       }
       reader.readAsDataURL(file)
+    })
+    
+    // input 초기화
+    e.target.value = ''
+  }
+  
+  // 사진 삭제
+  const handlePhotoDelete = (index) => {
+    const photos = editedProfile.photos || []
+    setEditedProfile({
+      ...editedProfile,
+      photos: photos.filter((_, i) => i !== index)
+    })
+  }
+  
+  // 드래그 시작
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  
+  // 드래그 오버
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+  
+  // 드롭
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+    
+    const photos = [...(editedProfile.photos || [])]
+    const [draggedItem] = photos.splice(draggedIndex, 1)
+    photos.splice(dropIndex, 0, draggedItem)
+    
+    setEditedProfile({ ...editedProfile, photos })
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+  
+  // 드래그 종료
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+  
+  // 지역 토글 (중복 선택)
+  const toggleRegion = (region) => {
+    const regions = editedProfile.regions || []
+    if (regions.includes(region)) {
+      setEditedProfile({ ...editedProfile, regions: regions.filter(r => r !== region) })
+    } else {
+      setEditedProfile({ ...editedProfile, regions: [...regions, region] })
     }
   }
   
+  // 스타일 토글 (최대 8개)
   const toggleStyle = (style) => {
     const styles = editedProfile.styles || []
     if (styles.includes(style)) {
       setEditedProfile({ ...editedProfile, styles: styles.filter(s => s !== style) })
-    } else if (styles.length < 5) {
+    } else if (styles.length < 8) {
       setEditedProfile({ ...editedProfile, styles: [...styles, style] })
     }
   }
+  
+  // 시간 토글 (중복 선택)
+  const toggleTime = (time) => {
+    const times = editedProfile.times || []
+    if (times.includes(time)) {
+      setEditedProfile({ ...editedProfile, times: times.filter(t => t !== time) })
+    } else {
+      setEditedProfile({ ...editedProfile, times: [...times, time] })
+    }
+  }
+  
+  // 저장 시 기존 형식 호환
+  const handleSave = () => {
+    if (!editedProfile.photos?.length) {
+      alert('대표 사진 1장은 필수입니다')
+      return
+    }
+    
+    const saveData = {
+      ...editedProfile,
+      // 기존 호환용
+      photo: editedProfile.photos?.[0] || '',
+      region: editedProfile.regions?.join(', ') || '',
+      time: editedProfile.times?.join(', ') || '',
+    }
+    onSave(saveData)
+  }
+  
+  const photos = editedProfile.photos || []
+  const canAddMore = photos.length < 6
 
   return (
     <motion.div
@@ -303,7 +448,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
         </button>
         <h2 className="text-lg font-bold">프로필 수정</h2>
         <button 
-          onClick={() => onSave(editedProfile)}
+          onClick={handleSave}
           className="text-gp-gold font-semibold"
         >
           저장
@@ -311,45 +456,103 @@ function EditProfileModal({ profile, onClose, onSave }) {
       </div>
       
       <div className="p-6 overflow-y-auto h-[calc(100vh-60px)] pb-20">
-        {/* 프로필 사진 */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            {editedProfile.photo ? (
-              <img
-                src={editedProfile.photo}
-                alt="프로필"
-                className="w-28 h-28 rounded-full object-cover border-4 border-gp-gold"
-              />
-            ) : (
-              <div className="w-28 h-28 rounded-full bg-gp-card flex items-center justify-center border-4 border-gp-gold">
-                <Camera className="w-10 h-10 text-gp-text-secondary" />
+        {/* 프로필 사진 (최대 6장) */}
+        <div className="mb-8">
+          <label className="block text-sm text-gp-text-secondary mb-3">
+            📸 프로필 사진 (최대 6장, 드래그로 순서 변경)
+            <span className="ml-2 text-gp-gold">{photos.length}/6</span>
+            {photos.length === 0 && <span className="ml-2 text-red-400">* 대표 사진 1장 필수</span>}
+          </label>
+          
+          <div className="grid grid-cols-3 gap-3">
+            {/* 업로드된 사진들 */}
+            {photos.map((photo, index) => (
+              <div
+                key={index}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`relative aspect-square rounded-xl overflow-hidden cursor-move transition-all ${
+                  draggedIndex === index ? 'opacity-50 scale-95' : ''
+                } ${dragOverIndex === index && draggedIndex !== index ? 'ring-2 ring-gp-gold' : ''}`}
+              >
+                <img
+                  src={photo}
+                  alt={`프로필 ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* 대표 사진 배지 */}
+                {index === 0 && (
+                  <div className="absolute top-1 left-1 px-2 py-0.5 bg-gp-gold text-gp-black text-[10px] font-bold rounded-full">
+                    대표
+                  </div>
+                )}
+                
+                {/* 순서 번호 */}
+                <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/60 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {index + 1}
+                </div>
+                
+                {/* 삭제 버튼 */}
+                <button
+                  onClick={() => handlePhotoDelete(index)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                
+                {/* 드래그 핸들 표시 */}
+                <div className="absolute bottom-1 right-1 text-white/60">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                  </svg>
+                </div>
               </div>
+            ))}
+            
+            {/* 사진 추가 버튼 */}
+            {canAddMore && (
+              <label className="aspect-square rounded-xl border-2 border-dashed border-gp-border hover:border-gp-gold bg-gp-card flex flex-col items-center justify-center cursor-pointer transition-colors">
+                <Camera className="w-8 h-8 text-gp-text-secondary mb-1" />
+                <span className="text-xs text-gp-text-secondary">추가</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple
+                  onChange={handlePhotoAdd}
+                  className="hidden" 
+                />
+              </label>
             )}
-            <label className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gp-gold flex items-center justify-center cursor-pointer">
-              <Camera className="w-5 h-5 text-gp-black" />
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handlePhotoChange}
-                className="hidden" 
-              />
-            </label>
           </div>
-          <p className="text-gp-text-secondary text-sm mt-2">사진 변경</p>
+          
+          <p className="text-xs text-gp-text-secondary mt-2">
+            💡 첫 번째 사진이 대표 사진으로 표시됩니다. 드래그해서 순서를 변경하세요.
+          </p>
         </div>
         
-        {/* 지역 */}
+        {/* 지역 (중복 선택) */}
         <div className="mb-6">
-          <label className="block text-sm text-gp-text-secondary mb-2">지역</label>
+          <label className="block text-sm text-gp-text-secondary mb-2">
+            📍 활동 지역 (중복 선택 가능)
+            {editedProfile.regions?.length > 0 && (
+              <span className="ml-2 text-gp-gold">
+                {editedProfile.regions.length}개 선택
+              </span>
+            )}
+          </label>
           <div className="flex flex-wrap gap-2">
             {REGIONS.map((region) => (
               <button
                 key={region}
-                onClick={() => setEditedProfile({ ...editedProfile, region })}
+                onClick={() => toggleRegion(region)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  editedProfile.region === region
+                  editedProfile.regions?.includes(region)
                     ? 'bg-gp-gold text-gp-black'
-                    : 'bg-gp-card text-gp-text-secondary'
+                    : 'bg-gp-card text-gp-text-secondary hover:bg-gp-border'
                 }`}
               >
                 {region}
@@ -360,7 +563,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
         
         {/* 핸디캡 */}
         <div className="mb-6">
-          <label className="block text-sm text-gp-text-secondary mb-2">실력 (핸디캡)</label>
+          <label className="block text-sm text-gp-text-secondary mb-2">🏌️ 실력 (핸디캡)</label>
           <div className="flex flex-wrap gap-2">
             {HANDICAPS.map((handicap) => (
               <button
@@ -369,7 +572,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   editedProfile.handicap === handicap
                     ? 'bg-gp-gold text-gp-black'
-                    : 'bg-gp-card text-gp-text-secondary'
+                    : 'bg-gp-card text-gp-text-secondary hover:bg-gp-border'
                 }`}
               >
                 {handicap}
@@ -378,47 +581,113 @@ function EditProfileModal({ profile, onClose, onSave }) {
           </div>
         </div>
         
-        {/* 스타일 */}
+        {/* 스타일 (카테고리별) */}
         <div className="mb-6">
-          <label className="block text-sm text-gp-text-secondary mb-2">
-            라운딩 스타일 (최대 5개)
+          <label className="block text-sm text-gp-text-secondary mb-3">
+            ⛳ 라운딩 스타일 (최대 8개)
+            {editedProfile.styles?.length > 0 && (
+              <span className="ml-2 text-gp-gold">
+                {editedProfile.styles.length}/8
+              </span>
+            )}
           </label>
-          <div className="flex flex-wrap gap-2">
-            {STYLE_OPTIONS.map((style) => (
-              <button
-                key={style}
-                onClick={() => toggleStyle(style)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  editedProfile.styles?.includes(style)
-                    ? 'bg-gp-gold text-gp-black'
-                    : 'bg-gp-card text-gp-text-secondary'
-                }`}
-              >
-                {style}
-              </button>
+          
+          <div className="space-y-4">
+            {STYLE_CATEGORIES.map((category) => (
+              <div key={category.category} className="bg-gp-card rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span>{category.icon}</span>
+                  <span className="text-sm font-medium text-gp-text-secondary">
+                    {category.category}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {category.options.map((style) => (
+                    <button
+                      key={style}
+                      onClick={() => toggleStyle(style)}
+                      disabled={!editedProfile.styles?.includes(style) && editedProfile.styles?.length >= 8}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        editedProfile.styles?.includes(style)
+                          ? 'bg-gp-gold text-gp-black'
+                          : editedProfile.styles?.length >= 8
+                            ? 'bg-gp-border/50 text-gp-text-secondary/50 cursor-not-allowed'
+                            : 'bg-gp-border text-gp-text-secondary hover:bg-gp-gold/20'
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
         
-        {/* 선호 시간 */}
+        {/* 선호 시간 (카테고리별, 중복 선택) */}
         <div className="mb-6">
-          <label className="block text-sm text-gp-text-secondary mb-2">선호 시간</label>
-          <div className="flex flex-wrap gap-2">
-            {TIME_OPTIONS.map((time) => (
-              <button
-                key={time}
-                onClick={() => setEditedProfile({ ...editedProfile, time })}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  editedProfile.time === time
-                    ? 'bg-gp-gold text-gp-black'
-                    : 'bg-gp-card text-gp-text-secondary'
-                }`}
-              >
-                {time}
-              </button>
+          <label className="block text-sm text-gp-text-secondary mb-3">
+            🕐 선호 시간 (중복 선택 가능)
+            {editedProfile.times?.length > 0 && (
+              <span className="ml-2 text-gp-gold">
+                {editedProfile.times.length}개 선택
+              </span>
+            )}
+          </label>
+          
+          <div className="space-y-3">
+            {TIME_OPTIONS.map((group) => (
+              <div key={group.category} className="bg-gp-card rounded-xl p-4">
+                <div className="text-xs font-medium text-gp-text-secondary mb-2">
+                  {group.category}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.options.map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => toggleTime(time)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        editedProfile.times?.includes(time)
+                          ? 'bg-gp-gold text-gp-black'
+                          : 'bg-gp-border text-gp-text-secondary hover:bg-gp-gold/20'
+                      }`}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
+        
+        {/* 선택한 항목 요약 */}
+        {(editedProfile.styles?.length > 0 || editedProfile.regions?.length > 0 || editedProfile.times?.length > 0) && (
+          <div className="bg-gp-card rounded-xl p-4 mb-6">
+            <h4 className="text-sm font-semibold mb-3">✅ 선택한 항목</h4>
+            
+            {editedProfile.regions?.length > 0 && (
+              <div className="mb-2">
+                <span className="text-xs text-gp-text-secondary">지역: </span>
+                <span className="text-xs text-gp-gold">{editedProfile.regions.join(', ')}</span>
+              </div>
+            )}
+            
+            {editedProfile.styles?.length > 0 && (
+              <div className="mb-2">
+                <span className="text-xs text-gp-text-secondary">스타일: </span>
+                <span className="text-xs text-gp-gold">{editedProfile.styles.join(', ')}</span>
+              </div>
+            )}
+            
+            {editedProfile.times?.length > 0 && (
+              <div>
+                <span className="text-xs text-gp-text-secondary">시간: </span>
+                <span className="text-xs text-gp-gold">{editedProfile.times.join(', ')}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   )
