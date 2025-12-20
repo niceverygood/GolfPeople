@@ -26,6 +26,12 @@ export const AuthProvider = ({ children }) => {
       return
     }
 
+    // 로딩 타임아웃 (5초 후 강제 진행)
+    const timeout = setTimeout(() => {
+      console.log('Auth loading timeout - forcing continue')
+      setLoading(false)
+    }, 5000)
+
     const initAuth = async () => {
       try {
         // 현재 세션 확인
@@ -33,14 +39,19 @@ export const AuthProvider = ({ children }) => {
         
         if (session?.user) {
           setUser(session.user)
-          // 프로필 로드
-          const { data: profileData } = await db.profiles.get(session.user.id)
-          setProfile(profileData)
+          // 프로필 로드 (실패해도 진행)
+          try {
+            const { data: profileData } = await db.profiles.get(session.user.id)
+            setProfile(profileData)
+          } catch (profileErr) {
+            console.log('Profile load failed, continuing:', profileErr)
+          }
         }
       } catch (err) {
         console.error('Auth initialization error:', err)
         setError(err.message)
       } finally {
+        clearTimeout(timeout)
         setLoading(false)
       }
     }
@@ -54,9 +65,13 @@ export const AuthProvider = ({ children }) => {
         
         if (session?.user) {
           setUser(session.user)
-          // 프로필 로드
-          const { data: profileData } = await db.profiles.get(session.user.id)
-          setProfile(profileData)
+          // 프로필 로드 (실패해도 진행)
+          try {
+            const { data: profileData } = await db.profiles.get(session.user.id)
+            setProfile(profileData)
+          } catch (profileErr) {
+            console.log('Profile load failed:', profileErr)
+          }
         } else {
           setUser(null)
           setProfile(null)
@@ -66,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     )
 
     return () => {
+      clearTimeout(timeout)
       subscription?.unsubscribe()
     }
   }, [])
