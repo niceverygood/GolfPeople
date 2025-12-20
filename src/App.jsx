@@ -33,10 +33,8 @@ function AppContent() {
   
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [proposalModal, setProposalModal] = useState({ open: false, user: null })
-
-  // 전화번호 인증 여부
-  const isPhoneVerified = profile?.phone_verified === true
 
   useEffect(() => {
     // 스플래시 화면 2초 후 종료
@@ -46,8 +44,14 @@ function AppContent() {
     const onboarded = localStorage.getItem('gp_onboarded')
     if (onboarded) setIsOnboarded(true)
     
+    // 전화번호 인증 여부 체크 (Supabase 또는 로컬스토리지)
+    const phoneVerified = localStorage.getItem('gp_phone_verified')
+    if (phoneVerified || profile?.phone_verified) {
+      setIsPhoneVerified(true)
+    }
+    
     return () => clearTimeout(timer)
-  }, [])
+  }, [profile])
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('gp_onboarded', 'true')

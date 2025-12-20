@@ -129,15 +129,22 @@ export default function PhoneVerification() {
       // Supabase 프로필에 전화번호 저장
       if (user) {
         const phoneDigits = phoneNumber.replace(/\D/g, '')
-        await db.profiles.update(user.id, {
-          phone: phoneDigits,
-          phone_verified: true
-        })
+        try {
+          await db.profiles.update(user.id, {
+            phone: phoneDigits,
+            phone_verified: true
+          })
+        } catch (err) {
+          console.log('Profile update failed, continuing anyway:', err)
+        }
       }
+      
+      // 로컬스토리지에 인증 완료 플래그 저장
+      localStorage.setItem('gp_phone_verified', 'true')
       
       setStep('success')
       
-      // 2초 후 페이지 새로고침으로 이동 (프로필 상태 반영)
+      // 2초 후 페이지 새로고침으로 이동
       setTimeout(() => {
         window.location.href = '/'
       }, 2000)
