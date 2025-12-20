@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut, 
-  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft
+  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
+import { useMarker } from '../context/MarkerContext'
 
 // 지역 옵션
 const REGIONS = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주', '강원', '충청', '전라', '경상']
@@ -54,9 +56,25 @@ const TIME_OPTIONS = [
   { category: '기타', options: ['새벽 티오프', '언제든 OK'] },
 ]
 
+// 마커 아이콘
+const MarkerIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="url(#markerGradientProfile)" />
+    <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D" />
+    <defs>
+      <linearGradient id="markerGradientProfile" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#D4AF37" />
+        <stop offset="1" stopColor="#B8962E" />
+      </linearGradient>
+    </defs>
+  </svg>
+)
+
 export default function Profile() {
+  const navigate = useNavigate()
   const { currentUser, proposals } = useApp()
   const { user, profile: authProfile, isAuthenticated, signOut, loading: authLoading } = useAuth()
+  const { balance } = useMarker()
   const [profile, setProfile] = useState(null)
   
   // 모달 상태
@@ -188,8 +206,32 @@ export default function Profile() {
         </motion.div>
       </div>
 
-      {/* 통계 */}
+      {/* 마커 잔액 카드 */}
       <div className="px-6 mt-6">
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => navigate('/store')}
+          className="w-full bg-gradient-to-r from-gp-gold/20 to-yellow-600/10 rounded-2xl p-4 flex items-center justify-between border border-gp-gold/30 hover:border-gp-gold/50 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gp-gold/20 flex items-center justify-center">
+              <MarkerIcon className="w-7 h-7" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm text-gp-text-secondary">내 마커</p>
+              <p className="text-2xl font-bold">{balance}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-gp-gold text-black px-4 py-2 rounded-xl font-semibold">
+            <Plus className="w-4 h-4" />
+            <span>충전</span>
+          </div>
+        </motion.button>
+      </div>
+
+      {/* 통계 */}
+      <div className="px-6 mt-4">
         <div className="grid grid-cols-3 gap-3">
           {stats.map((stat, index) => (
             <motion.div

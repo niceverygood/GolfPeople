@@ -358,6 +358,14 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO profiles (id, name, email)
   VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', '골프인'), NEW.email);
+  
+  -- 신규 가입 보너스 마커 지급
+  INSERT INTO marker_wallets (user_id, balance)
+  VALUES (NEW.id, 10);
+  
+  INSERT INTO marker_transactions (user_id, amount, type, description)
+  VALUES (NEW.id, 10, 'bonus', '신규 가입 보너스');
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -397,5 +405,167 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_friend_request_accepted
   AFTER UPDATE ON friend_requests
   FOR EACH ROW EXECUTE FUNCTION handle_friend_request_accepted();
+
+-- =============================================
+-- 15. 마커 지갑 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS marker_wallets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+  balance INTEGER DEFAULT 0,
+  total_purchased INTEGER DEFAULT 0, -- 총 구매한 마커
+  total_spent INTEGER DEFAULT 0, -- 총 사용한 마커
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- 16. 마커 거래 내역 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS marker_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL, -- 양수: 충전, 음수: 사용
+  type VARCHAR(50) NOT NULL, -- 'purchase', 'spend', 'bonus', 'refund'
+  description TEXT,
+  reference_id UUID, -- 관련 친구요청/조인신청 ID
+  reference_type VARCHAR(50), -- 'friend_request', 'join_application'
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_marker_transactions_user ON marker_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_marker_transactions_type ON marker_transactions(type);
+
+-- =============================================
+-- 17. 마커 상품 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS marker_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  marker_amount INTEGER NOT NULL, -- 지급되는 마커 수
+  bonus_amount INTEGER DEFAULT 0, -- 보너스 마커
+  price INTEGER NOT NULL, -- 원화 가격
+  discount_percent INTEGER DEFAULT 0, -- 할인율
+  is_popular BOOLEAN DEFAULT FALSE, -- 인기 상품 표시
+  is_active BOOLEAN DEFAULT TRUE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 기본 상품 데이터 추가
+INSERT INTO marker_products (name, description, marker_amount, bonus_amount, price, discount_percent, is_popular, sort_order) VALUES
+  ('마커 5개', '가볍게 시작하기', 5, 0, 3000, 0, false, 1),
+  ('마커 15개', '가장 인기 있는 패키지', 15, 2, 8000, 10, true, 2),
+  ('마커 30개', '알뜰하게 이용하기', 30, 5, 15000, 15, false, 3),
+  ('마커 50개', '헤비 유저를 위한 선택', 50, 10, 23000, 20, false, 4),
+  ('마커 100개', '최고의 가성비', 100, 25, 40000, 25, false, 5)
+ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- 18. 마커 가격 설정 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS marker_prices (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  action_type VARCHAR(50) NOT NULL UNIQUE, -- 'friend_request', 'join_application'
+  marker_cost INTEGER NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 기본 가격 설정
+INSERT INTO marker_prices (action_type, marker_cost, description) VALUES
+  ('friend_request', 1, '친구 요청 시 필요한 마커'),
+  ('join_application', 2, '조인 신청 시 필요한 마커')
+ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- 마커 RLS 정책
+-- =============================================
+
+-- 마커 지갑
+ALTER TABLE marker_wallets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "본인 지갑만 조회" ON marker_wallets
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 지갑만 수정" ON marker_wallets
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 지갑 생성" ON marker_wallets
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 마커 거래 내역
+ALTER TABLE marker_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "본인 거래내역만 조회" ON marker_transactions
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 거래내역 생성" ON marker_transactions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 마커 상품 (모두 조회 가능)
+ALTER TABLE marker_products ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "상품은 누구나 조회 가능" ON marker_products
+  FOR SELECT USING (true);
+
+-- 마커 가격 설정 (모두 조회 가능)
+ALTER TABLE marker_prices ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "가격설정은 누구나 조회 가능" ON marker_prices
+  FOR SELECT USING (true);
+
+-- 마커 지갑 updated_at 트리거
+CREATE TRIGGER marker_wallets_updated_at
+  BEFORE UPDATE ON marker_wallets
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- =============================================
+-- 마커 사용 함수
+-- =============================================
+CREATE OR REPLACE FUNCTION spend_markers(
+  p_user_id UUID,
+  p_amount INTEGER,
+  p_action_type VARCHAR(50),
+  p_reference_id UUID DEFAULT NULL
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_current_balance INTEGER;
+BEGIN
+  -- 현재 잔액 확인
+  SELECT balance INTO v_current_balance
+  FROM marker_wallets
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+  
+  IF v_current_balance IS NULL THEN
+    RAISE EXCEPTION '지갑이 존재하지 않습니다';
+  END IF;
+  
+  IF v_current_balance < p_amount THEN
+    RAISE EXCEPTION '마커가 부족합니다';
+  END IF;
+  
+  -- 잔액 차감
+  UPDATE marker_wallets
+  SET balance = balance - p_amount,
+      total_spent = total_spent + p_amount
+  WHERE user_id = p_user_id;
+  
+  -- 거래 내역 기록
+  INSERT INTO marker_transactions (user_id, amount, type, description, reference_id, reference_type)
+  VALUES (p_user_id, -p_amount, 'spend', 
+          CASE p_action_type 
+            WHEN 'friend_request' THEN '친구 요청'
+            WHEN 'join_application' THEN '조인 신청'
+            ELSE p_action_type
+          END,
+          p_reference_id, p_action_type);
+  
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 

@@ -15,6 +15,7 @@ import ProfileDetail from './pages/ProfileDetail'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import PhoneVerification from './pages/PhoneVerification'
+import Store from './pages/Store'
 
 // Components
 import TabBar from './components/TabBar'
@@ -23,6 +24,7 @@ import ProposalModal from './components/ProposalModal'
 // Context
 import { AppProvider } from './context/AppContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { MarkerProvider } from './context/MarkerContext'
 
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
@@ -105,30 +107,33 @@ function AppContent() {
 
   return (
     <AppProvider>
-      <div className="app-container">
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Home onPropose={openProposalModal} />} />
-            <Route path="/join" element={<Join />} />
-            <Route path="/join/create" element={<CreateJoin />} />
-            <Route path="/join/:id" element={<JoinDetail />} />
-            <Route path="/saved" element={<Saved onPropose={openProposalModal} />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/user/:userId" element={<ProfileDetail />} />
-            <Route path="/phone-verify" element={<PhoneVerification />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-          </Routes>
-        </AnimatePresence>
+      <MarkerProvider>
+        <div className="app-container">
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Home onPropose={openProposalModal} />} />
+              <Route path="/join" element={<Join />} />
+              <Route path="/join/create" element={<CreateJoin />} />
+              <Route path="/join/:id" element={<JoinDetail />} />
+              <Route path="/saved" element={<Saved onPropose={openProposalModal} />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/user/:userId" element={<ProfileDetail />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/phone-verify" element={<PhoneVerification />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+            </Routes>
+          </AnimatePresence>
 
-        {showTabBar && <TabBar />}
+          {showTabBar && <TabBar />}
 
-        <ProposalModal
-          isOpen={proposalModal.open}
-          user={proposalModal.user}
-          onClose={closeProposalModal}
-        />
-      </div>
+          <ProposalModal
+            isOpen={proposalModal.open}
+            user={proposalModal.user}
+            onClose={closeProposalModal}
+          />
+        </div>
+      </MarkerProvider>
     </AppProvider>
   )
 }
