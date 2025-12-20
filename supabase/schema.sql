@@ -397,3 +397,4 @@ CREATE TRIGGER on_friend_request_accepted
   AFTER UPDATE ON friend_requests
   FOR EACH ROW EXECUTE FUNCTION handle_friend_request_accepted();
 
+

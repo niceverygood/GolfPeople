@@ -12,6 +12,8 @@ import CreateJoin from './pages/CreateJoin'
 import Saved from './pages/Saved'
 import Profile from './pages/Profile'
 import ProfileDetail from './pages/ProfileDetail'
+import Login from './pages/Login'
+import AuthCallback from './pages/AuthCallback'
 
 // Components
 import TabBar from './components/TabBar'
@@ -77,6 +79,8 @@ function App() {
             <Route path="/saved" element={<Saved onPropose={openProposalModal} />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/user/:userId" element={<ProfileDetail />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
         </AnimatePresence>
 

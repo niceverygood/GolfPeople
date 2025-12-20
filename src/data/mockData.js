@@ -156,3 +156,4 @@ export const currentUser = {
   savedJoins: [], // 저장한 조인 ID
 };
 
+
