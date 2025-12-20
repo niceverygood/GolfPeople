@@ -88,9 +88,13 @@ function AppContent() {
     )
   }
 
-  // 4. 로그인 후 전화번호 인증 (인증 안 된 사용자만)
-  // phone-verify 경로이거나, 전화번호 인증 안 된 경우
-  if (location.pathname === '/phone-verify' || (!isPhoneVerified && isAuthenticated)) {
+  // 4. 로그인 후 온보딩 (사진등록 + 프로필등록)
+  if (!isOnboarded) {
+    return <Onboarding onComplete={handleOnboardingComplete} />
+  }
+
+  // 5. 온보딩 후 전화번호 인증 (인증 안 된 사용자만)
+  if (!isPhoneVerified && location.pathname !== '/phone-verify') {
     return (
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
@@ -98,11 +102,6 @@ function AppContent() {
         </Routes>
       </AnimatePresence>
     )
-  }
-
-  // 5. 전화번호 인증 후 온보딩 (처음 사용자만)
-  if (!isOnboarded) {
-    return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
   // 6. 메인 앱
