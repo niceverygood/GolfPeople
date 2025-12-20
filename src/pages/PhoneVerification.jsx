@@ -133,14 +133,13 @@ export default function PhoneVerification() {
           phone: phoneDigits,
           phone_verified: true
         })
-        await refreshProfile()
       }
       
       setStep('success')
       
-      // 2초 후 홈으로 이동
+      // 2초 후 페이지 새로고침으로 이동 (프로필 상태 반영)
       setTimeout(() => {
-        navigate('/', { replace: true })
+        window.location.href = '/'
       }, 2000)
     } else {
       if (result.error.includes('invalid-verification-code')) {
