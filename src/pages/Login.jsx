@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 // Google 아이콘 SVG
@@ -115,14 +115,7 @@ export default function Login() {
       exit={{ opacity: 0 }}
       className="min-h-screen bg-gp-black flex flex-col"
     >
-      {/* 헤더 */}
-      <div className="flex items-center p-4">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
-
-      <div className="flex-1 flex flex-col px-6 pt-8">
+      <div className="flex-1 flex flex-col px-6 pt-12">
         {/* 로고 & 타이틀 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

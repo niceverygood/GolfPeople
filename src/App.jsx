@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 
 // Pages
@@ -21,10 +21,13 @@ import ProposalModal from './components/ProposalModal'
 
 // Context
 import { AppProvider } from './context/AppContext'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 
-function App() {
+// 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
+function AppContent() {
   const location = useLocation()
+  const { user, loading: authLoading, isAuthenticated } = useAuth()
+  
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [proposalModal, setProposalModal] = useState({ open: false, user: null })
@@ -53,23 +56,40 @@ function App() {
     setProposalModal({ open: false, user: null })
   }
 
-  // 스플래시 화면
+  // 1. 스플래시 화면
   if (showSplash) {
     return <Splash />
   }
 
-  // 온보딩 화면
+  // 2. 인증 로딩 중
+  if (authLoading) {
+    return <Splash /> // 로딩 중에도 스플래시 표시
+  }
+
+  // 3. 로그인 안 되어 있으면 로그인 화면 (콜백 페이지 제외)
+  if (!isAuthenticated && location.pathname !== '/auth/callback') {
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </AnimatePresence>
+    )
+  }
+
+  // 4. 로그인 후 온보딩 (처음 사용자만)
   if (!isOnboarded) {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
+  // 5. 메인 앱
   // 탭바 표시 여부
   const showTabBar = ['/', '/join', '/saved', '/profile'].includes(location.pathname)
 
   return (
-    <AuthProvider>
-      <AppProvider>
-        <div className="app-container">
+    <AppProvider>
+      <div className="app-container">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home onPropose={openProposalModal} />} />
@@ -91,11 +111,18 @@ function App() {
           user={proposalModal.user}
           onClose={closeProposalModal}
         />
-        </div>
-      </AppProvider>
+      </div>
+    </AppProvider>
+  )
+}
+
+// 앱 최상위 - AuthProvider로 감싸기
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   )
 }
 
 export default App
-

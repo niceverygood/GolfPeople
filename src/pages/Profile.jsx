@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import { 
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut, 
-  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, User
+  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -56,7 +55,6 @@ const TIME_OPTIONS = [
 ]
 
 export default function Profile() {
-  const navigate = useNavigate()
   const { currentUser, proposals } = useApp()
   const { user, profile: authProfile, isAuthenticated, signOut, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState(null)
@@ -108,68 +106,6 @@ export default function Profile() {
     setProfile(updatedProfile)
     localStorage.setItem('gp_profile', JSON.stringify(updatedProfile))
     setShowEditModal(false)
-  }
-
-  // 로그인 안 되어 있으면 로그인 프롬프트 표시
-  if (!isAuthenticated && !authLoading) {
-    return (
-      <div className="flex-1 flex flex-col h-full overflow-y-auto pb-24">
-        {/* 헤더 배경 */}
-        <div className="relative h-40 bg-gradient-to-br from-gp-gold/20 to-gp-green-dark/20">
-          <div className="absolute inset-0 bg-gp-black/50" />
-        </div>
-
-        {/* 로그인 프롬프트 */}
-        <div className="px-6 -mt-16 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gp-card rounded-3xl p-8 text-center"
-          >
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gp-border flex items-center justify-center">
-              <User className="w-12 h-12 text-gp-text-secondary" />
-            </div>
-            
-            <h2 className="text-xl font-bold mb-2">로그인이 필요해요</h2>
-            <p className="text-gp-text-secondary mb-6">
-              프로필을 확인하고 골프 파트너를 찾으려면<br />로그인해주세요
-            </p>
-
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full py-4 btn-gold rounded-2xl font-semibold mb-3"
-            >
-              로그인 / 회원가입
-            </button>
-
-            <p className="text-xs text-gp-text-secondary">
-              간편하게 Google 또는 카카오로 시작하세요
-            </p>
-          </motion.div>
-        </div>
-
-        {/* 로그인 혜택 안내 */}
-        <div className="px-6 mt-6">
-          <div className="bg-gp-card rounded-2xl p-6">
-            <h3 className="font-semibold mb-4">로그인하면 이런 걸 할 수 있어요</h3>
-            <div className="space-y-3">
-              {[
-                { emoji: '⛳', text: '나만의 골프 프로필 만들기' },
-                { emoji: '👥', text: '골프 파트너에게 제안 보내기' },
-                { emoji: '📅', text: '조인 모집 참여하기' },
-                { emoji: '💬', text: '매칭된 골퍼와 채팅하기' },
-                { emoji: '❤️', text: '관심 있는 골퍼 저장하기' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-xl">{item.emoji}</span>
-                  <span className="text-gp-text-secondary">{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   // 유저 이름 (Supabase 프로필 또는 로컬)
