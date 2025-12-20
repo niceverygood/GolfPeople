@@ -1,29 +1,22 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
 
-// Firebase 설정 (Firebase Console에서 가져온 값으로 교체 필요)
+// Firebase 설정
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey: "AIzaSyAMJ8gdZ6hvZhVnZ-DpEWDzpsu1LlrSHKs",
+  authDomain: "golfpeople-9cbb0.firebaseapp.com",
+  databaseURL: "https://golfpeople-9cbb0.firebaseio.com",
+  projectId: "golfpeople-9cbb0",
+  storageBucket: "golfpeople-9cbb0.firebasestorage.app",
+  messagingSenderId: "625021580962",
+  appId: "1:625021580962:web:e9167bd102a25c7f5b89fb",
+  measurementId: "G-MFZVF6BZV5"
 }
 
 // Firebase 초기화
-let app = null
-let auth = null
-
-const isMissingConfig = !firebaseConfig.apiKey || !firebaseConfig.projectId
-
-if (!isMissingConfig) {
-  app = initializeApp(firebaseConfig)
-  auth = getAuth(app)
-  auth.languageCode = 'ko' // 한국어 설정
-} else {
-  console.warn('⚠️ Firebase 설정이 없습니다. 전화번호 인증이 비활성화됩니다.')
-}
+const app = initializeApp(firebaseConfig)
+const auth = getAuth(app)
+auth.languageCode = 'ko' // 한국어 설정
 
 // reCAPTCHA 설정
 export const setupRecaptcha = (containerId) => {
@@ -100,5 +93,5 @@ const formatPhoneNumber = (phone) => {
 }
 
 export { auth }
-export const isFirebaseConfigured = () => !isMissingConfig
+export const isFirebaseConfigured = () => true
 
