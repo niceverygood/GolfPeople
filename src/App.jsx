@@ -14,6 +14,7 @@ import Profile from './pages/Profile'
 import ProfileDetail from './pages/ProfileDetail'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
+import PhoneVerification from './pages/PhoneVerification'
 
 // Components
 import TabBar from './components/TabBar'
@@ -26,11 +27,14 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
   const location = useLocation()
-  const { user, loading: authLoading, isAuthenticated } = useAuth()
+  const { user, profile, loading: authLoading, isAuthenticated } = useAuth()
   
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [proposalModal, setProposalModal] = useState({ open: false, user: null })
+
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified === true
 
   useEffect(() => {
     // 스플래시 화면 2초 후 종료
@@ -78,12 +82,24 @@ function AppContent() {
     )
   }
 
-  // 4. 로그인 후 온보딩 (처음 사용자만)
+  // 4. 로그인 후 전화번호 인증 (인증 안 된 사용자만)
+  // phone-verify 경로이거나, 전화번호 인증 안 된 경우
+  if (location.pathname === '/phone-verify' || (!isPhoneVerified && isAuthenticated)) {
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="*" element={<PhoneVerification />} />
+        </Routes>
+      </AnimatePresence>
+    )
+  }
+
+  // 5. 전화번호 인증 후 온보딩 (처음 사용자만)
   if (!isOnboarded) {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
-  // 5. 메인 앱
+  // 6. 메인 앱
   // 탭바 표시 여부
   const showTabBar = ['/', '/join', '/saved', '/profile'].includes(location.pathname)
 
@@ -99,6 +115,7 @@ function AppContent() {
             <Route path="/saved" element={<Saved onPropose={openProposalModal} />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/user/:userId" element={<ProfileDetail />} />
+            <Route path="/phone-verify" element={<PhoneVerification />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>

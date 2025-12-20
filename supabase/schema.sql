@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   name VARCHAR(50) NOT NULL,
   email VARCHAR(255) UNIQUE,
   phone VARCHAR(20),
+  phone_verified BOOLEAN DEFAULT FALSE, -- 전화번호 인증 여부
   gender VARCHAR(10), -- '남성', '여성'
   birth_year INTEGER,
   photos TEXT[] DEFAULT '{}', -- 프로필 사진 배열 (최대 6장)
