@@ -58,18 +58,27 @@ export const sendVerificationCode = async (phoneNumber) => {
   }
 }
 
-// 인증코드 확인
+// 인증코드 확인 (타임아웃 포함)
 export const verifyCode = async (code) => {
   if (!window.confirmationResult) {
     return { success: false, error: 'No verification in progress' }
   }
   
   try {
-    const result = await window.confirmationResult.confirm(code)
+    // 10초 타임아웃
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('인증 시간이 초과되었습니다. 다시 시도해주세요.')), 10000)
+    })
+    
+    const result = await Promise.race([
+      window.confirmationResult.confirm(code),
+      timeoutPromise
+    ])
+    
     return { success: true, user: result.user }
   } catch (error) {
     console.error('인증 코드 오류:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error.message || '인증에 실패했습니다.' }
   }
 }
 

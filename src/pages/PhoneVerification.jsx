@@ -123,42 +123,48 @@ export default function PhoneVerification() {
     setLoading(true)
     setError('')
 
-    const result = await verifyCode(code)
-    
-    if (result.success) {
-      // Supabase 프로필에 전화번호 저장
-      if (user) {
-        const phoneDigits = phoneNumber.replace(/\D/g, '')
-        try {
-          await db.profiles.update(user.id, {
-            phone: phoneDigits,
-            phone_verified: true
-          })
-        } catch (err) {
-          console.log('Profile update failed, continuing anyway:', err)
+    try {
+      const result = await verifyCode(code)
+      
+      if (result.success) {
+        // Supabase 프로필에 전화번호 저장
+        if (user) {
+          const phoneDigits = phoneNumber.replace(/\D/g, '')
+          try {
+            await db.profiles.update(user.id, {
+              phone: phoneDigits,
+              phone_verified: true
+            })
+          } catch (err) {
+            console.log('Profile update failed, continuing anyway:', err)
+          }
+        }
+        
+        // 로컬스토리지에 인증 완료 플래그 저장
+        localStorage.setItem('gp_phone_verified', 'true')
+        
+        setStep('success')
+        setLoading(false)
+        
+        // 2초 후 페이지 새로고침으로 이동
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 2000)
+      } else {
+        setLoading(false)
+        if (result.error?.includes('invalid-verification-code')) {
+          setError('인증코드가 올바르지 않습니다.')
+        } else if (result.error?.includes('code-expired')) {
+          setError('인증코드가 만료되었습니다. 다시 요청해주세요.')
+        } else {
+          setError(result.error || '인증에 실패했습니다.')
         }
       }
-      
-      // 로컬스토리지에 인증 완료 플래그 저장
-      localStorage.setItem('gp_phone_verified', 'true')
-      
-      setStep('success')
-      
-      // 2초 후 페이지 새로고침으로 이동
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 2000)
-    } else {
-      if (result.error.includes('invalid-verification-code')) {
-        setError('인증코드가 올바르지 않습니다.')
-      } else if (result.error.includes('code-expired')) {
-        setError('인증코드가 만료되었습니다. 다시 요청해주세요.')
-      } else {
-        setError(result.error || '인증에 실패했습니다.')
-      }
+    } catch (err) {
+      console.error('Verification error:', err)
+      setLoading(false)
+      setError('인증 처리 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
-    
-    setLoading(false)
   }
 
   // 재발송
