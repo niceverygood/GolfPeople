@@ -176,7 +176,12 @@ export default function PhoneVerification() {
 
   // 스킵하기 (나중에 인증)
   const handleSkip = () => {
-    navigate('/', { replace: true })
+    // 이전 페이지가 있으면 뒤로, 없으면 홈으로
+    if (window.history.length > 2) {
+      navigate(-1)
+    } else {
+      window.location.href = '/'
+    }
   }
 
   const formatCountdown = (seconds) => {

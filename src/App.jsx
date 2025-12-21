@@ -93,16 +93,8 @@ function AppContent() {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
-  // 5. 온보딩 후 전화번호 인증 (인증 안 된 사용자만)
-  if (!isPhoneVerified && location.pathname !== '/phone-verify') {
-    return (
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="*" element={<PhoneVerification />} />
-        </Routes>
-      </AnimatePresence>
-    )
-  }
+  // 5. 전화번호 인증 - 선택적 (프로필에서 나중에 인증 가능)
+  // 인증 강제하지 않음 - 사용자가 원할 때 프로필에서 인증
 
   // 6. 메인 앱
   // 탭바 표시 여부

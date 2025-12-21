@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut, 
-  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus
+  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -101,8 +101,18 @@ export default function Profile() {
     { label: '완료 라운딩', value: 0 },
   ]
 
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+
   const menuItems = [
     { icon: Edit2, label: '프로필 수정', action: () => setShowEditModal(true) },
+    // 전화번호 미인증시 인증 메뉴 표시
+    ...(!isPhoneVerified ? [{ 
+      icon: Phone, 
+      label: '전화번호 인증', 
+      action: () => navigate('/phone-verify'),
+      highlight: true 
+    }] : []),
     { icon: Settings, label: '설정', action: () => setShowSettingsModal(true) },
     { icon: Shield, label: '차단 관리', action: () => setShowBlockModal(true) },
     { icon: LogOut, label: '로그아웃', action: () => setShowLogoutConfirm(true) },
@@ -289,15 +299,24 @@ export default function Profile() {
               onClick={item.action}
               className={`w-full flex items-center justify-between p-4 hover:bg-gp-border/50 transition-colors ${
                 index !== menuItems.length - 1 ? 'border-b border-gp-border' : ''
-              }`}
+              } ${item.highlight ? 'bg-gp-gold/10' : ''}`}
             >
               <div className="flex items-center gap-3">
                 <item.icon className={`w-5 h-5 ${
-                  item.label === '로그아웃' ? 'text-gp-red' : 'text-gp-text-secondary'
+                  item.label === '로그아웃' ? 'text-gp-red' : 
+                  item.highlight ? 'text-gp-gold' : 'text-gp-text-secondary'
                 }`} />
-                <span className={item.label === '로그아웃' ? 'text-gp-red' : ''}>
+                <span className={
+                  item.label === '로그아웃' ? 'text-gp-red' : 
+                  item.highlight ? 'text-gp-gold font-semibold' : ''
+                }>
                   {item.label}
                 </span>
+                {item.highlight && (
+                  <span className="text-xs bg-gp-gold text-black px-2 py-0.5 rounded-full">
+                    권장
+                  </span>
+                )}
               </div>
               <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
             </button>
