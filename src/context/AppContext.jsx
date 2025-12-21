@@ -43,30 +43,37 @@ export function AppProvider({ children }) {
   // 조인 신청 (내가 신청한)
   const [joinApplications, setJoinApplications] = useState([])
   
-  // 내가 만든 조인
-  const [myJoins, setMyJoins] = useState([
-    {
-      id: 101,
-      title: '주말 오전 여유롭게',
-      date: '12월 28일 (토)',
-      time: '오전 8시',
-      location: '남서울CC',
-      region: '서울',
-      spotsTotal: 4,
-      spotsFilled: 2,
-      style: ['여유롭게', '도보 가능'],
-      handicapRange: '90대~100대',
-      description: '편하게 치실 분 구합니다',
-      hostId: currentUser.id,
-      hostName: currentUser.name,
-      hostPhoto: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400',
-      participants: [
-        { id: 0, name: '나', photo: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400' },
-        { id: 101, name: '지민', photo: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400' },
-      ],
-      createdAt: new Date(Date.now() - 172800000).toISOString(),
-    },
-  ])
+  // 내가 만든 조인 (localStorage에서 복원)
+  const [myJoins, setMyJoins] = useState(() => {
+    const saved = localStorage.getItem('gp_my_joins')
+    if (saved) {
+      return JSON.parse(saved)
+    }
+    // 기본 데모 데이터
+    return [
+      {
+        id: 101,
+        title: '주말 오전 여유롭게',
+        date: '12월 28일 (토)',
+        time: '오전 8시',
+        location: '남서울CC',
+        region: '서울',
+        spotsTotal: 4,
+        spotsFilled: 2,
+        style: ['여유롭게', '도보 가능'],
+        handicapRange: '90대~100대',
+        description: '편하게 치실 분 구합니다',
+        hostId: currentUser.id,
+        hostName: currentUser.name,
+        hostPhoto: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400',
+        participants: [
+          { id: 0, name: '나', photo: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400' },
+          { id: 101, name: '지민', photo: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400' },
+        ],
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+      },
+    ]
+  })
   
   // 조인 신청 (내가 받은 - 내가 호스트인 조인에 신청한 사람들) - 데모 데이터
   const [receivedJoinRequests, setReceivedJoinRequests] = useState([
@@ -272,13 +279,17 @@ export function AppProvider({ children }) {
       ],
       createdAt: new Date().toISOString(),
     }
-    setMyJoins([newJoin, ...myJoins])
+    const updated = [newJoin, ...myJoins]
+    setMyJoins(updated)
+    localStorage.setItem('gp_my_joins', JSON.stringify(updated))
     return newJoin
   }
   
   // 내 조인 삭제
   const deleteMyJoin = (joinId) => {
-    setMyJoins(myJoins.filter(j => j.id !== joinId))
+    const updated = myJoins.filter(j => j.id !== joinId)
+    setMyJoins(updated)
+    localStorage.setItem('gp_my_joins', JSON.stringify(updated))
   }
 
   const value = {

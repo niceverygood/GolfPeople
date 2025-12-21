@@ -32,7 +32,7 @@ const MEETING_TYPES = [
 
 export default function CreateJoin() {
   const navigate = useNavigate()
-  const { joins } = useApp()
+  const { createJoin } = useApp()
   
   const [step, setStep] = useState(0) // 0: 골프장, 1: 일정, 2: 상세
   const [selectedCourse, setSelectedCourse] = useState(null)
@@ -187,8 +187,8 @@ export default function CreateJoin() {
       setStep(step + 1)
     } else {
       // 조인 생성 완료
-      const newJoin = {
-        id: Date.now(),
+      const joinData = {
+        title: `${selectedCourse.name} 라운딩`,
         courseId: selectedCourse.id,
         courseName: selectedCourse.name,
         location: selectedCourse.address,
@@ -204,12 +204,16 @@ export default function CreateJoin() {
         ],
         wantedConditions: wantedConditions.slice(0, recruitCount), // 모집 인원만큼만
         handicapRange,
+        style: styles, // AppContext에서 style로 사용
         styles,
         meetingType: meetingType || null,
         description,
       }
       
-      console.log('Created join:', newJoin)
+      // AppContext에 저장
+      const created = createJoin(joinData)
+      console.log('Created join:', created)
+      
       alert('조인이 생성되었습니다!')
       navigate('/join')
     }
