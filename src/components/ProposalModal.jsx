@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, MapPin, MessageSquare, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import PhoneVerifyModal from './PhoneVerifyModal'
 
 const DATE_OPTIONS = [
   { id: 'this-weekend', label: '이번 주말' },
@@ -19,17 +21,35 @@ const REGION_OPTIONS = [
 
 export default function ProposalModal({ isOpen, user, onClose }) {
   const { sendProposal } = useApp()
+  const { profile } = useAuth()
   const [step, setStep] = useState(0) // 0: 날짜, 1: 지역, 2: 메시지, 3: 완료
   const [datePreference, setDatePreference] = useState('')
   const [region, setRegion] = useState('')
   const [message, setMessage] = useState('')
+  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
+
+  // 전화번호 인증 여부 체크
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+
+  // 모달이 열릴 때 인증 여부 체크
+  useEffect(() => {
+    if (isOpen && !isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+    }
+  }, [isOpen, isPhoneVerified])
 
   const handleClose = () => {
     setStep(0)
     setDatePreference('')
     setRegion('')
     setMessage('')
+    setShowPhoneVerifyModal(false)
     onClose()
+  }
+
+  const handlePhoneVerifyClose = () => {
+    setShowPhoneVerifyModal(false)
+    onClose() // 인증 안하면 모달 닫기
   }
 
   const handleNext = () => {
@@ -58,6 +78,17 @@ export default function ProposalModal({ isOpen, user, onClose }) {
   }
 
   if (!isOpen || !user) return null
+
+  // 전화번호 인증 필요 모달 표시
+  if (showPhoneVerifyModal && !isPhoneVerified) {
+    return (
+      <PhoneVerifyModal
+        isOpen={true}
+        onClose={handlePhoneVerifyClose}
+        message="친구에게 라운딩을 제안하려면 전화번호 인증이 필요해요."
+      />
+    )
+  }
 
   return (
     <AnimatePresence>
