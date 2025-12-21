@@ -56,6 +56,29 @@ const TIME_OPTIONS = [
   { category: '기타', options: ['새벽 티오프', '언제든 OK'] },
 ]
 
+// 골프복 브랜드 옵션 (마크앤로나 제일 먼저)
+const GOLF_BRANDS = [
+  { name: '마크앤로나', emoji: '👑', premium: true },
+  { name: 'PXG', emoji: '🔥', premium: true },
+  { name: '타이틀리스트', emoji: '⛳', premium: false },
+  { name: '캘러웨이', emoji: '🏌️', premium: false },
+  { name: '테일러메이드', emoji: '🎯', premium: false },
+  { name: '풋조이', emoji: '👟', premium: false },
+  { name: '나이키 골프', emoji: '✔️', premium: false },
+  { name: '아디다스 골프', emoji: '🏃', premium: false },
+  { name: '언더아머', emoji: '💪', premium: false },
+  { name: '지포어', emoji: '🌟', premium: true },
+  { name: '말본골프', emoji: '🦆', premium: true },
+  { name: '파리게이츠', emoji: '🇫🇷', premium: true },
+  { name: '마스터바니', emoji: '🐰', premium: true },
+  { name: '데상트골프', emoji: '🏔️', premium: false },
+  { name: '르꼬끄골프', emoji: '🐓', premium: false },
+  { name: '휠라골프', emoji: '🎾', premium: false },
+  { name: '와이드앵글', emoji: '📐', premium: false },
+  { name: '볼빅', emoji: '🌈', premium: false },
+  { name: '기타', emoji: '👕', premium: false },
+]
+
 // 마커 아이콘
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -203,6 +226,30 @@ export default function Profile() {
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+          
+          {/* 좋아하는 브랜드 */}
+          {profile?.brands?.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs text-gp-text-secondary mb-2 text-center">👕 좋아하는 브랜드</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {profile.brands.map((brand) => {
+                  const brandData = GOLF_BRANDS.find(b => b.name === brand)
+                  return (
+                    <span 
+                      key={brand} 
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        brandData?.premium 
+                          ? 'bg-gp-gold/20 text-gp-gold border border-gp-gold/30' 
+                          : 'bg-gp-card text-gp-text-secondary'
+                      }`}
+                    >
+                      {brandData?.emoji} {brand}
+                    </span>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -380,10 +427,15 @@ function EditProfileModal({ profile, onClose, onSave }) {
       handicap: '',
       styles: [],
       times: [],
+      brands: [], // 좋아하는 브랜드
     }
     // 기존 photo를 photos 배열로 변환
     if (base.photo && !base.photos?.length) {
       base.photos = [base.photo]
+    }
+    // brands 배열 초기화
+    if (!base.brands) {
+      base.brands = []
     }
     return base
   })
@@ -488,6 +540,16 @@ function EditProfileModal({ profile, onClose, onSave }) {
       setEditedProfile({ ...editedProfile, times: times.filter(t => t !== time) })
     } else {
       setEditedProfile({ ...editedProfile, times: [...times, time] })
+    }
+  }
+  
+  // 브랜드 토글 (최대 5개)
+  const toggleBrand = (brandName) => {
+    const brands = editedProfile.brands || []
+    if (brands.includes(brandName)) {
+      setEditedProfile({ ...editedProfile, brands: brands.filter(b => b !== brandName) })
+    } else if (brands.length < 5) {
+      setEditedProfile({ ...editedProfile, brands: [...brands, brandName] })
     }
   }
   
@@ -738,8 +800,72 @@ function EditProfileModal({ profile, onClose, onSave }) {
           </div>
         </div>
         
+        {/* 좋아하는 골프복 브랜드 */}
+        <div className="mb-6">
+          <label className="block text-sm text-gp-text-secondary mb-3">
+            👕 좋아하는 브랜드 (최대 5개)
+            {editedProfile.brands?.length > 0 && (
+              <span className="ml-2 text-gp-gold">
+                {editedProfile.brands.length}/5
+              </span>
+            )}
+          </label>
+          
+          {/* 프리미엄 브랜드 */}
+          <div className="bg-gradient-to-r from-gp-gold/10 to-yellow-600/5 rounded-xl p-4 mb-3 border border-gp-gold/20">
+            <div className="text-xs font-medium text-gp-gold mb-3 flex items-center gap-1">
+              ✨ 프리미엄 브랜드
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {GOLF_BRANDS.filter(b => b.premium).map((brand) => (
+                <button
+                  key={brand.name}
+                  onClick={() => toggleBrand(brand.name)}
+                  disabled={!editedProfile.brands?.includes(brand.name) && editedProfile.brands?.length >= 5}
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    editedProfile.brands?.includes(brand.name)
+                      ? 'bg-gp-gold text-gp-black'
+                      : editedProfile.brands?.length >= 5
+                        ? 'bg-gp-border/50 text-gp-text-secondary/50 cursor-not-allowed'
+                        : 'bg-gp-card text-gp-text-secondary hover:bg-gp-gold/20 border border-gp-border'
+                  }`}
+                >
+                  <span>{brand.emoji}</span>
+                  <span>{brand.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 일반 브랜드 */}
+          <div className="bg-gp-card rounded-xl p-4">
+            <div className="text-xs font-medium text-gp-text-secondary mb-3">
+              일반 브랜드
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {GOLF_BRANDS.filter(b => !b.premium).map((brand) => (
+                <button
+                  key={brand.name}
+                  onClick={() => toggleBrand(brand.name)}
+                  disabled={!editedProfile.brands?.includes(brand.name) && editedProfile.brands?.length >= 5}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                    editedProfile.brands?.includes(brand.name)
+                      ? 'bg-gp-gold text-gp-black'
+                      : editedProfile.brands?.length >= 5
+                        ? 'bg-gp-border/50 text-gp-text-secondary/50 cursor-not-allowed'
+                        : 'bg-gp-border text-gp-text-secondary hover:bg-gp-gold/20'
+                  }`}
+                >
+                  <span>{brand.emoji}</span>
+                  <span>{brand.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        
         {/* 선택한 항목 요약 */}
-        {(editedProfile.styles?.length > 0 || editedProfile.regions?.length > 0 || editedProfile.times?.length > 0) && (
+        {(editedProfile.styles?.length > 0 || editedProfile.regions?.length > 0 || editedProfile.times?.length > 0 || editedProfile.brands?.length > 0) && (
           <div className="bg-gp-card rounded-xl p-4 mb-6">
             <h4 className="text-sm font-semibold mb-3">✅ 선택한 항목</h4>
             
@@ -758,9 +884,16 @@ function EditProfileModal({ profile, onClose, onSave }) {
             )}
             
             {editedProfile.times?.length > 0 && (
-              <div>
+              <div className="mb-2">
                 <span className="text-xs text-gp-text-secondary">시간: </span>
                 <span className="text-xs text-gp-gold">{editedProfile.times.join(', ')}</span>
+              </div>
+            )}
+            
+            {editedProfile.brands?.length > 0 && (
+              <div>
+                <span className="text-xs text-gp-text-secondary">브랜드: </span>
+                <span className="text-xs text-gp-gold">{editedProfile.brands.join(', ')}</span>
               </div>
             )}
           </div>
