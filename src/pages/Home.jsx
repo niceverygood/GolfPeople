@@ -1,8 +1,23 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, Sparkles, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck } from 'lucide-react'
+import { MapPin, Sparkles, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useMarker } from '../context/MarkerContext'
+
+// 마커 아이콘
+const MarkerIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="url(#markerGradientHome)" />
+    <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D" />
+    <defs>
+      <linearGradient id="markerGradientHome" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#D4AF37" />
+        <stop offset="1" stopColor="#B8962E" />
+      </linearGradient>
+    </defs>
+  </svg>
+)
 
 // 추천 시간대
 const RECOMMENDATION_TIMES = [
@@ -23,6 +38,7 @@ const FILTER_OPTIONS = {
 export default function Home({ onPropose }) {
   const navigate = useNavigate()
   const { users, notifications, unreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } = useApp()
+  const { balance } = useMarker()
   const [recommendations, setRecommendations] = useState({})
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -165,6 +181,16 @@ export default function Home({ onPropose }) {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* 마커 잔액 버튼 */}
+            <button
+              onClick={() => navigate('/store')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gp-gold/10 border border-gp-gold/30 rounded-full hover:bg-gp-gold/20 transition-all"
+            >
+              <MarkerIcon className="w-4 h-4" />
+              <span className="text-sm font-semibold text-gp-gold">{balance}</span>
+              <Plus className="w-3 h-3 text-gp-gold" />
+            </button>
+            
             {/* 알림 버튼 */}
             <button
               onClick={() => setShowNotifications(true)}
