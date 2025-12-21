@@ -125,3 +125,11 @@ body {
   perspective: 1000px;
 }
 
+/* reCAPTCHA 배지 숨기기 */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+

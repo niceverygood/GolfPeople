@@ -93,16 +93,16 @@ function AppContent() {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
-  // 5. 전화번호 인증 - 현재 비활성화 (나중에 활성화 가능)
-  // if (!isPhoneVerified && location.pathname !== '/phone-verify') {
-  //   return (
-  //     <AnimatePresence mode="wait">
-  //       <Routes location={location} key={location.pathname}>
-  //         <Route path="*" element={<PhoneVerification />} />
-  //       </Routes>
-  //     </AnimatePresence>
-  //   )
-  // }
+  // 5. 온보딩 후 전화번호 인증 (인증 안 된 사용자만)
+  if (!isPhoneVerified && location.pathname !== '/phone-verify') {
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="*" element={<PhoneVerification />} />
+        </Routes>
+      </AnimatePresence>
+    )
+  }
 
   // 6. 메인 앱
   // 탭바 표시 여부
