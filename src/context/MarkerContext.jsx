@@ -220,6 +220,8 @@ export const MarkerProvider = ({ children }) => {
 
   // 마커 충전 (결제 후 호출)
   const addMarkers = async (amount, type = 'purchase', description = '마커 충전') => {
+    console.log('마커 충전 시작:', { amount, type, description })
+    
     // 로컬에서 처리
     const newBalance = balance + amount
     saveBalance(newBalance)
@@ -230,6 +232,8 @@ export const MarkerProvider = ({ children }) => {
       type: type,
       description: description
     })
+    
+    console.log('마커 충전 완료! 새 잔액:', newBalance)
 
     // Supabase 연결되어 있으면 서버에도 저장
     if (isConnected() && user) {
@@ -249,6 +253,8 @@ export const MarkerProvider = ({ children }) => {
         console.error('서버 동기화 오류:', err)
       }
     }
+    
+    return { success: true, newBalance }
     
     return { success: true }
   }
