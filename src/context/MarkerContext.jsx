@@ -262,14 +262,20 @@ export const MarkerProvider = ({ children }) => {
     return prices[actionType] || 0
   }
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 - 상품과 가격은 항상 로드
   useEffect(() => {
-    if (isAuthenticated) {
+    // 상품과 가격은 인증 여부와 관계없이 로드
+    fetchProducts()
+    fetchPrices()
+    setLoading(false)
+  }, [])
+  
+  // 지갑은 인증 후 로드
+  useEffect(() => {
+    if (isAuthenticated && user) {
       fetchWallet()
-      fetchProducts()
-      fetchPrices()
     }
-  }, [isAuthenticated, fetchWallet, fetchProducts, fetchPrices])
+  }, [isAuthenticated, user, fetchWallet])
 
   const value = {
     balance,
