@@ -30,26 +30,29 @@ export const AuthProvider = ({ children }) => {
 
     // Auth 상태 변경 리스너 (먼저 설정)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth event:', event, session?.user?.email)
         
         if (!mounted) return
         
         if (session?.user) {
           setUser(session.user)
-          // 프로필 로드 (실패해도 진행)
-          try {
-            const { data: profileData } = await db.profiles.get(session.user.id)
-            if (mounted) setProfile(profileData)
-          } catch (profileErr) {
-            console.log('Profile load failed:', profileErr)
-          }
+          // 로딩 먼저 해제
+          setLoading(false)
+          // 프로필은 백그라운드에서 로드
+          db.profiles.get(session.user.id)
+            .then(({ data }) => {
+              if (mounted && data) setProfile(data)
+            })
+            .catch(err => console.log('Profile load failed:', err))
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           setProfile(null)
+          setLoading(false)
+        } else {
+          // 다른 이벤트에서도 로딩 해제
+          setLoading(false)
         }
-        
-        if (mounted) setLoading(false)
       }
     )
 
@@ -63,21 +66,23 @@ export const AuthProvider = ({ children }) => {
         
         if (session?.user) {
           setUser(session.user)
-          try {
-            const { data: profileData } = await db.profiles.get(session.user.id)
-            if (mounted) setProfile(profileData)
-          } catch (profileErr) {
-            console.log('Profile load failed:', profileErr)
-          }
+          // 로딩 먼저 해제
+          setLoading(false)
+          // 프로필은 백그라운드에서 로드
+          db.profiles.get(session.user.id)
+            .then(({ data }) => {
+              if (mounted && data) setProfile(data)
+            })
+            .catch(err => console.log('Profile load failed:', err))
+        } else {
+          setLoading(false)
         }
       } catch (err) {
         console.error('Auth initialization error:', err)
-        if (mounted) setError(err.message)
-      } finally {
-        // 약간의 딜레이 후 로딩 해제 (OAuth hash 처리 대기)
-        setTimeout(() => {
-          if (mounted) setLoading(false)
-        }, 500)
+        if (mounted) {
+          setError(err.message)
+          setLoading(false)
+        }
       }
     }
 
