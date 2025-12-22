@@ -26,62 +26,65 @@ export const AuthProvider = ({ children }) => {
       return
     }
 
-    // 로딩 타임아웃 (5초 후 강제 진행)
-    const timeout = setTimeout(() => {
-      console.log('Auth loading timeout - forcing continue')
-      setLoading(false)
-    }, 5000)
+    let mounted = true
 
-    const initAuth = async () => {
-      try {
-        // 현재 세션 확인
-        const { session } = await auth.getSession()
+    // Auth 상태 변경 리스너 (먼저 설정)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event, session?.user?.email)
+        
+        if (!mounted) return
         
         if (session?.user) {
           setUser(session.user)
           // 프로필 로드 (실패해도 진행)
           try {
             const { data: profileData } = await db.profiles.get(session.user.id)
-            setProfile(profileData)
+            if (mounted) setProfile(profileData)
           } catch (profileErr) {
-            console.log('Profile load failed, continuing:', profileErr)
+            console.log('Profile load failed:', profileErr)
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setProfile(null)
+        }
+        
+        if (mounted) setLoading(false)
+      }
+    )
+
+    // 초기 세션 확인
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log('Initial session:', session?.user?.email)
+        
+        if (!mounted) return
+        
+        if (session?.user) {
+          setUser(session.user)
+          try {
+            const { data: profileData } = await db.profiles.get(session.user.id)
+            if (mounted) setProfile(profileData)
+          } catch (profileErr) {
+            console.log('Profile load failed:', profileErr)
           }
         }
       } catch (err) {
         console.error('Auth initialization error:', err)
-        setError(err.message)
+        if (mounted) setError(err.message)
       } finally {
-        clearTimeout(timeout)
-        setLoading(false)
+        // 약간의 딜레이 후 로딩 해제 (OAuth hash 처리 대기)
+        setTimeout(() => {
+          if (mounted) setLoading(false)
+        }, 500)
       }
     }
 
     initAuth()
 
-    // Auth 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event)
-        
-        if (session?.user) {
-          setUser(session.user)
-          // 프로필 로드 (실패해도 진행)
-          try {
-            const { data: profileData } = await db.profiles.get(session.user.id)
-            setProfile(profileData)
-          } catch (profileErr) {
-            console.log('Profile load failed:', profileErr)
-          }
-        } else {
-          setUser(null)
-          setProfile(null)
-        }
-        setLoading(false)
-      }
-    )
-
     return () => {
-      clearTimeout(timeout)
+      mounted = false
       subscription?.unsubscribe()
     }
   }, [])
