@@ -1,15 +1,20 @@
 /**
- * 포트원 결제 모듈
- * KG이니시스 연동
+ * 포트원 결제 모듈 (V1 - KG이니시스)
  */
 
-import * as PortOne from '@portone/browser-sdk/v2'
+// 가맹점 식별코드 (포트원 관리자에서 확인)
+const IMP_CODE = 'imp54abordk' // 포트원 가맹점 식별코드
 
-// 상점 설정 (KG이니시스)
-// MID: MOIplay998
-// signkey: TU5vYzk0L2Q2Z2ZaL28wN0JJczlVQT09
-const STORE_ID = 'store-2f6c0f4c-bdd5-4668-8945-99457b5ffbce'
-const CHANNEL_KEY = 'channel-key-696dc6ff-e438-4482-b6fb-d43f91db472e'
+/**
+ * 포트원 초기화
+ */
+const initIMP = () => {
+  if (typeof window.IMP !== 'undefined') {
+    window.IMP.init(IMP_CODE)
+    return true
+  }
+  return false
+}
 
 /**
  * 결제 요청
@@ -20,55 +25,49 @@ const CHANNEL_KEY = 'channel-key-696dc6ff-e438-4482-b6fb-d43f91db472e'
  * @param {Object} params.customer - 고객 정보
  * @returns {Promise<Object>} - 결제 결과
  */
-export const requestPayment = async ({
+export const requestPayment = ({
   orderName,
   totalAmount,
   paymentId,
   customer = {}
 }) => {
-  try {
-    // 고객 정보 구성 (빈 값 제외)
-    const customerInfo = {
-      fullName: customer.name || '골프피플 회원',
-    }
-    if (customer.phone) customerInfo.phoneNumber = customer.phone
-    if (customer.email) customerInfo.email = customer.email
-    
-    const response = await PortOne.requestPayment({
-      storeId: STORE_ID,
-      channelKey: CHANNEL_KEY,
-      paymentId: paymentId || `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      orderName,
-      totalAmount,
-      currency: 'KRW',
-      payMethod: 'CARD',
-      customer: customerInfo,
-      // 모바일 결제 후 리다이렉트 URL
-      redirectUrl: `${window.location.origin}/store?payment=complete`,
-    })
-
-    if (response.code) {
-      // 에러 발생
-      return {
+  return new Promise((resolve) => {
+    if (!initIMP()) {
+      resolve({
         success: false,
-        error: response.message || '결제 중 오류가 발생했습니다.',
-        code: response.code
-      }
+        error: '결제 모듈을 불러오는데 실패했습니다.'
+      })
+      return
     }
 
-    // 결제 성공
-    return {
-      success: true,
-      paymentId: response.paymentId,
-      transactionType: response.transactionType
-    }
-  } catch (error) {
-    console.error('결제 요청 오류:', error)
-    return {
-      success: false,
-      error: error.message || '결제 요청 중 오류가 발생했습니다.'
-    }
-  }
+    const merchantUid = paymentId || `GP_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+
+    window.IMP.request_pay({
+      pg: 'html5_inicis.MOIplay998', // KG이니시스 MID
+      pay_method: 'card',
+      merchant_uid: merchantUid,
+      name: orderName,
+      amount: totalAmount,
+      buyer_name: customer.name || '골프피플 회원',
+      buyer_email: customer.email || '',
+      buyer_tel: customer.phone || '',
+      m_redirect_url: `${window.location.origin}/store?payment=complete&merchant_uid=${merchantUid}`,
+    }, (response) => {
+      if (response.success) {
+        resolve({
+          success: true,
+          paymentId: response.merchant_uid,
+          impUid: response.imp_uid,
+          paidAmount: response.paid_amount
+        })
+      } else {
+        resolve({
+          success: false,
+          error: response.error_msg || '결제가 취소되었습니다.'
+        })
+      }
+    })
+  })
 }
 
 /**
@@ -97,4 +96,3 @@ export default {
   generatePaymentId,
   validateAmount
 }
-
