@@ -180,6 +180,10 @@ export default function Store() {
         }
       })
       
+      console.log('결제 결과:', paymentResult)
+      
+      setPurchasing(false) // 결제창 닫히면 바로 로딩 해제
+      
       if (paymentResult.success) {
         // 결제 성공 - 마커 충전
         const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
@@ -202,19 +206,24 @@ export default function Store() {
         }
       } else {
         // 결제 실패 또는 취소
-        if (paymentResult.code === 'FAILURE_TYPE_PG') {
+        if (paymentResult.error) {
           setPurchaseResult({ success: false, error: paymentResult.error })
+          setTimeout(() => {
+            setPurchaseResult(null)
+          }, 3000)
         } else {
           // 사용자가 결제창을 닫은 경우
-          setPurchaseResult(null)
           setShowPayment(false)
+          setSelectedProduct(null)
         }
       }
     } catch (error) {
       console.error('결제 오류:', error)
-      setPurchaseResult({ success: false, error: error.message || '결제 중 오류가 발생했습니다.' })
-    } finally {
       setPurchasing(false)
+      setPurchaseResult({ success: false, error: error.message || '결제 중 오류가 발생했습니다.' })
+      setTimeout(() => {
+        setPurchaseResult(null)
+      }, 3000)
     }
   }
 

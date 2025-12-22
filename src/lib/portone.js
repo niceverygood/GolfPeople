@@ -42,6 +42,8 @@ export const requestPayment = ({
 
     const merchantUid = paymentId || `GP_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
 
+    console.log('결제 요청 시작:', { orderName, totalAmount, merchantUid })
+    
     window.IMP.request_pay({
       pg: 'html5_inicis.MOIplay998', // KG이니시스 MID
       pay_method: 'card',
@@ -53,7 +55,10 @@ export const requestPayment = ({
       buyer_tel: customer.phone || '',
       m_redirect_url: `${window.location.origin}/store?payment=complete&merchant_uid=${merchantUid}`,
     }, (response) => {
+      console.log('결제 응답:', response)
+      
       if (response.success) {
+        console.log('결제 성공!')
         resolve({
           success: true,
           paymentId: response.merchant_uid,
@@ -61,6 +66,7 @@ export const requestPayment = ({
           paidAmount: response.paid_amount
         })
       } else {
+        console.log('결제 실패/취소:', response.error_msg)
         resolve({
           success: false,
           error: response.error_msg || '결제가 취소되었습니다.'
