@@ -8,7 +8,7 @@ import * as PortOne from '@portone/browser-sdk/v2'
 // 상점 설정 (KG이니시스)
 // MID: MOIplay998
 // signkey: TU5vYzk0L2Q2Z2ZaL28wN0JJczlVQT09
-const STORE_ID = import.meta.env.VITE_PORTONE_STORE_ID || '' // 포트원 관리자 > 상점 설정에서 확인
+const STORE_ID = 'store-2f6c0f4c-bdd5-4668-8945-99457b5ffbce'
 const CHANNEL_KEY = 'channel-key-696dc6ff-e438-4482-b6fb-d43f91db472e'
 
 /**
