@@ -10,27 +10,24 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('로그인 중...')
 
   useEffect(() => {
-    const handleCallback = async () => {
-      if (!isConnected()) {
-        setStatus('error')
-        setMessage('Supabase 연결이 필요합니다')
-        return
-      }
+    if (!isConnected()) {
+      setStatus('error')
+      setMessage('Supabase 연결이 필요합니다')
+      setTimeout(() => navigate('/login', { replace: true }), 3000)
+      return
+    }
 
-      try {
-        // URL에서 auth code 처리
-        const { data, error } = await supabase.auth.getSession()
+    // Supabase 인증 상태 변경 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, session)
+      
+      if (event === 'SIGNED_IN' && session) {
+        setStatus('success')
+        setMessage('로그인 성공!')
         
-        if (error) {
-          throw error
-        }
-
-        if (data.session) {
-          setStatus('success')
-          setMessage('로그인 성공!')
-          
+        try {
           // 프로필 확인 및 생성
-          const userId = data.session.user.id
+          const userId = session.user.id
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -39,35 +36,35 @@ export default function AuthCallback() {
 
           if (profileError && profileError.code === 'PGRST116') {
             // 프로필이 없으면 생성
-            const userMeta = data.session.user.user_metadata
+            const userMeta = session.user.user_metadata
             await supabase.from('profiles').insert({
               id: userId,
               name: userMeta.name || userMeta.full_name || '골퍼',
-              email: data.session.user.email,
+              email: session.user.email,
               avatar_url: userMeta.avatar_url || userMeta.picture,
             })
           }
-
-          // 잠시 후 프로필 페이지로 이동
-          setTimeout(() => {
-            navigate('/profile', { replace: true })
-          }, 1500)
-        } else {
-          throw new Error('세션을 찾을 수 없습니다')
+        } catch (err) {
+          console.error('Profile error:', err)
         }
-      } catch (err) {
-        console.error('Auth callback error:', err)
-        setStatus('error')
-        setMessage(err.message || '로그인 중 오류가 발생했습니다')
-        
-        // 에러 시 3초 후 로그인 페이지로
-        setTimeout(() => {
-          navigate('/login', { replace: true })
-        }, 3000)
-      }
-    }
 
-    handleCallback()
+        // 홈으로 이동
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 1500)
+      }
+    })
+
+    // 5초 후에도 로그인 안되면 홈으로 강제 이동
+    const timeout = setTimeout(() => {
+      console.log('Auth timeout - redirecting to home')
+      window.location.href = '/'
+    }, 5000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [navigate])
 
   return (
