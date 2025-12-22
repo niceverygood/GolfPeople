@@ -13,8 +13,10 @@ import {
   History,
   X
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarker } from '../context/MarkerContext'
+import { useAuth } from '../context/AuthContext'
+import { requestPayment, generatePaymentId } from '../lib/portone'
 
 // 마커 아이콘 컴포넌트
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
@@ -133,6 +135,8 @@ const TransactionItem = ({ transaction }) => {
 
 export default function Store() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { user } = useAuth()
   const { balance, products, prices, transactions, refreshTransactions, addMarkers } = useMarker()
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showPayment, setShowPayment] = useState(false)
@@ -142,36 +146,75 @@ export default function Store() {
 
   useEffect(() => {
     refreshTransactions()
+    
+    // 모바일 결제 후 리다이렉트 처리
+    const paymentComplete = searchParams.get('payment')
+    if (paymentComplete === 'complete') {
+      // URL에서 결제 완료 파라미터 제거
+      navigate('/store', { replace: true })
+    }
   }, [])
 
-  // 결제 처리 (데모용 - 실제로는 PG 연동 필요)
+  // 실제 결제 처리 (포트원 + KG이니시스)
   const handlePurchase = async () => {
     if (!selectedProduct) return
     
     setPurchasing(true)
     
-    // 데모: 2초 후 결제 완료 처리
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
-    const result = await addMarkers(
-      totalMarkers, 
-      'purchase', 
-      `${selectedProduct.name} 구매`
-    )
-    
-    setPurchasing(false)
-    
-    if (result.success) {
-      setPurchaseResult({ success: true, amount: totalMarkers })
-      setTimeout(() => {
-        setShowPayment(false)
-        setPurchaseResult(null)
-        setSelectedProduct(null)
-        refreshTransactions()
-      }, 2000)
-    } else {
-      setPurchaseResult({ success: false, error: result.error })
+    try {
+      // 고유 결제 ID 생성
+      const paymentId = generatePaymentId(
+        user?.id || 'guest',
+        selectedProduct.id
+      )
+      
+      // 포트원 결제 요청
+      const paymentResult = await requestPayment({
+        orderName: selectedProduct.name,
+        totalAmount: selectedProduct.price,
+        paymentId,
+        customer: {
+          name: user?.profile?.name || '골프피플 회원',
+          email: user?.email || '',
+          phone: user?.profile?.phone || ''
+        }
+      })
+      
+      if (paymentResult.success) {
+        // 결제 성공 - 마커 충전
+        const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
+        const result = await addMarkers(
+          totalMarkers, 
+          'purchase', 
+          `${selectedProduct.name} 구매 (${paymentId})`
+        )
+        
+        if (result.success) {
+          setPurchaseResult({ success: true, amount: totalMarkers })
+          setTimeout(() => {
+            setShowPayment(false)
+            setPurchaseResult(null)
+            setSelectedProduct(null)
+            refreshTransactions()
+          }, 2000)
+        } else {
+          setPurchaseResult({ success: false, error: '마커 충전 중 오류가 발생했습니다.' })
+        }
+      } else {
+        // 결제 실패 또는 취소
+        if (paymentResult.code === 'FAILURE_TYPE_PG') {
+          setPurchaseResult({ success: false, error: paymentResult.error })
+        } else {
+          // 사용자가 결제창을 닫은 경우
+          setPurchaseResult(null)
+          setShowPayment(false)
+        }
+      }
+    } catch (error) {
+      console.error('결제 오류:', error)
+      setPurchaseResult({ success: false, error: error.message || '결제 중 오류가 발생했습니다.' })
+    } finally {
+      setPurchasing(false)
     }
   }
 
