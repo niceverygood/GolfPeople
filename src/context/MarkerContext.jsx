@@ -13,10 +13,12 @@ const DEFAULT_PRODUCTS = [
   { id: 5, name: '마커 100개', marker_amount: 100, bonus_amount: 25, price: 14900, discount_percent: 20, is_popular: false, description: '최고의 가성비 💎' },
 ]
 
-// 기본 가격 설정
+// 기본 가격 설정 (마커 개수)
+// 친구 요청: 3마커 (약 450~600원)
+// 조인 신청: 5마커 (약 750~1,000원)
 const DEFAULT_PRICES = {
-  friend_request: 1,
-  join_application: 2,
+  friend_request: 3,
+  join_application: 5,
 }
 
 export const useMarker = () => {

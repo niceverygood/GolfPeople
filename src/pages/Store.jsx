@@ -225,7 +225,7 @@ export default function Store() {
                 <MarkerIcon className="w-4 h-4" />
               </div>
               <span className="text-gp-text-secondary">
-                친구 요청 <span className="text-gp-gold font-medium">{prices.friend_request || 1}개</span>
+                친구 요청 <span className="text-gp-gold font-medium">{prices.friend_request || 3}개</span>
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -233,7 +233,7 @@ export default function Store() {
                 <MarkerIcon className="w-4 h-4" />
               </div>
               <span className="text-gp-text-secondary">
-                조인 신청 <span className="text-gp-gold font-medium">{prices.join_application || 2}개</span>
+                조인 신청 <span className="text-gp-gold font-medium">{prices.join_application || 5}개</span>
               </span>
             </div>
           </div>
@@ -270,8 +270,8 @@ export default function Store() {
             <div className="text-sm text-gp-text-secondary">
               <p className="font-medium text-white mb-1">마커 사용 안내</p>
               <ul className="space-y-1">
-                <li>• 친구 요청 시 마커 {prices.friend_request || 1}개가 사용됩니다</li>
-                <li>• 조인 신청 시 마커 {prices.join_application || 2}개가 사용됩니다</li>
+                <li>• 친구 요청 시 마커 {prices.friend_request || 3}개가 사용됩니다 (약 500원)</li>
+                <li>• 조인 신청 시 마커 {prices.join_application || 5}개가 사용됩니다 (약 800원)</li>
                 <li>• 상대방이 거절해도 마커는 환불되지 않습니다</li>
                 <li>• 구매한 마커는 환불이 불가능합니다</li>
               </ul>
@@ -430,4 +430,5 @@ export default function Store() {
     </motion.div>
   )
 }
+
 
