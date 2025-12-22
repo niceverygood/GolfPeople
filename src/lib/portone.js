@@ -27,6 +27,13 @@ export const requestPayment = async ({
   customer = {}
 }) => {
   try {
+    // 고객 정보 구성 (빈 값 제외)
+    const customerInfo = {
+      fullName: customer.name || '골프피플 회원',
+    }
+    if (customer.phone) customerInfo.phoneNumber = customer.phone
+    if (customer.email) customerInfo.email = customer.email
+    
     const response = await PortOne.requestPayment({
       storeId: STORE_ID,
       channelKey: CHANNEL_KEY,
@@ -35,11 +42,7 @@ export const requestPayment = async ({
       totalAmount,
       currency: 'CURRENCY_KRW',
       payMethod: 'CARD',
-      customer: {
-        fullName: customer.name || '골프피플 회원',
-        phoneNumber: customer.phone || '',
-        email: customer.email || '',
-      },
+      customer: customerInfo,
       // 모바일 결제 후 리다이렉트 URL
       redirectUrl: `${window.location.origin}/store?payment=complete`,
       // 결제창 UI 설정
