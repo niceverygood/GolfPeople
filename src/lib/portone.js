@@ -40,18 +40,11 @@ export const requestPayment = async ({
       paymentId: paymentId || `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       orderName,
       totalAmount,
-      currency: 'CURRENCY_KRW',
+      currency: 'KRW',
       payMethod: 'CARD',
       customer: customerInfo,
       // 모바일 결제 후 리다이렉트 URL
       redirectUrl: `${window.location.origin}/store?payment=complete`,
-      // 결제창 UI 설정
-      windowType: {
-        pc: 'IFRAME',
-        mobile: 'REDIRECTION'
-      },
-      // 앱 스킴 (앱에서 결제 후 복귀용)
-      appScheme: 'golfpeople',
     })
 
     if (response.code) {
