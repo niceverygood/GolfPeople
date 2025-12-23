@@ -568,4 +568,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- =============================================
+-- 19. 푸시 토큰 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS push_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  platform VARCHAR(20) NOT NULL, -- 'ios', 'android', 'web'
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_tokens_user ON push_tokens(user_id);
+
+-- 푸시 토큰 RLS
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "본인 토큰만 조회" ON push_tokens
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 토큰 생성/업데이트" ON push_tokens
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "본인 토큰만 수정" ON push_tokens
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 토큰만 삭제" ON push_tokens
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- 푸시 토큰 updated_at 트리거
+CREATE TRIGGER push_tokens_updated_at
+  BEFORE UPDATE ON push_tokens
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 

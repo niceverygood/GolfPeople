@@ -26,6 +26,10 @@ import { AppProvider } from './context/AppContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { MarkerProvider } from './context/MarkerContext'
 
+// Native
+import { initializeNative, isNative, app, haptic } from './lib/native'
+import { initializePush } from './lib/pushService'
+
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
   const location = useLocation()
@@ -37,6 +41,9 @@ function AppContent() {
   const [proposalModal, setProposalModal] = useState({ open: false, user: null })
 
   useEffect(() => {
+    // 네이티브 기능 초기화
+    initializeNative()
+    
     // 스플래시 화면 2초 후 종료
     const timer = setTimeout(() => setShowSplash(false), 2000)
     
@@ -50,8 +57,27 @@ function AppContent() {
       setIsPhoneVerified(true)
     }
     
-    return () => clearTimeout(timer)
+    // Android 뒤로가기 버튼 처리
+    const unsubscribeBackButton = app.onBackButton(({ canGoBack }) => {
+      if (canGoBack) {
+        window.history.back()
+      }
+    })
+    
+    return () => {
+      clearTimeout(timer)
+      if (typeof unsubscribeBackButton === 'function') {
+        unsubscribeBackButton()
+      }
+    }
   }, [profile])
+  
+  // 로그인 후 푸시 알림 초기화
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      initializePush(user.id)
+    }
+  }, [isAuthenticated, user?.id])
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('gp_onboarded', 'true')

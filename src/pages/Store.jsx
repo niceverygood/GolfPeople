@@ -11,12 +11,16 @@ import {
   Gift,
   CreditCard,
   History,
-  X
+  X,
+  Smartphone
 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { requestPayment, generatePaymentId } from '../lib/portone'
+import { isNative } from '../lib/native'
+import { shouldUseNativeIAP, purchaseProduct as nativePurchase, PRODUCT_INFO, PRODUCTS } from '../lib/iap'
+import { haptic } from '../lib/native'
 
 // 마커 아이콘 컴포넌트
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
@@ -155,14 +159,58 @@ export default function Store() {
     }
   }, [])
 
-  // 실제 결제 처리 (포트원 + KG이니시스)
+  // 네이티브 IAP 사용 여부 확인
+  const useNativeIAP = shouldUseNativeIAP()
+  
+  // 네이티브 상품 ID 매핑
+  const getNativeProductId = (product) => {
+    const markerCount = product.marker_amount
+    if (markerCount === 5) return PRODUCTS.MARKER_5
+    if (markerCount === 10) return PRODUCTS.MARKER_10
+    if (markerCount === 30) return PRODUCTS.MARKER_30
+    if (markerCount === 50) return PRODUCTS.MARKER_50
+    if (markerCount === 100) return PRODUCTS.MARKER_100
+    return null
+  }
+
+  // 결제 처리 (네이티브 IAP 또는 포트원)
   const handlePurchase = async () => {
     if (!selectedProduct) return
+    
+    // 햅틱 피드백
+    await haptic.medium()
     
     setPurchasing(true)
     
     try {
-      // 고유 결제 ID 생성
+      // 네이티브 앱에서는 Apple/Google IAP 사용
+      if (useNativeIAP) {
+        const nativeProductId = getNativeProductId(selectedProduct)
+        if (!nativeProductId) {
+          throw new Error('상품을 찾을 수 없습니다')
+        }
+        
+        const result = await nativePurchase(nativeProductId)
+        setPurchasing(false)
+        
+        if (result.success) {
+          await haptic.success()
+          const totalMarkers = result.markers || (selectedProduct.marker_amount + selectedProduct.bonus_amount)
+          addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매`)
+          setPurchaseResult({ success: true, amount: totalMarkers })
+        } else if (result.cancelled) {
+          // 사용자가 취소
+          setShowPayment(false)
+          setSelectedProduct(null)
+        } else {
+          await haptic.error()
+          setPurchaseResult({ success: false, error: result.error || '결제에 실패했습니다' })
+          setTimeout(() => setPurchaseResult(null), 3000)
+        }
+        return
+      }
+      
+      // 웹에서는 포트원 사용
       const paymentId = generatePaymentId(
         user?.id || 'guest',
         selectedProduct.id
@@ -471,7 +519,14 @@ export default function Store() {
                   </button>
 
                   <p className="text-xs text-center text-gp-text-secondary mt-3">
-                    테스트 모드: 실제 결제가 진행되지 않습니다
+                    {useNativeIAP ? (
+                      <span className="flex items-center justify-center gap-1">
+                        <Smartphone className="w-3 h-3" />
+                        {isNative() && window.Capacitor?.getPlatform() === 'ios' ? 'Apple Pay' : 'Google Pay'}로 결제됩니다
+                      </span>
+                    ) : (
+                      '신용카드/간편결제로 결제됩니다'
+                    )}
                   </p>
                 </>
               )}
