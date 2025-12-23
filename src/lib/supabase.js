@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
+import { Browser } from '@capacitor/browser'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -14,6 +15,15 @@ const getRedirectUrl = (path = '/auth/callback') => {
   }
   // 웹에서는 현재 origin 사용
   return `${window.location.origin}${path}`
+}
+
+// 네이티브 앱에서 OAuth URL을 브라우저로 열기
+const openOAuthInBrowser = async (url) => {
+  if (Capacitor.isNativePlatform()) {
+    await Browser.open({ url, windowName: '_self' })
+    return true
+  }
+  return false
 }
 
 if (isMissingEnv) {
@@ -55,18 +65,46 @@ export const auth = {
 
   signInWithKakao: async () => {
     if (!supabase) return notConnected()
+    
+    // 네이티브 앱에서는 Vercel 콜백 사용 후 딥링크로 앱에 토큰 전달
+    const redirectUrl = Capacitor.isNativePlatform()
+      ? 'https://golf-people.vercel.app/auth/callback/native'
+      : `${window.location.origin}/auth/callback`
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: getRedirectUrl('/auth/callback') },
+      options: { redirectTo: redirectUrl },
     })
     return { data, error }
   },
 
   signInWithGoogle: async () => {
     if (!supabase) return notConnected()
+    
+    // 네이티브 앱에서는 외부 브라우저로 OAuth 열기 (Google은 WebView 차단)
+    if (Capacitor.isNativePlatform()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { 
+          redirectTo: 'https://golf-people.vercel.app/auth/callback/native',
+          skipBrowserRedirect: true
+        },
+      })
+      if (data?.url) {
+        // Chrome Custom Tab으로 열기
+        await Browser.open({ 
+          url: data.url,
+          toolbarColor: '#0D0D0D',
+          presentationStyle: 'popover'
+        })
+      }
+      return { data, error }
+    }
+    
+    // 웹에서는 기본 동작
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: getRedirectUrl('/auth/callback') },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     return { data, error }
   },

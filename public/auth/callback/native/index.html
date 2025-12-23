@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 중...</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0D0D0D;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #333;
+      border-top-color: #D4AF37;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #999;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      background: #D4AF37;
+      color: #0D0D0D;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>로그인 완료!</h1>
+    <p>앱으로 돌아가는 중...</p>
+    <a id="openApp" class="btn" style="display:none;">앱 열기</a>
+  </div>
+
+  <script>
+    // URL에서 토큰 정보 추출
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    
+    // 앱 딥링크로 리다이렉트
+    const appUrl = 'kr.golfpeople.app://auth/callback#' + hash;
+    
+    // 자동으로 앱 열기 시도
+    setTimeout(() => {
+      window.location.href = appUrl;
+    }, 1000);
+    
+    // 3초 후에도 앱이 안 열리면 버튼 표시
+    setTimeout(() => {
+      document.getElementById('openApp').style.display = 'inline-block';
+      document.getElementById('openApp').href = appUrl;
+    }, 3000);
+  </script>
+</body>
+</html>
+
