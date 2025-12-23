@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1290, height=2796">
+  <title>Screenshot 1 - Home</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 1290px;
+      height: 2796px;
+      background: linear-gradient(180deg, #0D0D0D 0%, #1a1a1a 100%);
+      font-family: 'Pretendard Variable', -apple-system, sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+    
+    .status-bar {
+      height: 94px;
+      padding: 0 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 34px;
+      font-weight: 600;
+    }
+    
+    .notch {
+      width: 250px;
+      height: 70px;
+      background: #000;
+      border-radius: 0 0 40px 40px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .header {
+      padding: 30px 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 50%, #D4AF37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .marker-badge {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+      color: #0D0D0D;
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-size: 32px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .marker-icon {
+      width: 40px;
+      height: 40px;
+    }
+    
+    .section-title {
+      padding: 40px 50px 30px;
+      font-size: 44px;
+      font-weight: 700;
+    }
+    
+    .cards-container {
+      padding: 0 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .user-card {
+      background: linear-gradient(145deg, #1f1f1f 0%, #171717 100%);
+      border-radius: 40px;
+      padding: 40px;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      gap: 40px;
+    }
+    
+    .user-photo {
+      width: 200px;
+      height: 200px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #3D7A4A 0%, #2D5A3D 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      flex-shrink: 0;
+    }
+    
+    .user-info {
+      flex: 1;
+    }
+    
+    .user-name {
+      font-size: 44px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .verified-badge {
+      background: #D4AF37;
+      color: #0D0D0D;
+      font-size: 24px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .user-meta {
+      font-size: 32px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    
+    .user-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .tag {
+      background: rgba(212, 175, 55, 0.15);
+      color: #D4AF37;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    
+    .tag.green {
+      background: rgba(61, 122, 74, 0.2);
+      color: #5CAB6F;
+    }
+    
+    .match-percent {
+      position: absolute;
+      right: 50px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #0D0D0D;
+    }
+    
+    .match-number {
+      font-size: 48px;
+      font-weight: 800;
+    }
+    
+    .match-label {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 180px;
+      background: linear-gradient(180deg, rgba(13, 13, 13, 0) 0%, #0D0D0D 30%);
+      padding: 0 60px;
+      padding-bottom: 60px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+    }
+    
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #666;
+    }
+    
+    .tab-item.active {
+      color: #D4AF37;
+    }
+    
+    .tab-icon {
+      font-size: 52px;
+    }
+    
+    .tab-label {
+      font-size: 26px;
+      font-weight: 500;
+    }
+    
+    .promo-banner {
+      margin: 30px 50px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(61, 122, 74, 0.2) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 30px;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    
+    .promo-icon {
+      font-size: 64px;
+    }
+    
+    .promo-text {
+      font-size: 34px;
+      font-weight: 600;
+    }
+    
+    .promo-sub {
+      font-size: 28px;
+      color: #888;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="notch"></div>
+  
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>📶 📶 🔋</span>
+  </div>
+  
+  <div class="header">
+    <div class="logo">⛳ 골프피플</div>
+    <div class="marker-badge">
+      <svg class="marker-icon" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#0D0D0D"/>
+        <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#D4AF37"/>
+      </svg>
+      47
+    </div>
+  </div>
+  
+  <div class="promo-banner">
+    <div class="promo-icon">🏌️</div>
+    <div>
+      <div class="promo-text">오늘의 추천 파트너를 만나보세요</div>
+      <div class="promo-sub">취향이 맞는 골퍼들이 기다리고 있어요</div>
+    </div>
+  </div>
+  
+  <div class="section-title">추천 파트너</div>
+  
+  <div class="cards-container">
+    <div class="user-card" style="position: relative;">
+      <div class="user-photo">👨</div>
+      <div class="user-info">
+        <div class="user-name">
+          김민준
+          <span class="verified-badge">✓ 인증</span>
+        </div>
+        <div class="user-meta">32세 · 서울 강남 · 90대 초반</div>
+        <div class="user-tags">
+          <span class="tag">편하게</span>
+          <span class="tag">내기 좋아요</span>
+          <span class="tag green">주말 오전</span>
+        </div>
+      </div>
+      <div class="match-percent">
+        <div class="match-number">92%</div>
+        <div class="match-label">매칭</div>
+      </div>
+    </div>
+    
+    <div class="user-card" style="position: relative;">
+      <div class="user-photo" style="background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);">👩</div>
+      <div class="user-info">
+        <div class="user-name">
+          이서연
+          <span class="verified-badge">✓ 인증</span>
+        </div>
+        <div class="user-meta">28세 · 서울 송파 · 100대</div>
+        <div class="user-tags">
+          <span class="tag">즐겁게</span>
+          <span class="tag">사진 찍기</span>
+          <span class="tag green">평일 오후</span>
+        </div>
+      </div>
+      <div class="match-percent">
+        <div class="match-number">88%</div>
+        <div class="match-label">매칭</div>
+      </div>
+    </div>
+    
+    <div class="user-card" style="position: relative;">
+      <div class="user-photo" style="background: linear-gradient(135deg, #4A7A3D 0%, #3D5A2D 100%);">👨</div>
+      <div class="user-info">
+        <div class="user-name">
+          박준혁
+        </div>
+        <div class="user-meta">35세 · 경기 분당 · 80대 후반</div>
+        <div class="user-tags">
+          <span class="tag">진지하게</span>
+          <span class="tag">스코어 중시</span>
+          <span class="tag green">주말</span>
+        </div>
+      </div>
+      <div class="match-percent">
+        <div class="match-number">85%</div>
+        <div class="match-label">매칭</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="tab-bar">
+    <div class="tab-item active">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">홈</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">⛳</div>
+      <div class="tab-label">조인</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">❤️</div>
+      <div class="tab-label">저장</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">👤</div>
+      <div class="tab-label">프로필</div>
+    </div>
+  </div>
+</body>
+</html>
+

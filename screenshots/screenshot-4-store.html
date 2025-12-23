@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1290, height=2796">
+  <title>Screenshot 4 - Marker Store</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 1290px;
+      height: 2796px;
+      background: linear-gradient(180deg, #0D0D0D 0%, #1a1a1a 100%);
+      font-family: 'Pretendard Variable', -apple-system, sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+    
+    .status-bar {
+      height: 94px;
+      padding: 0 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 34px;
+      font-weight: 600;
+    }
+    
+    .notch {
+      width: 250px;
+      height: 70px;
+      background: #000;
+      border-radius: 0 0 40px 40px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .header {
+      padding: 30px 50px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid #222;
+    }
+    
+    .back-btn {
+      font-size: 48px;
+      color: #888;
+    }
+    
+    .header-title {
+      font-size: 48px;
+      font-weight: 700;
+    }
+    
+    .balance-card {
+      margin: 40px 50px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(170, 140, 44, 0.15) 100%);
+      border: 2px solid rgba(212, 175, 55, 0.4);
+      border-radius: 40px;
+      padding: 50px;
+    }
+    
+    .balance-label {
+      font-size: 32px;
+      color: #888;
+      margin-bottom: 15px;
+    }
+    
+    .balance-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .balance-value {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .marker-icon {
+      width: 80px;
+      height: 80px;
+    }
+    
+    .balance-number {
+      font-size: 72px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 50%, #D4AF37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .sparkle {
+      font-size: 64px;
+    }
+    
+    .usage-info {
+      display: flex;
+      gap: 40px;
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    
+    .usage-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 28px;
+      color: #888;
+    }
+    
+    .usage-cost {
+      color: #D4AF37;
+      font-weight: 700;
+    }
+    
+    .section-title {
+      padding: 30px 50px 25px;
+      font-size: 40px;
+      font-weight: 700;
+    }
+    
+    .products-container {
+      padding: 0 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    
+    .product-card {
+      background: linear-gradient(145deg, #1f1f1f 0%, #171717 100%);
+      border-radius: 30px;
+      padding: 35px 40px;
+      border: 2px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    
+    .product-card.popular {
+      border-color: #D4AF37;
+      background: linear-gradient(145deg, #252015 0%, #1a1710 100%);
+    }
+    
+    .popular-badge {
+      position: absolute;
+      top: -16px;
+      right: 30px;
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF4444 100%);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .discount-badge {
+      position: absolute;
+      top: -16px;
+      left: 30px;
+      background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+      color: #0D0D0D;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .product-left {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    
+    .product-icon {
+      width: 90px;
+      height: 90px;
+      border-radius: 25px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(170, 140, 44, 0.1) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .product-icon svg {
+      width: 55px;
+      height: 55px;
+    }
+    
+    .product-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .product-amount {
+      font-size: 38px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .bonus {
+      color: #D4AF37;
+      font-size: 30px;
+    }
+    
+    .product-desc {
+      font-size: 28px;
+      color: #888;
+    }
+    
+    .product-right {
+      text-align: right;
+    }
+    
+    .original-price {
+      font-size: 26px;
+      color: #666;
+      text-decoration: line-through;
+    }
+    
+    .sale-price {
+      font-size: 42px;
+      font-weight: 800;
+      color: #D4AF37;
+    }
+    
+    .info-box {
+      margin: 40px 50px;
+      background: #1a1a1a;
+      border-radius: 25px;
+      padding: 35px;
+      border: 1px solid #2a2a2a;
+    }
+    
+    .info-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #D4AF37;
+    }
+    
+    .info-list {
+      font-size: 28px;
+      color: #888;
+      line-height: 1.8;
+    }
+    
+    .info-list li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="notch"></div>
+  
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>📶 📶 🔋</span>
+  </div>
+  
+  <div class="header">
+    <span class="back-btn">‹</span>
+    <div class="header-title">마커 스토어</div>
+  </div>
+  
+  <div class="balance-card">
+    <div class="balance-label">내 마커</div>
+    <div class="balance-row">
+      <div class="balance-value">
+        <svg class="marker-icon" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="url(#markerGrad)"/>
+          <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          <defs>
+            <linearGradient id="markerGrad" x1="2" y1="2" x2="22" y2="22">
+              <stop stop-color="#D4AF37"/>
+              <stop offset="1" stop-color="#AA8C2C"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="balance-number">47</span>
+      </div>
+      <span class="sparkle">✨</span>
+    </div>
+    <div class="usage-info">
+      <div class="usage-item">
+        <span>👋</span>
+        친구 요청 <span class="usage-cost">3개</span>
+      </div>
+      <div class="usage-item">
+        <span>⛳</span>
+        조인 신청 <span class="usage-cost">5개</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section-title">마커 충전</div>
+  
+  <div class="products-container">
+    <div class="product-card">
+      <div class="product-left">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+            <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="product-amount">5개</div>
+          <div class="product-desc">가볍게 시작하기</div>
+        </div>
+      </div>
+      <div class="product-right">
+        <div class="sale-price">₩1,000</div>
+      </div>
+    </div>
+    
+    <div class="product-card">
+      <div class="discount-badge">5% OFF</div>
+      <div class="product-left">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+            <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="product-amount">10개 <span class="bonus">+1 보너스</span></div>
+          <div class="product-desc">조금 더 필요할 때</div>
+        </div>
+      </div>
+      <div class="product-right">
+        <div class="original-price">₩2,000</div>
+        <div class="sale-price">₩1,900</div>
+      </div>
+    </div>
+    
+    <div class="product-card popular">
+      <div class="popular-badge">🔥 인기</div>
+      <div class="discount-badge">10% OFF</div>
+      <div class="product-left">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+            <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="product-amount">30개 <span class="bonus">+5 보너스</span></div>
+          <div class="product-desc">가장 인기 있는 패키지</div>
+        </div>
+      </div>
+      <div class="product-right">
+        <div class="original-price">₩5,500</div>
+        <div class="sale-price">₩4,900</div>
+      </div>
+    </div>
+    
+    <div class="product-card">
+      <div class="discount-badge">15% OFF</div>
+      <div class="product-left">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+            <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="product-amount">50개 <span class="bonus">+10 보너스</span></div>
+          <div class="product-desc">헤비 유저를 위한 선택</div>
+        </div>
+      </div>
+      <div class="product-right">
+        <div class="original-price">₩9,300</div>
+        <div class="sale-price">₩7,900</div>
+      </div>
+    </div>
+    
+    <div class="product-card">
+      <div class="discount-badge">20% OFF</div>
+      <div class="product-left">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+            <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="product-amount">100개 <span class="bonus">+25 보너스</span></div>
+          <div class="product-desc">최고의 가성비</div>
+        </div>
+      </div>
+      <div class="product-right">
+        <div class="original-price">₩18,700</div>
+        <div class="sale-price">₩14,900</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="info-box">
+    <div class="info-title">
+      <span>ℹ️</span>
+      마커 사용 안내
+    </div>
+    <ul class="info-list">
+      <li>• 친구 요청 시 마커 3개가 사용됩니다</li>
+      <li>• 조인 신청 시 마커 5개가 사용됩니다</li>
+      <li>• 상대방이 거절해도 마커는 환불되지 않습니다</li>
+    </ul>
+  </div>
+</body>
+</html>
+

@@ -46,3 +46,4 @@ coverage/
 .vercel
 *.apk
 *.aab
+screenshots/output/

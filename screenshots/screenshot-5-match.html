@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1290, height=2796">
+  <title>Screenshot 5 - Match</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 1290px;
+      height: 2796px;
+      background: linear-gradient(180deg, #0D0D0D 0%, #1a1a1a 100%);
+      font-family: 'Pretendard Variable', -apple-system, sans-serif;
+      color: white;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+    }
+    
+    .modal {
+      position: relative;
+      width: 1100px;
+      background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+      border-radius: 50px;
+      padding: 60px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 25px 100px rgba(212, 175, 55, 0.2);
+    }
+    
+    .modal-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .modal-title {
+      font-size: 52px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 50%, #D4AF37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .modal-subtitle {
+      font-size: 34px;
+      color: #888;
+    }
+    
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 50px;
+      background: #1f1f1f;
+      border-radius: 35px;
+      padding: 45px;
+      margin-bottom: 40px;
+    }
+    
+    .profile-photo {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3D7A4A 0%, #2D5A3D 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 90px;
+      border: 4px solid #D4AF37;
+      flex-shrink: 0;
+    }
+    
+    .profile-info {
+      flex: 1;
+    }
+    
+    .profile-name {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .verified {
+      background: #D4AF37;
+      color: #0D0D0D;
+      font-size: 26px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .profile-meta {
+      font-size: 34px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    
+    .profile-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    
+    .tag {
+      background: rgba(212, 175, 55, 0.15);
+      color: #D4AF37;
+      padding: 14px 26px;
+      border-radius: 30px;
+      font-size: 28px;
+    }
+    
+    .match-score {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .score-circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+      border: 6px solid #D4AF37;
+      margin: 0 auto 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .score-value {
+      font-size: 72px;
+      font-weight: 800;
+      color: #D4AF37;
+    }
+    
+    .score-label {
+      font-size: 28px;
+      color: #888;
+    }
+    
+    .match-reasons {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+    
+    .reason-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 28px;
+      color: #5CAB6F;
+    }
+    
+    .message-section {
+      margin-bottom: 40px;
+    }
+    
+    .message-label {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    
+    .message-input {
+      width: 100%;
+      background: #1f1f1f;
+      border: 2px solid #333;
+      border-radius: 25px;
+      padding: 30px;
+      font-size: 32px;
+      color: #888;
+      font-family: inherit;
+    }
+    
+    .cost-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 35px;
+      font-size: 30px;
+      color: #888;
+    }
+    
+    .cost-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #D4AF37;
+      font-weight: 700;
+    }
+    
+    .marker-small {
+      width: 32px;
+      height: 32px;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 25px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 35px;
+      border-radius: 30px;
+      font-size: 36px;
+      font-weight: 700;
+      text-align: center;
+    }
+    
+    .btn-cancel {
+      background: #2a2a2a;
+      color: #888;
+    }
+    
+    .btn-send {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+      color: #0D0D0D;
+    }
+    
+    .confetti {
+      position: absolute;
+      font-size: 40px;
+    }
+    
+    .confetti-1 { top: 100px; left: 100px; }
+    .confetti-2 { top: 150px; right: 120px; }
+    .confetti-3 { top: 250px; left: 200px; }
+    .confetti-4 { top: 200px; right: 200px; }
+    .confetti-5 { bottom: 300px; left: 150px; }
+    .confetti-6 { bottom: 250px; right: 150px; }
+  </style>
+</head>
+<body>
+  <div class="modal-backdrop"></div>
+  
+  <div class="confetti confetti-1">🎉</div>
+  <div class="confetti confetti-2">⛳</div>
+  <div class="confetti confetti-3">🏌️</div>
+  <div class="confetti confetti-4">✨</div>
+  <div class="confetti confetti-5">🎊</div>
+  <div class="confetti confetti-6">💫</div>
+  
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏌️ 라운딩 제안하기</div>
+      <div class="modal-subtitle">함께 라운딩하고 싶은 분에게 제안을 보내보세요</div>
+    </div>
+    
+    <div class="profile-section">
+      <div class="profile-photo">👨</div>
+      <div class="profile-info">
+        <div class="profile-name">
+          김민준
+          <span class="verified">✓ 인증</span>
+        </div>
+        <div class="profile-meta">32세 · 서울 강남 · 90대 초반</div>
+        <div class="profile-tags">
+          <span class="tag">편하게</span>
+          <span class="tag">내기 좋아요</span>
+          <span class="tag">쾌속 플레이</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="match-score">
+      <div class="score-circle">
+        <div class="score-value">92%</div>
+        <div class="score-label">매칭률</div>
+      </div>
+      <div class="match-reasons">
+        <div class="reason-item">✓ 비슷한 실력</div>
+        <div class="reason-item">✓ 같은 지역</div>
+        <div class="reason-item">✓ 스타일 일치</div>
+      </div>
+    </div>
+    
+    <div class="message-section">
+      <div class="message-label">💬 메시지 (선택)</div>
+      <div class="message-input">
+        안녕하세요! 프로필 보고 연락드립니다. 다음 주 주말에 같이 라운딩 하실래요? 😊
+      </div>
+    </div>
+    
+    <div class="cost-info">
+      제안 시 
+      <div class="cost-value">
+        <svg class="marker-small" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#D4AF37"/>
+          <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D"/>
+        </svg>
+        3개
+      </div>
+      가 사용됩니다
+    </div>
+    
+    <div class="buttons">
+      <div class="btn btn-cancel">취소</div>
+      <div class="btn btn-send">제안 보내기 🏌️</div>
+    </div>
+  </div>
+</body>
+</html>
+
