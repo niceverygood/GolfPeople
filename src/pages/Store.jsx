@@ -187,29 +187,21 @@ export default function Store() {
       if (paymentResult.success) {
         // 결제 성공 - 마커 충전
         const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
-        console.log('마커 충전 요청:', totalMarkers)
+        console.log('💰 마커 충전 요청:', totalMarkers)
         
         try {
-          await addMarkers(
+          const result = addMarkers(
             totalMarkers, 
             'purchase', 
             `${selectedProduct.name} 구매`
           )
-          
-          setPurchaseResult({ success: true, amount: totalMarkers })
-          
-          // 2초 후 모달 닫기 및 페이지 새로고침
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000)
+          console.log('✅ 마커 충전 결과:', result)
         } catch (markerError) {
           console.error('마커 충전 오류:', markerError)
-          // 마커 충전 실패해도 결제는 성공했으므로 성공 표시
-          setPurchaseResult({ success: true, amount: totalMarkers })
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000)
         }
+        
+        // 충전 완료 팝업 표시 (확인 버튼 누르면 새로고침)
+        setPurchaseResult({ success: true, amount: totalMarkers })
       } else {
         // 결제 실패 또는 취소
         if (paymentResult.error) {
@@ -358,28 +350,68 @@ export default function Store() {
             >
               {purchaseResult ? (
                 // 결제 결과
-                <div className="text-center py-8">
+                <div className="text-center py-6">
                   {purchaseResult.success ? (
                     <>
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4"
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-gp-gold/30 to-yellow-500/20 flex items-center justify-center mx-auto mb-5"
                       >
-                        <CheckCircle2 className="w-10 h-10 text-green-400" />
+                        <motion.div
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ delay: 0.2, type: 'spring' }}
+                        >
+                          <CheckCircle2 className="w-12 h-12 text-gp-gold" />
+                        </motion.div>
                       </motion.div>
-                      <h3 className="text-xl font-bold mb-2">충전 완료!</h3>
-                      <p className="text-gp-text-secondary">
-                        마커 {purchaseResult.amount}개가 충전되었습니다
-                      </p>
+                      <motion.h3 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-2xl font-bold mb-3"
+                      >
+                        🎉 충전 완료!
+                      </motion.h3>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="bg-gp-surface rounded-xl p-4 mb-6"
+                      >
+                        <div className="flex items-center justify-center gap-2 text-xl">
+                          <MarkerIcon className="w-6 h-6" />
+                          <span className="font-bold text-gp-gold">{purchaseResult.amount}개</span>
+                          <span className="text-gp-text-secondary">충전되었습니다</span>
+                        </div>
+                      </motion.div>
+                      <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        onClick={() => window.location.reload()}
+                        className="w-full py-4 rounded-xl font-semibold text-lg bg-gradient-to-r from-gp-gold to-yellow-500 text-black"
+                      >
+                        확인
+                      </motion.button>
                     </>
                   ) : (
                     <>
                       <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                         <AlertCircle className="w-10 h-10 text-red-400" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2">충전 실패</h3>
-                      <p className="text-gp-text-secondary">{purchaseResult.error}</p>
+                      <h3 className="text-xl font-bold mb-2">결제 실패</h3>
+                      <p className="text-gp-text-secondary mb-6">{purchaseResult.error}</p>
+                      <button
+                        onClick={() => {
+                          setPurchaseResult(null)
+                          setShowPayment(false)
+                        }}
+                        className="w-full py-3 rounded-xl font-medium bg-gp-surface"
+                      >
+                        닫기
+                      </button>
                     </>
                   )}
                 </div>
