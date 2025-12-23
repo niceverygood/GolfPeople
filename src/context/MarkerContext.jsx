@@ -68,17 +68,28 @@ export const MarkerProvider = ({ children }) => {
 
   // 거래 내역 저장 (로컬 우선)
   const saveTransaction = useCallback((tx) => {
+    console.log('📝 거래 내역 저장:', tx)
+    
     const newTx = { 
       id: `local_${Date.now()}`, 
       ...tx, 
       created_at: new Date().toISOString() 
     }
     
-    setTransactions(prev => {
-      const updated = [newTx, ...prev].slice(0, 50)
-      localStorage.setItem('gp_marker_transactions', JSON.stringify(updated))
-      return updated
-    })
+    // 현재 localStorage에서 직접 불러와서 업데이트
+    let currentTransactions = []
+    try {
+      const saved = localStorage.getItem('gp_marker_transactions')
+      currentTransactions = saved ? JSON.parse(saved) : []
+    } catch (e) {
+      console.log('거래 내역 파싱 오류:', e)
+    }
+    
+    const updated = [newTx, ...currentTransactions].slice(0, 50)
+    localStorage.setItem('gp_marker_transactions', JSON.stringify(updated))
+    setTransactions(updated)
+    
+    console.log('✅ 거래 내역 저장 완료:', updated.length, '건')
     
     // Supabase 동기화 (비동기, 에러 무시)
     if (isConnected() && user) {
