@@ -1,9 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
+import { Capacitor } from '@capacitor/core'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 const isMissingEnv = !supabaseUrl || !supabaseAnonKey
+
+// OAuth 리다이렉트 URL 결정
+const getRedirectUrl = (path = '/auth/callback') => {
+  // 네이티브 앱에서는 Custom URL Scheme 사용
+  if (Capacitor.isNativePlatform()) {
+    return `kr.golfpeople.app:/${path}`
+  }
+  // 웹에서는 현재 origin 사용
+  return `${window.location.origin}${path}`
+}
 
 if (isMissingEnv) {
   console.warn('⚠️ Missing Supabase environment variables. App will run in offline/demo mode.')
@@ -46,7 +57,7 @@ export const auth = {
     if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getRedirectUrl('/auth/callback') },
     })
     return { data, error }
   },
@@ -55,7 +66,7 @@ export const auth = {
     if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getRedirectUrl('/auth/callback') },
     })
     return { data, error }
   },
@@ -81,7 +92,7 @@ export const auth = {
   resetPassword: async (email) => {
     if (!supabase) return notConnected()
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: getRedirectUrl('/auth/reset-password'),
     })
     return { data, error }
   },

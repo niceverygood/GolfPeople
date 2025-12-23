@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase, auth, db, isConnected } from '../lib/supabase'
+import { isNative, app } from '../lib/native'
 
 const AuthContext = createContext({})
 
@@ -17,6 +18,46 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // OAuth 딥링크 URL에서 토큰 추출
+  const handleOAuthDeepLink = async (url) => {
+    console.log('🔗 OAuth Deep Link received:', url)
+    
+    try {
+      // URL 파싱 (hash fragment에서 토큰 추출)
+      // 형식: kr.golfpeople.app://auth/callback#access_token=xxx&refresh_token=xxx...
+      const hashIndex = url.indexOf('#')
+      if (hashIndex === -1) {
+        console.log('No hash fragment in URL')
+        return false
+      }
+      
+      const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      
+      if (accessToken && refreshToken) {
+        console.log('🔑 Setting session from deep link tokens')
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        })
+        
+        if (error) {
+          console.error('Failed to set session:', error)
+          return false
+        }
+        
+        console.log('✅ Session set successfully:', data.user?.email)
+        return true
+      }
+      
+      return false
+    } catch (err) {
+      console.error('Error handling OAuth deep link:', err)
+      return false
+    }
+  }
+
   // 세션 체크 및 프로필 로드
   useEffect(() => {
     // Supabase 미연결 시 데모 모드로 바로 진입
@@ -27,6 +68,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     let mounted = true
+    let deepLinkUnsubscribe = null
 
     // Auth 상태 변경 리스너 (먼저 설정)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -55,6 +97,16 @@ export const AuthProvider = ({ children }) => {
         }
       }
     )
+
+    // 네이티브 앱에서 딥링크 리스너 설정
+    if (isNative()) {
+      deepLinkUnsubscribe = app.onAppUrlOpen(async (data) => {
+        console.log('📱 App URL opened:', data.url)
+        if (data.url.includes('/auth/callback') || data.url.includes('access_token')) {
+          await handleOAuthDeepLink(data.url)
+        }
+      })
+    }
 
     // 초기 세션 확인
     const initAuth = async () => {
@@ -91,6 +143,9 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false
       subscription?.unsubscribe()
+      if (typeof deepLinkUnsubscribe === 'function') {
+        deepLinkUnsubscribe()
+      }
     }
   }, [])
 
