@@ -14,7 +14,7 @@ import {
   X,
   Smartphone
 } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { requestPayment, generatePaymentId } from '../lib/portone'
@@ -139,8 +139,19 @@ const TransactionItem = ({ transaction }) => {
 
 export default function Store() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
+  
+  // 안전한 뒤로가기 - 히스토리가 없으면 홈으로
+  const handleBack = () => {
+    // location.key가 'default'면 히스토리가 없음 (직접 URL 접속 등)
+    if (location.key === 'default') {
+      navigate('/', { replace: true })
+    } else {
+      navigate(-1)
+    }
+  }
   const { balance, products, prices, transactions, refreshTransactions, addMarkers } = useMarker()
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showPayment, setShowPayment] = useState(false)
@@ -283,7 +294,7 @@ export default function Store() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-lg border-b border-gp-border">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+          <button onClick={handleBack} className="p-2 -ml-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-lg font-bold">마커 스토어</h1>
