@@ -23,11 +23,11 @@ const REVENUECAT_ANDROID_KEY = 'YOUR_REVENUECAT_ANDROID_API_KEY'
 
 // 상품 ID (App Store Connect / Google Play Console에서 설정)
 export const PRODUCTS = {
-  MARKER_5: 'kr.golfpeople.marker5',      // 마커 5개 - ₩1,100
-  MARKER_10: 'kr.golfpeople.marker10',    // 마커 10개 - ₩2,200
-  MARKER_30: 'kr.golfpeople.marker30',    // 마커 30개 - ₩5,500
-  MARKER_50: 'kr.golfpeople.marker50',    // 마커 50개 - ₩8,800
-  MARKER_100: 'kr.golfpeople.marker100',  // 마커 100개 - ₩15,000
+  MARKER_5: 'marker5',      // 마커 5개 - ₩1,000
+  MARKER_10: 'marker10',    // 마커 10개 (+1 보너스) - ₩1,900
+  MARKER_30: 'marker30',    // 마커 30개 (+5 보너스) - ₩4,900
+  MARKER_50: 'marker50',    // 마커 50개 (+10 보너스) - ₩7,900
+  MARKER_100: 'marker100',  // 마커 100개 (+25 보너스) - ₩14,900
 }
 
 // 상품 정보 (로컬 백업)
