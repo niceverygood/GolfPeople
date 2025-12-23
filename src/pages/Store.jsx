@@ -390,7 +390,11 @@ export default function Store() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.5 }}
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                          setShowPayment(false)
+                          setPurchaseResult(null)
+                          setSelectedProduct(null)
+                        }}
                         className="w-full py-4 rounded-xl font-semibold text-lg bg-gradient-to-r from-gp-gold to-yellow-500 text-black"
                       >
                         확인
