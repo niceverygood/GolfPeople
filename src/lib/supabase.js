@@ -9,9 +9,9 @@ const isMissingEnv = !supabaseUrl || !supabaseAnonKey
 
 // OAuth 리다이렉트 URL 결정
 const getRedirectUrl = (path = '/auth/callback') => {
-  // 네이티브 앱에서는 Custom URL Scheme 사용
+  // 네이티브 앱에서는 Custom URL Scheme 사용 (명확한 스킴)
   if (Capacitor.isNativePlatform()) {
-    return `kr.golfpeople.app:/${path}`
+    return `kr.golfpeople.app://auth/callback`
   }
   // 웹에서는 현재 origin 사용
   return `${window.location.origin}${path}`
@@ -66,14 +66,28 @@ export const auth = {
   signInWithKakao: async () => {
     if (!supabase) return notConnected()
     
-    // 네이티브 앱에서는 Vercel 콜백 사용 후 딥링크로 앱에 토큰 전달
-    const redirectUrl = Capacitor.isNativePlatform()
-      ? 'https://golf-people.vercel.app/auth/callback/native'
-      : `${window.location.origin}/auth/callback`
-    
+    // 네이티브: 중간 페이지를 거쳐 앱으로 복귀 (가장 안정적)
+    if (Capacitor.isNativePlatform()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: 'https://golf-people.vercel.app/auth/callback/native',
+          skipBrowserRedirect: true,
+        },
+      })
+      if (data?.url) {
+        await Browser.open({
+          url: data.url,
+          windowName: '_self'
+        })
+      }
+      return { data, error }
+    }
+
+    // 웹: 기본 동작
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: redirectUrl },
+      options: { redirectTo: getRedirectUrl('/auth/callback') },
     })
     return { data, error }
   },

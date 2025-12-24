@@ -63,29 +63,33 @@
   </div>
 
   <script>
-    // URL에서 토큰 정보 추출
-    const hash = window.location.hash.substring(1);
+    // URL에서 토큰 정보 추출 (hash fragment)
+    const hash = window.location.hash;
     
     // Android Intent URL (더 확실하게 앱을 엶)
-    const intentUrl = 'intent://callback#' + hash + '#Intent;scheme=kr.golfpeople.app;package=com.golfpeople.app;end';
+    // kr.golfpeople.app://auth/callback
+    const intentUrl = 'intent://auth/callback' + hash + '#Intent;scheme=kr.golfpeople.app;package=com.golfpeople.app;end';
     
     // 일반 딥링크 URL (fallback)
-    const appUrl = 'kr.golfpeople.app://callback#' + hash;
+    const appUrl = 'kr.golfpeople.app://auth/callback' + hash;
     
-    // 자동으로 앱 열기 시도 (Intent URL 사용)
+    console.log('Redirecting to:', intentUrl);
+
+    // 자동으로 앱 열기 시도
     setTimeout(() => {
       window.location.href = intentUrl;
-    }, 1000);
+    }, 500);
     
-    // 3초 후에도 앱이 안 열리면 버튼 표시
+    // 3초 후에도 앱이 안 열리면 버튼 표시 및 수동 클릭 유도
     setTimeout(() => {
-      document.getElementById('openApp').style.display = 'inline-block';
-      document.getElementById('openApp').href = intentUrl;
-      document.getElementById('openApp').onclick = function(e) {
-        e.preventDefault();
+      const btn = document.getElementById('openApp');
+      btn.style.display = 'inline-block';
+      btn.href = intentUrl;
+      btn.onclick = function(e) {
         window.location.href = intentUrl;
+        return false;
       };
-    }, 3000);
+    }, 2500);
   </script>
 </body>
 </html>

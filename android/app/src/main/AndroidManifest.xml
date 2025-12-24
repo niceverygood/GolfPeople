@@ -27,7 +27,10 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="kr.golfpeople.app" android:host="callback" />
+                <data
+                    android:scheme="kr.golfpeople.app"
+                    android:host="auth"
+                    android:pathPrefix="/callback" />
             </intent-filter>
 
             <!-- App Links (https) -->
