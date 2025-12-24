@@ -65,20 +65,26 @@
   <script>
     // URL에서 토큰 정보 추출
     const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
     
-    // 앱 딥링크로 리다이렉트
-    const appUrl = 'kr.golfpeople.app://auth/callback#' + hash;
+    // Android Intent URL (더 확실하게 앱을 엶)
+    const intentUrl = 'intent://callback#' + hash + '#Intent;scheme=kr.golfpeople.app;package=com.golfpeople.app;end';
     
-    // 자동으로 앱 열기 시도
+    // 일반 딥링크 URL (fallback)
+    const appUrl = 'kr.golfpeople.app://callback#' + hash;
+    
+    // 자동으로 앱 열기 시도 (Intent URL 사용)
     setTimeout(() => {
-      window.location.href = appUrl;
+      window.location.href = intentUrl;
     }, 1000);
     
     // 3초 후에도 앱이 안 열리면 버튼 표시
     setTimeout(() => {
       document.getElementById('openApp').style.display = 'inline-block';
-      document.getElementById('openApp').href = appUrl;
+      document.getElementById('openApp').href = intentUrl;
+      document.getElementById('openApp').onclick = function(e) {
+        e.preventDefault();
+        window.location.href = intentUrl;
+      };
     }, 3000);
   </script>
 </body>
