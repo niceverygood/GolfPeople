@@ -215,16 +215,6 @@ export default function Home({ onPropose }) {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* 마커 잔액 버튼 */}
-            <button
-              onClick={() => navigate('/store')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gp-gold/10 border border-gp-gold/30 rounded-full hover:bg-gp-gold/20 transition-all"
-            >
-              <MarkerIcon className="w-4 h-4" />
-              <span className="text-sm font-semibold text-gp-gold">{balance}</span>
-              <Plus className="w-3 h-3 text-gp-gold" />
-            </button>
-            
             {/* 알림 버튼 */}
             <button
               onClick={() => setShowNotifications(true)}
