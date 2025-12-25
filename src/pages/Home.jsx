@@ -21,7 +21,7 @@ const MarkerIcon = ({ className = "w-5 h-5" }) => (
 
 // 추천 시간대
 const RECOMMENDATION_TIMES = [
-  { id: 'midnight', hour: 0, label: '자정', icon: '🌙' },
+  { id: 'noon', hour: 12, label: '정오', icon: '☀️' },
   { id: 'afternoon', hour: 15, label: '오후 3시', icon: '☀️' },
   { id: 'evening', hour: 18, label: '저녁 6시', icon: '🌅' },
   { id: 'night', hour: 21, label: '밤 9시', icon: '🌃' },
@@ -37,16 +37,40 @@ const FILTER_OPTIONS = {
 
 export default function Home({ onPropose }) {
   const navigate = useNavigate()
-  const { users, notifications, unreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } = useApp()
+  const { 
+    users, 
+    notifications, 
+    unreadNotificationCount, 
+    markNotificationAsRead, 
+    markAllNotificationsAsRead, 
+    deleteNotification, 
+    addPastCard,
+    recommendationHistory,
+    saveDailyRecommendation
+  } = useApp()
   const { balance } = useMarker()
+  const [activeTab, setActiveTab] = useState('today') // 'today' | 'past'
   const [recommendations, setRecommendations] = useState({})
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [revealedCards, setRevealedCards] = useState(() => {
-    // localStorage에서 뒤집힌 카드 상태 복원
+    // localStorage에서 뒤집힌 카드 상태 복원 (날짜가 같을 때만)
     const saved = localStorage.getItem('gp_revealed_cards')
-    return saved ? new Set(JSON.parse(saved)) : new Set()
+    const savedDate = localStorage.getItem('gp_revealed_date')
+    const today = new Date().toISOString().split('T')[0]
+    
+    if (saved && savedDate === today) {
+      return new Set(JSON.parse(saved))
+    }
+    return new Set()
   })
+  
+  // 뒤집힌 카드 상태가 바뀔 때마다 날짜와 함께 저장
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    localStorage.setItem('gp_revealed_cards', JSON.stringify([...revealedCards]))
+    localStorage.setItem('gp_revealed_date', today)
+  }, [revealedCards])
   
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -101,31 +125,46 @@ export default function Home({ onPropose }) {
   
   // 시간대별 추천 카드 생성 (필터링된 유저 기반)
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
     const currentHour = new Date().getHours()
-    const newRecommendations = {}
     
-    // 필터링된 유저가 없으면 전체 유저 사용
-    const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
+    // 오늘의 추천이 이미 저장되어 있는지 확인
+    let dailyRecs = recommendationHistory[today]
     
-    RECOMMENDATION_TIMES.forEach((time, timeIndex) => {
-      // 현재 시간 이전의 추천만 공개 가능
-      const isUnlocked = currentHour >= time.hour || (time.hour === 0 && currentHour < 3)
+    if (!dailyRecs) {
+      // 없으면 새로 생성 (필터링된 유저가 없으면 전체 유저 사용)
+      const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
+      dailyRecs = {}
       
-      // 각 시간대별로 2명씩 배정
-      const startIndex = (timeIndex * 2) % targetUsers.length
-      const assignedUsers = [
-        targetUsers[startIndex % targetUsers.length],
-        targetUsers[(startIndex + 1) % targetUsers.length],
-      ].filter(Boolean) // undefined 제거
+      RECOMMENDATION_TIMES.forEach((time, timeIndex) => {
+        const startIndex = (timeIndex * 2) % targetUsers.length
+        const assignedUserIds = [
+          targetUsers[startIndex % targetUsers.length]?.id,
+          targetUsers[(startIndex + 1) % targetUsers.length]?.id,
+        ].filter(Boolean)
+        
+        dailyRecs[time.id] = assignedUserIds
+      })
+      
+      // 생성된 추천 저장
+      saveDailyRecommendation(today, dailyRecs)
+    }
+    
+    // UI 표시용 상태 생성
+    const newRecommendations = {}
+    RECOMMENDATION_TIMES.forEach((time) => {
+      const isUnlocked = currentHour >= time.hour
+      const userIds = dailyRecs[time.id] || []
+      const assignedUsers = userIds.map(id => users.find(u => u.id === id)).filter(Boolean)
       
       newRecommendations[time.id] = {
         ...time,
         isUnlocked,
         cards: assignedUsers.map((user, idx) => {
-          const cardId = `${time.id}-${idx}`
+          const cardId = `${today}-${time.id}-${idx}`
           return {
             user,
-            state: revealedCards.has(cardId) ? 'revealed' : 'hidden', // 저장된 상태 복원
+            state: revealedCards.has(cardId) ? 'revealed' : 'hidden',
             id: cardId,
           }
         }),
@@ -133,7 +172,7 @@ export default function Home({ onPropose }) {
     })
     
     setRecommendations(newRecommendations)
-  }, [users, filteredUsers, revealedCards])
+  }, [users, filteredUsers, revealedCards, recommendationHistory, saveDailyRecommendation])
 
   // 카드 클릭 - 숨겨진 카드면 뒤집기, 공개된 카드면 상세로 이동
   const handleCardClick = (timeId, cardIndex) => {
@@ -144,11 +183,13 @@ export default function Home({ onPropose }) {
       // 숨겨진 카드면 뒤집기만 (약식 프로필 보여주기)
       const cardId = card.id
       
-      // revealedCards에 추가하고 localStorage에 저장
+      // 지난 카드 목록에 추가
+      addPastCard(card.user)
+      
+      // revealedCards에 추가
       setRevealedCards(prev => {
         const newSet = new Set(prev)
         newSet.add(cardId)
-        localStorage.setItem('gp_revealed_cards', JSON.stringify([...newSet]))
         return newSet
       })
       
@@ -168,16 +209,9 @@ export default function Home({ onPropose }) {
     <div className="flex-1 flex flex-col h-full overflow-auto pb-24">
       {/* 헤더 */}
       <div className="px-6 pt-4 pb-4 safe-top sticky top-0 bg-gp-black/90 backdrop-blur-lg z-10">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold font-display gold-gradient">골프피플</h1>
-            <p className="text-gp-text-secondary text-sm flex items-center gap-1">
-              <Sparkles className="w-4 h-4 text-gp-gold" />
-              오늘의 추천 카드
-              {activeFilterCount > 0 && (
-                <span className="ml-1 text-gp-gold">({filteredUsers.length}명)</span>
-              )}
-            </p>
           </div>
           
           <div className="flex items-center gap-2">
@@ -218,36 +252,71 @@ export default function Home({ onPropose }) {
             </button>
           </div>
         </div>
+
+        {/* 상단 탭 버튼 */}
+        <div className="flex bg-gp-card p-1 rounded-xl gap-1">
+          <button
+            onClick={() => setActiveTab('today')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+              activeTab === 'today' 
+                ? 'bg-gp-gold text-gp-black' 
+                : 'text-gp-text-secondary hover:text-gp-text'
+            }`}
+          >
+            오늘의 추천 카드
+          </button>
+          <button
+            onClick={() => setActiveTab('past')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+              activeTab === 'past' 
+                ? 'bg-gp-gold text-gp-black' 
+                : 'text-gp-text-secondary hover:text-gp-text'
+            }`}
+          >
+            지나간 추천 카드
+          </button>
+        </div>
       </div>
 
-      {/* 시간대별 추천 섹션 */}
-      <div className="px-4 space-y-6">
-        {Object.values(recommendations).map((timeSlot) => (
-          <div key={timeSlot.id} className="space-y-3">
-            {/* 시간대 헤더 */}
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{timeSlot.icon}</span>
-              <span className="font-medium">{timeSlot.label}</span>
-              {!timeSlot.isUnlocked && (
-                <span className="text-xs text-gp-text-secondary bg-gp-card px-2 py-0.5 rounded-full">
-                  잠금
-                </span>
-              )}
-            </div>
-            
-            {/* 카드 2장 */}
-            <div className="flex gap-3">
-              {timeSlot.cards.map((card, idx) => (
-                <FlipCard
-                  key={card.id}
-                  card={card}
-                  isUnlocked={timeSlot.isUnlocked}
-                  onClick={() => timeSlot.isUnlocked && handleCardClick(timeSlot.id, idx)}
-                />
-              ))}
-            </div>
+      <div className="px-4 mt-2">
+        {activeTab === 'today' ? (
+          /* 시간대별 추천 섹션 (기존 코드) */
+          <div className="space-y-6">
+            {Object.values(recommendations).map((timeSlot) => (
+              <div key={timeSlot.id} className="space-y-3">
+                {/* 시간대 헤더 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{timeSlot.icon}</span>
+                  <span className="font-medium">{timeSlot.label}</span>
+                  {!timeSlot.isUnlocked && (
+                    <span className="text-xs text-gp-text-secondary bg-gp-card px-2 py-0.5 rounded-full">
+                      잠금
+                    </span>
+                  )}
+                </div>
+                
+                {/* 카드 2장 */}
+                <div className="flex gap-3">
+                  {timeSlot.cards.map((card, idx) => (
+                    <FlipCard
+                      key={card.id}
+                      card={card}
+                      isUnlocked={timeSlot.isUnlocked}
+                      onClick={() => timeSlot.isUnlocked && handleCardClick(timeSlot.id, idx)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          /* 지나간 추천 카드 섹션 */
+          <PastRecommendations 
+            history={recommendationHistory} 
+            users={users} 
+            navigate={navigate}
+          />
+        )}
       </div>
 
       {/* 필터 모달 */}
@@ -274,6 +343,92 @@ export default function Home({ onPropose }) {
           />
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// 지나간 추천 카드 컴포넌트
+function PastRecommendations({ history, users, navigate }) {
+  const today = new Date().toISOString().split('T')[0]
+  
+  // 오늘을 제외한 과거 7일간의 날짜 정렬
+  const pastDates = Object.keys(history)
+    .filter(date => date !== today)
+    .sort((a, b) => b.localeCompare(a)) // 문자열 비교로 정렬
+    .slice(0, 7)
+
+  if (pastDates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-gp-card flex items-center justify-center mb-4">
+          <History className="w-8 h-8 text-gp-text-secondary" />
+        </div>
+        <h3 className="font-semibold mb-1">지나간 추천이 없어요</h3>
+        <p className="text-gp-text-secondary text-sm">내일부터 어제의 추천을 볼 수 있습니다</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8 pb-10">
+      {pastDates.map(date => {
+        const dailyRecs = history[date]
+        const allUserIds = Object.values(dailyRecs).flat()
+        const assignedUsers = allUserIds.map(id => users.find(u => u.id === id)).filter(Boolean)
+        
+        // D-Day 계산 (YYYY-MM-DD 파싱)
+        const dateObj = new Date(date)
+        const todayObj = new Date(today)
+        const diffTime = todayObj.getTime() - dateObj.getTime()
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        const remainingDays = 7 - diffDays
+        const dDayText = `D-${String(remainingDays).padStart(2, '0')}`
+        
+        return (
+          <div key={date} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gp-gold" />
+              <span className="font-bold text-lg">{date}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {assignedUsers.map((user) => (
+                <div 
+                  key={`${date}-${user.id}`}
+                  onClick={() => navigate(`/user/${user.id}`)}
+                  className="aspect-[3/4] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-transform"
+                >
+                  <img
+                    src={user.photos[0]}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  
+                  {/* D-Day 배지 추가 */}
+                  <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[10px] font-black shadow-lg z-10 ${
+                    remainingDays <= 1 
+                      ? 'bg-red-500 text-white animate-pulse' 
+                      : 'bg-gp-gold text-gp-black'
+                  }`}>
+                    {dDayText}
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="font-bold text-white text-sm">
+                      {user.name}, {user.age}
+                    </p>
+                    <p className="text-[10px] text-white/70 flex items-center gap-1">
+                      <MapPin className="w-2.5 h-2.5" />
+                      {user.region}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -398,6 +553,8 @@ function FlipCard({ card, isUnlocked, onClick }) {
 // 필터 모달 컴포넌트
 function FilterModal({ filters, setFilters, onClose, matchCount }) {
   const [localFilters, setLocalFilters] = useState(filters)
+  const { balance, addMarkers } = useMarker()
+  const [isConfirming, setIsConfirming] = useState(false)
   
   // 필터 토글
   const toggleFilter = (category, value) => {
@@ -411,8 +568,22 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
     })
   }
   
-  // 필터 적용
-  const applyFilters = () => {
+  // 필터 적용 (마커 차감 확인)
+  const handleApplyClick = () => {
+    // 변경된 사항이 있는지 확인 (필요시 구현)
+    setIsConfirming(true)
+  }
+
+  const confirmApply = async () => {
+    if (balance < 5) {
+      alert('마커가 부족합니다. 스토어에서 충전해 주세요.')
+      return
+    }
+
+    // 마커 5개 차감
+    await addMarkers(-5, 'spend', '추천 필터 변경')
+    
+    // 필터 적용
     setFilters(localFilters)
     onClose()
   }
@@ -426,8 +597,9 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
       regions: [],
     }
     setLocalFilters(emptyFilters)
-    setFilters(emptyFilters)
   }
+
+  const activeFilters = Object.entries(localFilters).flatMap(([key, values]) => values)
 
   return (
     <motion.div
@@ -457,7 +629,7 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         
         {/* 헤더 */}
         <div className="px-6 pb-4 flex items-center justify-between border-b border-gp-border">
-          <h2 className="text-xl font-bold">추천 필터</h2>
+          <h2 className="text-xl font-bold">추천 필터 설정</h2>
           <button
             onClick={resetFilters}
             className="text-gp-gold text-sm font-medium"
@@ -468,6 +640,27 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         
         {/* 필터 옵션들 */}
         <div className="px-6 py-4 space-y-6 overflow-auto max-h-[50vh]">
+          {/* 현재 적용된 필터 요약 */}
+          {activeFilters.length > 0 && (
+            <div className="bg-gp-gold/10 p-3 rounded-xl border border-gp-gold/20">
+              <p className="text-xs text-gp-gold font-bold mb-2">선택된 조건</p>
+              <div className="flex flex-wrap gap-1.5">
+                {activeFilters.map(f => (
+                  <span key={f} className="bg-gp-gold text-gp-black text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 안내 메시지 */}
+          <div className="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
+            <p className="text-xs text-blue-400 leading-relaxed">
+              💡 <b>필터 적용 시:</b> 다음 추천부터 설정하신 조건에 가장 가까운 골퍼들을 우선적으로 매칭해 드립니다.
+            </p>
+          </div>
+
           {/* 성별 */}
           <div>
             <h3 className="text-sm text-gp-text-secondary mb-3 flex items-center gap-2">
@@ -562,18 +755,36 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         </div>
         
         {/* 하단 버튼 */}
-        <div className="px-6 py-4 border-t border-gp-border safe-bottom">
-          <button
-            onClick={applyFilters}
-            className="w-full py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2"
-          >
-            <span>필터 적용하기</span>
-            {matchCount > 0 && (
-              <span className="bg-gp-black/20 px-2 py-0.5 rounded-full text-sm">
-                {matchCount}명
-              </span>
-            )}
-          </button>
+        <div className="px-6 py-4 border-t border-gp-border safe-bottom bg-gp-black">
+          {isConfirming ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-center gap-2 text-sm font-bold text-gp-gold animate-bounce">
+                <MarkerIcon className="w-4 h-4" />
+                <span>마커 5개가 사용됩니다</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsConfirming(false)}
+                  className="flex-1 py-4 bg-gp-border rounded-xl font-semibold"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmApply}
+                  className="flex-2 py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2 px-8"
+                >
+                  확인 및 결제
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleApplyClick}
+              className="w-full py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2"
+            >
+              <span>필터 수정하기 (마커 5개)</span>
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -582,6 +793,46 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
 
 // 알림 모달
 function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRead, onDelete }) {
+  const navigate = useNavigate()
+  
+  const handleNotificationClick = (notification) => {
+    // 읽음 처리
+    onMarkAsRead(notification.id)
+    
+    // 모달 닫기
+    onClose()
+    
+    // 타입별 페이지 이동
+    switch (notification.type) {
+      case 'friend_request':
+        // 저장함 -> 친구요청 탭으로 이동 (상태 전달 가능하면 전달)
+        navigate('/saved?tab=friends')
+        break
+      case 'join_request':
+        // 저장함 -> 조인신청 탭으로 이동
+        navigate('/saved?tab=applications')
+        break
+      case 'match':
+        // 홈 화면 (이미 홈이지만 탭 전환이 필요할 수 있음)
+        // 만약 특정 유저 ID가 있다면 해당 유저 프로필로 이동
+        if (notification.userId) {
+          navigate(`/user/${notification.userId}`)
+        } else {
+          // 기본적으로 홈의 오늘의 추천 탭
+          navigate('/')
+        }
+        break
+      case 'system':
+        // 시스템 공지 등 (필요시 특정 페이지 이동)
+        if (notification.link) {
+          navigate(notification.link)
+        }
+        break
+      default:
+        break
+    }
+  }
+
   const getTimeAgo = (dateString) => {
     const now = new Date()
     const date = new Date(dateString)
@@ -676,7 +927,7 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
                   className={`p-4 hover:bg-gp-card/50 transition-colors cursor-pointer ${
                     !notification.isRead ? 'bg-gp-card/30' : ''
                   }`}
-                  onClick={() => onMarkAsRead(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
                     {/* 아이콘 또는 사진 */}

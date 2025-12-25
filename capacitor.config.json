@@ -1,5 +1,5 @@
 {
-  "appId": "kr.golfpeople.app",
+  "appId": "com.golfpeople.app",
   "appName": "GolfPeople",
   "webDir": "dist",
   "server": {

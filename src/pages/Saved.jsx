@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp } from 'lucide-react'
+import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 // 메인 탭 정의
@@ -86,6 +86,7 @@ function Section({ title, count, children, defaultOpen = true }) {
 
 export default function Saved({ onPropose }) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { 
     users, 
     joins, 
@@ -103,11 +104,20 @@ export default function Saved({ onPropose }) {
     rejectFriendRequest,
     acceptJoinRequest,
     rejectJoinRequest,
+    pastCards,
   } = useApp()
   
   const [activeTab, setActiveTab] = useState('saved')
   const [savedSubTab, setSavedSubTab] = useState('people')
   const [matchedSubTab, setMatchedSubTab] = useState('friends')
+
+  // URL 파라미터에 따라 탭 설정
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && TABS.find(t => t.id === tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   const likedUsersList = users.filter(u => likedUsers.includes(u.id))
   const savedJoinsList = joins.filter(j => savedJoins.includes(j.id))
@@ -526,12 +536,14 @@ function SavedUserCard({ user, onRemove, onPropose }) {
           <div className="flex-1">
             <div className="flex items-start justify-between mb-1">
               <h3 className="font-bold text-lg">{user.name}, {user.age}</h3>
-              <button
-                onClick={onRemove}
-                className="w-6 h-6 rounded-full bg-gp-border flex items-center justify-center"
-              >
-                <X className="w-4 h-4 text-gp-text-secondary" />
-              </button>
+              {onRemove && (
+                <button
+                  onClick={onRemove}
+                  className="w-6 h-6 rounded-full bg-gp-border flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-gp-text-secondary" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 text-gp-text-secondary text-sm mb-2">

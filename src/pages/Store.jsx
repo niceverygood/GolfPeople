@@ -18,8 +18,8 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { requestPayment, generatePaymentId } from '../lib/portone'
-import { isNative } from '../lib/native'
-import { shouldUseNativeIAP, purchaseProduct as nativePurchase, PRODUCT_INFO, PRODUCTS } from '../lib/iap'
+import { isNative, isAndroid, isIOS } from '../lib/native'
+import { purchaseProduct as nativePurchase, PRODUCT_INFO, PRODUCTS } from '../lib/iap'
 import { haptic } from '../lib/native'
 
 // 마커 아이콘 컴포넌트
@@ -170,9 +170,6 @@ export default function Store() {
     }
   }, [])
 
-  // 네이티브 IAP 사용 여부 확인
-  const useNativeIAP = shouldUseNativeIAP()
-  
   // 네이티브 상품 ID 매핑
   const getNativeProductId = (product) => {
     const markerCount = product.marker_amount
@@ -184,21 +181,22 @@ export default function Store() {
     return null
   }
 
-  // 결제 처리 (네이티브 IAP 또는 포트원)
+  // 결제 처리 (플랫폼별 분기 처리)
   const handlePurchase = async () => {
     if (!selectedProduct) return
     
     // 햅틱 피드백
     await haptic.medium()
-    
     setPurchasing(true)
     
     try {
-      // 네이티브 앱에서는 Apple/Google IAP 사용
-      if (useNativeIAP) {
+      // 1. 네이티브 앱 환경 (Android 또는 iOS)
+      if (isNative()) {
+        console.log('📱 네이티브 앱 결제 시작:', isAndroid() ? 'Google Play' : 'Apple App Store')
+        
         const nativeProductId = getNativeProductId(selectedProduct)
         if (!nativeProductId) {
-          throw new Error('상품을 찾을 수 없습니다')
+          throw new Error('상품 정보를 찾을 수 없습니다 (IAP)')
         }
         
         const result = await nativePurchase(nativeProductId)
@@ -207,10 +205,11 @@ export default function Store() {
         if (result.success) {
           await haptic.success()
           const totalMarkers = result.markers || (selectedProduct.marker_amount + selectedProduct.bonus_amount)
-          addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매`)
+          // 서버에 마커 충전 기록 (실제 검증은 서버에서 진행해야 함)
+          addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (인앱결제)`)
           setPurchaseResult({ success: true, amount: totalMarkers })
         } else if (result.cancelled) {
-          // 사용자가 취소
+          // 사용자가 시스템 결제창에서 취소한 경우
           setShowPayment(false)
           setSelectedProduct(null)
         } else {
@@ -221,13 +220,10 @@ export default function Store() {
         return
       }
       
-      // 웹에서는 포트원 사용
-      const paymentId = generatePaymentId(
-        user?.id || 'guest',
-        selectedProduct.id
-      )
+      // 2. 웹 브라우저 환경 (포트원 카드 결제)
+      console.log('🌐 웹 브라우저 결제 시작')
+      const paymentId = generatePaymentId(user?.id || 'guest', selectedProduct.id)
       
-      // 포트원 결제 요청
       const paymentResult = await requestPayment({
         orderName: selectedProduct.name,
         totalAmount: selectedProduct.price,
@@ -239,48 +235,26 @@ export default function Store() {
         }
       })
       
-      console.log('결제 결과:', paymentResult)
-      
-      setPurchasing(false) // 결제창 닫히면 바로 로딩 해제
+      setPurchasing(false)
       
       if (paymentResult.success) {
-        // 결제 성공 - 마커 충전
         const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
-        console.log('💰 마커 충전 요청:', totalMarkers)
-        
-        try {
-          const result = addMarkers(
-            totalMarkers, 
-            'purchase', 
-            `${selectedProduct.name} 구매`
-          )
-          console.log('✅ 마커 충전 결과:', result)
-        } catch (markerError) {
-          console.error('마커 충전 오류:', markerError)
-        }
-        
-        // 충전 완료 팝업 표시 (확인 버튼 누르면 새로고침)
+        addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (카드결제)`)
         setPurchaseResult({ success: true, amount: totalMarkers })
       } else {
-        // 결제 실패 또는 취소
         if (paymentResult.error) {
           setPurchaseResult({ success: false, error: paymentResult.error })
-          setTimeout(() => {
-            setPurchaseResult(null)
-          }, 3000)
+          setTimeout(() => setPurchaseResult(null), 3000)
         } else {
-          // 사용자가 결제창을 닫은 경우
           setShowPayment(false)
           setSelectedProduct(null)
         }
       }
     } catch (error) {
-      console.error('결제 오류:', error)
+      console.error('결제 처리 중 오류:', error)
       setPurchasing(false)
       setPurchaseResult({ success: false, error: error.message || '결제 중 오류가 발생했습니다.' })
-      setTimeout(() => {
-        setPurchaseResult(null)
-      }, 3000)
+      setTimeout(() => setPurchaseResult(null), 3000)
     }
   }
 
@@ -530,10 +504,10 @@ export default function Store() {
                   </button>
 
                   <p className="text-xs text-center text-gp-text-secondary mt-3">
-                    {useNativeIAP ? (
+                    {isNative() ? (
                       <span className="flex items-center justify-center gap-1">
                         <Smartphone className="w-3 h-3" />
-                        {isNative() && window.Capacitor?.getPlatform() === 'ios' ? 'Apple Pay' : 'Google Pay'}로 결제됩니다
+                        {isIOS() ? 'Apple Pay' : 'Google Pay'}로 결제됩니다
                       </span>
                     ) : (
                       '신용카드/간편결제로 결제됩니다'

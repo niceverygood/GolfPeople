@@ -66,7 +66,7 @@ export const auth = {
   signInWithKakao: async () => {
     if (!supabase) return notConnected()
     
-    // 네이티브: 중간 페이지를 거쳐 앱으로 복귀 (가장 안정적)
+    // 네이티브 앱: 구글과 동일하게 중간 페이지를 거치는 가장 안정적인 방식 사용
     if (Capacitor.isNativePlatform()) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
@@ -76,10 +76,7 @@ export const auth = {
         },
       })
       if (data?.url) {
-        await Browser.open({
-          url: data.url,
-          windowName: '_self'
-        })
+        await Browser.open({ url: data.url, windowName: '_self' })
       }
       return { data, error }
     }

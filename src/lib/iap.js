@@ -18,8 +18,8 @@ import { Capacitor } from '@capacitor/core'
 import { isNative, isWeb, haptic } from './native'
 
 // RevenueCat API 키 (설정 필요)
-const REVENUECAT_IOS_KEY = 'YOUR_REVENUECAT_IOS_API_KEY'
-const REVENUECAT_ANDROID_KEY = 'YOUR_REVENUECAT_ANDROID_API_KEY'
+const REVENUECAT_IOS_KEY = 'appl_YmCshYUnuNscYlSndLqAOmWbT'
+const REVENUECAT_ANDROID_KEY = 'goog_FswVxUpumVzslOdUBTcSSqcNtbD'
 
 // 상품 ID (App Store Connect / Google Play Console에서 설정)
 export const PRODUCTS = {
@@ -249,6 +249,8 @@ export const shouldUseNativeIAP = () => {
   return isNative() && isConfigured
 }
 
+export const isIAPConfigured = () => isConfigured
+
 export default {
   initializeIAP,
   setUserId,
@@ -258,6 +260,7 @@ export default {
   restorePurchases,
   getCustomerInfo,
   shouldUseNativeIAP,
+  isIAPConfigured,
   PRODUCTS,
   PRODUCT_INFO
 }

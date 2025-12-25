@@ -21,39 +21,56 @@ export const AuthProvider = ({ children }) => {
   // OAuth 딥링크 URL에서 토큰 추출
   const handleOAuthDeepLink = async (url) => {
     console.log('🔗 OAuth Deep Link received:', url)
+    setLoading(true) // 세션 설정 중에는 로딩 표시
     
     try {
-      // URL 파싱 (hash fragment에서 토큰 추출)
-      // 형식: kr.golfpeople.app://auth/callback#access_token=xxx&refresh_token=xxx...
-      const hashIndex = url.indexOf('#')
-      if (hashIndex === -1) {
-        console.log('No hash fragment in URL')
+      // URL에서 해시(#) 또는 쿼리(?) 이후의 토큰 추출 시도
+      let tokenString = ''
+      if (url.includes('#')) {
+        tokenString = url.split('#')[1]
+      } else if (url.includes('?')) {
+        tokenString = url.split('?')[1]
+      }
+      
+      if (!tokenString) {
+        console.log('No token string found in URL')
+        setLoading(false)
         return false
       }
       
-      const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
+      // Intent URL 등에 포함된 부가 정보(#Intent;...) 제거
+      if (tokenString.includes('#')) {
+        tokenString = tokenString.split('#')[0]
+      }
+      
+      const params = new URLSearchParams(tokenString)
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
       
       if (accessToken && refreshToken) {
-        console.log('🔑 Setting session from deep link tokens')
+        console.log('🔑 Setting session from deep link tokens...')
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken
         })
         
         if (error) {
-          console.error('Failed to set session:', error)
+          console.error('Failed to set session:', error.message)
+          setLoading(false)
           return false
         }
         
-        console.log('✅ Session set successfully:', data.user?.email)
+        console.log('✅ Session set successfully for:', data.user?.email)
+        // 세션 설정 후 onAuthStateChange가 호출되면서 user 상태가 업데이트됨
         return true
       }
       
+      console.log('Access token or refresh token missing')
+      setLoading(false)
       return false
     } catch (err) {
       console.error('Error handling OAuth deep link:', err)
+      setLoading(false)
       return false
     }
   }
@@ -100,11 +117,24 @@ export const AuthProvider = ({ children }) => {
 
     // 네이티브 앱에서 딥링크 리스너 설정
     if (isNative()) {
+      // 1. 이미 열려있는 상태에서 딥링크 수신
       deepLinkUnsubscribe = app.onAppUrlOpen(async (data) => {
-        console.log('📱 App URL opened:', data.url)
-        if (data.url.includes('/auth/callback') || data.url.includes('access_token')) {
+        console.log('📱 App URL opened (resume):', data.url)
+        if (data.url.includes('callback') || data.url.includes('access_token')) {
           await handleOAuthDeepLink(data.url)
         }
+      })
+
+      // 2. 앱이 종료된 상태에서 딥링크로 시작된 경우
+      import('@capacitor/app').then(({ App }) => {
+        App.getLaunchUrl().then(async (launchUrl) => {
+          if (launchUrl?.url) {
+            console.log('🚀 App launched with URL:', launchUrl.url)
+            if (launchUrl.url.includes('callback') || launchUrl.url.includes('access_token')) {
+              await handleOAuthDeepLink(launchUrl.url)
+            }
+          }
+        })
       })
     }
 

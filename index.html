@@ -22,7 +22,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="bg-gp-black text-gp-text">
-    <div id="root"></div>
+    <div id="root">
+      <!-- 인라인 스플래시 (React 로드 전 표시) -->
+      <div id="initial-splash" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0A0A0A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      ">
+        <div style="text-align: center;">
+          <!-- 로고 -->
+          <div style="
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 16px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="#0A0A0A">
+              <circle cx="12" cy="12" r="8" stroke="#0A0A0A" stroke-width="2" fill="none"/>
+              <circle cx="12" cy="12" r="3" fill="#0A0A0A"/>
+            </svg>
+          </div>
+          <!-- 타이틀 -->
+          <h1 style="
+            font-size: 30px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0 0 8px 0;
+            font-family: 'Pretendard Variable', -apple-system, sans-serif;
+          ">골프피플</h1>
+          <p style="
+            font-size: 14px;
+            color: #9CA3AF;
+            margin: 0 0 48px 0;
+            font-family: 'Pretendard Variable', -apple-system, sans-serif;
+          ">라운딩 메이트를 만나다</p>
+          <!-- 로딩 스피너 -->
+          <div style="
+            width: 32px;
+            height: 32px;
+            margin: 0 auto;
+            border: 2px solid #D4AF37;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          "></div>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
     <!-- 포트원 V1 SDK (KG이니시스 호환) -->
     <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
     <script type="module" src="/src/main.jsx"></script>

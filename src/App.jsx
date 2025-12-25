@@ -29,6 +29,7 @@ import { MarkerProvider } from './context/MarkerContext'
 // Native
 import { initializeNative, isNative, app, haptic } from './lib/native'
 import { initializePush } from './lib/pushService'
+import { initializeIAP, setUserId as setIAPUserId } from './lib/iap'
 
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
@@ -43,6 +44,8 @@ function AppContent() {
   useEffect(() => {
     // 네이티브 기능 초기화
     initializeNative()
+    // 인앱 결제 초기화 (게스트 모드로 우선 초기화)
+    initializeIAP()
     
     // 스플래시 화면 2초 후 종료
     const timer = setTimeout(() => setShowSplash(false), 2000)
@@ -72,10 +75,11 @@ function AppContent() {
     }
   }, [profile])
   
-  // 로그인 후 푸시 알림 초기화
+  // 로그인 후 푸시 및 인앱결제 사용자 식별자 설정
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       initializePush(user.id)
+      setIAPUserId(user.id)
     }
   }, [isAuthenticated, user?.id])
 

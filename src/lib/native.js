@@ -235,12 +235,10 @@ export const pushNotifications = {
   requestPermission: async () => {
     if (!isNative()) return { granted: false }
     try {
+      // Firebase 설정(google-services.json)이 없으면 PushNotifications.register()에서 크래시가 발생합니다.
+      // 당장 푸시가 필요 없으므로 권한 요청만 하고 등록 과정은 생략합니다.
       const permission = await PushNotifications.requestPermissions()
-      if (permission.receive === 'granted') {
-        await PushNotifications.register()
-        return { granted: true }
-      }
-      return { granted: false }
+      return { granted: permission.receive === 'granted' }
     } catch (e) {
       console.log('Push permission error:', e)
       return { granted: false, error: e.message }
@@ -261,33 +259,22 @@ export const pushNotifications = {
   
   // 토큰 수신 리스너
   onRegistration: (callback) => {
-    if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('registration', (token) => {
-      console.log('Push registration token:', token.value)
-      callback(token.value)
-    })
-    return () => listener.remove()
+    return () => {}
   },
   
   // 푸시 알림 수신 리스너 (앱이 열려있을 때)
   onPushReceived: (callback) => {
-    if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('pushNotificationReceived', callback)
-    return () => listener.remove()
+    return () => {}
   },
   
   // 푸시 알림 탭 리스너
   onPushActionPerformed: (callback) => {
-    if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('pushNotificationActionPerformed', callback)
-    return () => listener.remove()
+    return () => {}
   },
   
   // 에러 리스너
   onRegistrationError: (callback) => {
-    if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('registrationError', callback)
-    return () => listener.remove()
+    return () => {}
   }
 }
 
@@ -423,4 +410,5 @@ export default {
   localNotifications,
   initializeNative
 }
+
 

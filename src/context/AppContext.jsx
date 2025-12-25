@@ -11,6 +11,37 @@ export function AppProvider({ children }) {
   const [savedJoins, setSavedJoins] = useState([])
   const [proposals, setProposals] = useState([]) // 보낸 제안들
   
+  // 지난 카드 (뒤집어본 프로필들 - 기존 기능 유지하되 추천 기록 위주로 변경 가능)
+  const [pastCards, setPastCards] = useState(() => {
+    const saved = localStorage.getItem('gp_past_cards')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // 일별 추천 기록 저장 (7일 보관)
+  const [recommendationHistory, setRecommendationHistory] = useState(() => {
+    const saved = localStorage.getItem('gp_recommendation_history')
+    return saved ? JSON.parse(saved) : {}
+  })
+
+  // 오늘의 추천 생성 및 저장
+  const saveDailyRecommendation = (dateKey, recommendations) => {
+    setRecommendationHistory(prev => {
+      const newHistory = { ...prev, [dateKey]: recommendations }
+      
+      // 7일 지난 데이터 삭제 (문자열 비교로 정렬 가능하도록 YYYY-MM-DD 형식 권장)
+      const dates = Object.keys(newHistory).sort().reverse()
+      if (dates.length > 7) {
+        const updatedHistory = { ...newHistory }
+        dates.slice(7).forEach(d => delete updatedHistory[d])
+        localStorage.setItem('gp_recommendation_history', JSON.stringify(updatedHistory))
+        return updatedHistory
+      }
+      
+      localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
+      return newHistory
+    })
+  }
+
   // 친구 요청 (내가 보낸)
   const [friendRequests, setFriendRequests] = useState([])
   
@@ -285,6 +316,23 @@ export function AppProvider({ children }) {
     return newJoin
   }
   
+  // 지난 카드 추가
+  const addPastCard = (user) => {
+    setPastCards(prev => {
+      // 이미 목록에 있는지 확인 (중복 제거)
+      if (prev.some(c => c.id === user.id)) {
+        // 이미 있으면 순서만 맨 앞으로
+        const filtered = prev.filter(c => c.id !== user.id)
+        const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...filtered]
+        localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50))) // 최대 50개만 저장
+        return updated
+      }
+      const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...prev]
+      localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50)))
+      return updated
+    })
+  }
+
   // 내 조인 삭제
   const deleteMyJoin = (joinId) => {
     const updated = myJoins.filter(j => j.id !== joinId)
@@ -299,6 +347,8 @@ export function AppProvider({ children }) {
     likedUsers,
     savedJoins,
     proposals,
+    pastCards,
+    recommendationHistory,
     friendRequests,
     receivedFriendRequests,
     joinApplications,
@@ -322,6 +372,8 @@ export function AppProvider({ children }) {
     updateProfile,
     createJoin,
     deleteMyJoin,
+    addPastCard,
+    saveDailyRecommendation,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     deleteNotification,
