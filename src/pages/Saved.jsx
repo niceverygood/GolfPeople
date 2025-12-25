@@ -319,6 +319,7 @@ export default function Saved({ onPropose }) {
                       request={request}
                       onAccept={() => acceptFriendRequest(request.id)}
                       onReject={() => rejectFriendRequest(request.id)}
+                      onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
                 )}
@@ -340,6 +341,7 @@ export default function Saved({ onPropose }) {
                       key={request.id}
                       request={request}
                       onCancel={() => cancelFriendRequest(request.id)}
+                      onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
                 )}
@@ -372,6 +374,7 @@ export default function Saved({ onPropose }) {
                       request={request}
                       onAccept={() => acceptJoinRequest(request.id)}
                       onReject={() => rejectJoinRequest(request.id)}
+                      onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
                 )}
@@ -431,6 +434,7 @@ export default function Saved({ onPropose }) {
                             <MatchedFriendCard
                               key={request.id}
                               request={request}
+                              onProfileClick={(userId) => navigate(`/user/${userId}`)}
                             />
                           ))}
                         </Section>
@@ -447,6 +451,7 @@ export default function Saved({ onPropose }) {
                             <MatchedFriendCard
                               key={request.id}
                               request={request}
+                              onProfileClick={(userId) => navigate(`/user/${userId}`)}
                             />
                           ))}
                         </Section>
@@ -479,6 +484,7 @@ export default function Saved({ onPropose }) {
                               key={request.id}
                               request={request}
                               type="received"
+                              onProfileClick={(userId) => navigate(`/user/${userId}`)}
                             />
                           ))}
                         </Section>
@@ -497,6 +503,7 @@ export default function Saved({ onPropose }) {
                               request={application}
                               type="sent"
                               onClick={() => navigate(`/join/${application.joinId}`)}
+                              onProfileClick={(userId) => navigate(`/user/${userId}`)}
                             />
                           ))}
                         </Section>
@@ -636,7 +643,7 @@ function SavedJoinCard({ join, onRemove, onClick }) {
 }
 
 // 내가 보낸 친구 요청 카드 (대기중)
-function SentFriendCard({ request, onCancel }) {
+function SentFriendCard({ request, onCancel, onProfileClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -648,11 +655,16 @@ function SentFriendCard({ request, onCancel }) {
       className="bg-gp-card rounded-2xl p-4"
     >
       <div className="flex items-start gap-4">
-        <img
-          src={request.userPhoto}
-          alt={request.userName}
-          className="w-14 h-14 rounded-xl object-cover"
-        />
+        <button
+          onClick={() => onProfileClick && onProfileClick(request.userId)}
+          className="flex-shrink-0"
+        >
+          <img
+            src={request.userPhoto}
+            alt={request.userName}
+            className="w-14 h-14 rounded-xl object-cover hover:ring-2 hover:ring-gp-gold transition-all"
+          />
+        </button>
         
         <div className="flex-1">
           <div className="flex items-start justify-between mb-1">
@@ -690,7 +702,7 @@ function SentFriendCard({ request, onCancel }) {
 }
 
 // 내가 받은 친구 요청 카드 (대기중)
-function ReceivedFriendCard({ request, onAccept, onReject }) {
+function ReceivedFriendCard({ request, onAccept, onReject, onProfileClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -702,11 +714,16 @@ function ReceivedFriendCard({ request, onAccept, onReject }) {
       className="bg-gp-card rounded-2xl p-4"
     >
       <div className="flex items-start gap-4">
-        <img
-          src={request.userPhoto}
-          alt={request.userName}
-          className="w-14 h-14 rounded-xl object-cover"
-        />
+        <button
+          onClick={() => onProfileClick && onProfileClick(request.userId)}
+          className="flex-shrink-0"
+        >
+          <img
+            src={request.userPhoto}
+            alt={request.userName}
+            className="w-14 h-14 rounded-xl object-cover hover:ring-2 hover:ring-gp-gold transition-all"
+          />
+        </button>
         
         <div className="flex-1">
           <div className="flex items-start justify-between mb-1">
@@ -752,7 +769,7 @@ function ReceivedFriendCard({ request, onAccept, onReject }) {
 }
 
 // 매칭완료 친구 카드
-function MatchedFriendCard({ request }) {
+function MatchedFriendCard({ request, onProfileClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -764,11 +781,16 @@ function MatchedFriendCard({ request }) {
       className="bg-gp-card rounded-2xl p-4"
     >
       <div className="flex items-start gap-4">
-        <img
-          src={request.userPhoto}
-          alt={request.userName}
-          className="w-14 h-14 rounded-xl object-cover border-2 border-gp-green"
-        />
+        <button
+          onClick={() => onProfileClick && onProfileClick(request.userId)}
+          className="flex-shrink-0"
+        >
+          <img
+            src={request.userPhoto}
+            alt={request.userName}
+            className="w-14 h-14 rounded-xl object-cover border-2 border-gp-green hover:ring-2 hover:ring-gp-gold transition-all"
+          />
+        </button>
         
         <div className="flex-1">
           <div className="flex items-start justify-between mb-1">
@@ -870,7 +892,7 @@ function SentJoinCard({ application, onCancel, onClick }) {
 }
 
 // 내가 받은 조인 신청 카드 (대기중)
-function ReceivedJoinCard({ request, onAccept, onReject }) {
+function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -883,11 +905,16 @@ function ReceivedJoinCard({ request, onAccept, onReject }) {
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <img
-            src={request.userPhoto}
-            alt={request.userName}
-            className="w-12 h-12 rounded-xl object-cover"
-          />
+          <button
+            onClick={() => onProfileClick && onProfileClick(request.userId)}
+            className="flex-shrink-0"
+          >
+            <img
+              src={request.userPhoto}
+              alt={request.userName}
+              className="w-12 h-12 rounded-xl object-cover hover:ring-2 hover:ring-gp-gold transition-all"
+            />
+          </button>
           <div>
             <h3 className="font-semibold">{request.userName}</h3>
             <div className="flex items-center gap-2 text-gp-text-secondary text-xs">
@@ -936,7 +963,7 @@ function ReceivedJoinCard({ request, onAccept, onReject }) {
 }
 
 // 매칭완료 조인 카드
-function MatchedJoinCard({ request, type, onClick }) {
+function MatchedJoinCard({ request, type, onClick, onProfileClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -950,11 +977,20 @@ function MatchedJoinCard({ request, type, onClick }) {
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <img
-            src={type === 'sent' ? request.hostPhoto : request.userPhoto}
-            alt={type === 'sent' ? request.hostName : request.userName}
-            className="w-12 h-12 rounded-xl object-cover border-2 border-gp-green"
-          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              const userId = type === 'sent' ? request.hostId : request.userId
+              onProfileClick && onProfileClick(userId)
+            }}
+            className="flex-shrink-0"
+          >
+            <img
+              src={type === 'sent' ? request.hostPhoto : request.userPhoto}
+              alt={type === 'sent' ? request.hostName : request.userName}
+              className="w-12 h-12 rounded-xl object-cover border-2 border-gp-green hover:ring-2 hover:ring-gp-gold transition-all"
+            />
+          </button>
           <div>
             <h3 className="font-semibold">
               {type === 'sent' ? request.joinTitle : request.userName}
