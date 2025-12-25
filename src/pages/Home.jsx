@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, Sparkles, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus } from 'lucide-react'
+import { MapPin, Sparkles, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 
@@ -403,9 +403,9 @@ function PastRecommendations({ history, users, navigate }) {
                     alt={user.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   
-                  {/* D-Day 배지 추가 */}
+                  {/* D-Day 배지 */}
                   <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[10px] font-black shadow-lg z-10 ${
                     remainingDays <= 1 
                       ? 'bg-red-500 text-white animate-pulse' 
@@ -413,6 +413,14 @@ function PastRecommendations({ history, users, navigate }) {
                   }`}>
                     {dDayText}
                   </div>
+                  
+                  {/* 스코어 배지 (우상단) */}
+                  {user.scoreStats && (
+                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-lg flex items-center gap-1">
+                      <Target className="w-2.5 h-2.5 text-gp-gold" />
+                      <span className="text-[9px] font-bold text-white">{user.scoreStats.averageScore}</span>
+                    </div>
+                  )}
 
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="font-bold text-white text-sm">
@@ -422,6 +430,26 @@ function PastRecommendations({ history, users, navigate }) {
                       <MapPin className="w-2.5 h-2.5" />
                       {user.region}
                     </p>
+                    
+                    {/* 스코어 정보 */}
+                    {user.scoreStats && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[9px] bg-gp-gold/20 text-gp-gold px-1 py-0.5 rounded font-medium">
+                          BEST {user.scoreStats.bestScore}
+                        </span>
+                        <span className={`text-[9px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5 ${
+                          user.scoreStats.recentTrend === 'improving' 
+                            ? 'bg-gp-green/20 text-gp-green' 
+                            : user.scoreStats.recentTrend === 'declining'
+                            ? 'bg-red-500/20 text-red-400'
+                            : 'bg-white/10 text-white/60'
+                        }`}>
+                          {user.scoreStats.recentTrend === 'improving' && <TrendingUp className="w-2 h-2" />}
+                          {user.scoreStats.recentTrend === 'declining' && <TrendingDown className="w-2 h-2" />}
+                          {user.scoreStats.recentTrend === 'stable' && <Minus className="w-2 h-2" />}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -528,19 +556,51 @@ function FlipCard({ card, isUnlocked, onClick }) {
                 alt={card.user.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+              
+              {/* 스코어 배지 (좌상단) */}
+              {card.user.scoreStats && (
+                <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
+                  <Target className="w-3 h-3 text-gp-gold" />
+                  <span className="text-[10px] font-bold text-white">AVG {card.user.scoreStats.averageScore}</span>
+                </div>
+              )}
+              
+              {/* 탭 힌트 */}
+              <div className="absolute top-2 right-2 bg-black/50 px-2 py-1 rounded-full">
+                <span className="text-[10px] text-white/80">탭하여 상세</span>
+              </div>
+              
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="font-bold text-white">
                   {card.user.name}, {card.user.age}
                 </p>
-                <p className="text-xs text-white/70 flex items-center gap-1">
+                <p className="text-xs text-white/70 flex items-center gap-1 mb-1">
                   <MapPin className="w-3 h-3" />
                   {card.user.region}
                 </p>
-              </div>
-              {/* 탭 힌트 */}
-              <div className="absolute top-2 right-2 bg-black/50 px-2 py-1 rounded-full">
-                <span className="text-[10px] text-white/80">탭하여 상세</span>
+                
+                {/* 스코어 정보 */}
+                {card.user.scoreStats && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] bg-gp-gold/20 text-gp-gold px-1.5 py-0.5 rounded font-medium">
+                      베스트 {card.user.scoreStats.bestScore}
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5 ${
+                      card.user.scoreStats.recentTrend === 'improving' 
+                        ? 'bg-gp-green/20 text-gp-green' 
+                        : card.user.scoreStats.recentTrend === 'declining'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-white/10 text-white/60'
+                    }`}>
+                      {card.user.scoreStats.recentTrend === 'improving' && <TrendingUp className="w-2.5 h-2.5" />}
+                      {card.user.scoreStats.recentTrend === 'declining' && <TrendingDown className="w-2.5 h-2.5" />}
+                      {card.user.scoreStats.recentTrend === 'stable' && <Minus className="w-2.5 h-2.5" />}
+                      {card.user.scoreStats.recentTrend === 'improving' ? '성장중' : 
+                       card.user.scoreStats.recentTrend === 'declining' ? '슬럼프' : '유지중'}
+                    </span>
+                  </div>
+                )}
               </div>
             </>
           )}

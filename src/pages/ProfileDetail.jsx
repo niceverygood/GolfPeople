@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban } from 'lucide-react'
+import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 export default function ProfileDetail() {
@@ -217,8 +217,55 @@ export default function ProfileDetail() {
           </p>
         </div>
         
-        {/* 라운딩 횟수 */}
-        {user.roundCount > 0 && (
+        {/* 스코어 기록 */}
+        {user.scoreStats && (
+          <div className="mb-6">
+            <h3 className="text-sm text-gp-text-secondary mb-3 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              스코어 기록
+            </h3>
+            <div className="bg-gradient-to-r from-gp-card to-gp-card/50 rounded-xl p-4 border border-gp-border">
+              {/* 메인 통계 */}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gp-gold">{user.scoreStats.averageScore}</p>
+                  <p className="text-xs text-gp-text-secondary">평균 스코어</p>
+                </div>
+                <div className="text-center border-x border-gp-border">
+                  <p className="text-2xl font-bold text-gp-green">{user.scoreStats.bestScore}</p>
+                  <p className="text-xs text-gp-text-secondary">베스트</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{user.scoreStats.handicap?.toFixed(1) || '-'}</p>
+                  <p className="text-xs text-gp-text-secondary">핸디캡</p>
+                </div>
+              </div>
+              
+              {/* 하단 정보 */}
+              <div className="flex items-center justify-between pt-3 border-t border-gp-border">
+                <div className="flex items-center gap-2 text-sm text-gp-text-secondary">
+                  <span>🏌️ {user.scoreStats.totalRounds}회 라운딩</span>
+                </div>
+                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                  user.scoreStats.recentTrend === 'improving' 
+                    ? 'bg-gp-green/20 text-gp-green' 
+                    : user.scoreStats.recentTrend === 'declining'
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-gp-border text-gp-text-secondary'
+                }`}>
+                  {user.scoreStats.recentTrend === 'improving' && <TrendingUp className="w-3 h-3" />}
+                  {user.scoreStats.recentTrend === 'declining' && <TrendingDown className="w-3 h-3" />}
+                  {user.scoreStats.recentTrend === 'stable' && <Minus className="w-3 h-3" />}
+                  {user.scoreStats.recentTrend === 'improving' ? '성장 중' : 
+                   user.scoreStats.recentTrend === 'declining' ? '슬럼프' : '유지 중'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 라운딩 횟수 (스코어 통계 없을 때만) */}
+        {!user.scoreStats && user.roundCount > 0 && (
           <div className="bg-gp-gold/10 rounded-xl p-4 mb-6">
             <p className="text-gp-gold font-medium flex items-center gap-2">
               🏌️ 골프피플에서 {user.roundCount}회 라운딩 완료

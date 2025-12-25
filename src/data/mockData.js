@@ -14,6 +14,13 @@ export const mockUsers = [
     intro: "골프 3년차, 같이 편하게 라운딩할 분 찾습니다",
     roundCount: 12,
     verified: true,
+    scoreStats: {
+      totalRounds: 12,
+      averageScore: 92,
+      bestScore: 86,
+      handicap: 18.5,
+      recentTrend: 'improving', // 'improving', 'stable', 'declining'
+    },
   },
   {
     id: 2,
@@ -29,6 +36,13 @@ export const mockUsers = [
     intro: "스크린에서 필드로 넘어온 초보입니다 🏌️‍♀️",
     roundCount: 5,
     verified: true,
+    scoreStats: {
+      totalRounds: 5,
+      averageScore: 108,
+      bestScore: 102,
+      handicap: 32.4,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 3,
@@ -44,6 +58,13 @@ export const mockUsers = [
     intro: "주말마다 필드 나가는 골프광입니다",
     roundCount: 48,
     verified: true,
+    scoreStats: {
+      totalRounds: 48,
+      averageScore: 87,
+      bestScore: 79,
+      handicap: 12.8,
+      recentTrend: 'stable',
+    },
   },
   {
     id: 4,
@@ -59,6 +80,13 @@ export const mockUsers = [
     intro: "함께 성장할 골프메이트 찾아요",
     roundCount: 8,
     verified: false,
+    scoreStats: {
+      totalRounds: 8,
+      averageScore: 96,
+      bestScore: 91,
+      handicap: 22.1,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 5,
@@ -74,6 +102,13 @@ export const mockUsers = [
     intro: "싱글 목표로 열심히 치는 중입니다",
     roundCount: 120,
     verified: true,
+    scoreStats: {
+      totalRounds: 120,
+      averageScore: 81,
+      bestScore: 74,
+      handicap: 7.2,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 6,
@@ -89,6 +124,13 @@ export const mockUsers = [
     intro: "패션과 골프를 사랑하는 인플루언서 지아입니다 💖",
     roundCount: 15,
     verified: true,
+    scoreStats: {
+      totalRounds: 15,
+      averageScore: 95,
+      bestScore: 89,
+      handicap: 20.8,
+      recentTrend: 'stable',
+    },
   },
   {
     id: 7,
@@ -104,6 +146,13 @@ export const mockUsers = [
     intro: "필드 위에서의 진지한 승부를 즐겨요 ⛳️",
     roundCount: 85,
     verified: true,
+    scoreStats: {
+      totalRounds: 85,
+      averageScore: 88,
+      bestScore: 80,
+      handicap: 13.6,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 8,
@@ -119,6 +168,13 @@ export const mockUsers = [
     intro: "명랑 골프가 제일 좋아요! 같이 예쁜 사진 찍어요 ✨",
     roundCount: 10,
     verified: true,
+    scoreStats: {
+      totalRounds: 10,
+      averageScore: 103,
+      bestScore: 98,
+      handicap: 28.2,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 9,
@@ -134,6 +190,13 @@ export const mockUsers = [
     intro: "전국 골프장 투어 중! 매너 있는 라운딩 원해요 🍷",
     roundCount: 150,
     verified: true,
+    scoreStats: {
+      totalRounds: 150,
+      averageScore: 82,
+      bestScore: 75,
+      handicap: 8.4,
+      recentTrend: 'stable',
+    },
   },
   {
     id: 10,
@@ -149,6 +212,13 @@ export const mockUsers = [
     intro: "골린이 1년차, 필드 경험 쌓고 싶어요 🌱",
     roundCount: 4,
     verified: true,
+    scoreStats: {
+      totalRounds: 4,
+      averageScore: 115,
+      bestScore: 110,
+      handicap: 38.5,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 11,
@@ -164,6 +234,13 @@ export const mockUsers = [
     intro: "골프는 멘탈 스포츠! 즐겁게 운동하실 분?",
     roundCount: 42,
     verified: true,
+    scoreStats: {
+      totalRounds: 42,
+      averageScore: 91,
+      bestScore: 84,
+      handicap: 16.8,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 12,
@@ -179,6 +256,13 @@ export const mockUsers = [
     intro: "노을 질 때 라운딩하는 게 제일 행복해요 🌅",
     roundCount: 28,
     verified: true,
+    scoreStats: {
+      totalRounds: 28,
+      averageScore: 98,
+      bestScore: 92,
+      handicap: 23.5,
+      recentTrend: 'stable',
+    },
   },
   {
     id: 13,
@@ -194,6 +278,13 @@ export const mockUsers = [
     intro: "매너 골프 지향합니다. 같이 성장해요!",
     roundCount: 110,
     verified: true,
+    scoreStats: {
+      totalRounds: 110,
+      averageScore: 85,
+      bestScore: 78,
+      handicap: 11.2,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 14,
@@ -209,6 +300,13 @@ export const mockUsers = [
     intro: "연습장에서 살다시피 하는 열혈 골퍼입니다!",
     roundCount: 12,
     verified: true,
+    scoreStats: {
+      totalRounds: 12,
+      averageScore: 106,
+      bestScore: 99,
+      handicap: 30.2,
+      recentTrend: 'improving',
+    },
   },
   {
     id: 15,
@@ -224,6 +322,13 @@ export const mockUsers = [
     intro: "필드 룩 완성은 자신감! 즐겁게 쳐요 👑",
     roundCount: 35,
     verified: true,
+    scoreStats: {
+      totalRounds: 35,
+      averageScore: 94,
+      bestScore: 88,
+      handicap: 19.6,
+      recentTrend: 'stable',
+    },
   },
 ];
 
