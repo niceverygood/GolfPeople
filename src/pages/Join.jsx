@@ -297,14 +297,6 @@ export default function Join() {
                 <span className="text-gp-text-secondary text-sm">가 사용됩니다</span>
               </p>
               
-              <div className="bg-gp-dark rounded-xl p-3 mb-4 flex items-center justify-between">
-                <span className="text-sm text-gp-text-secondary">내 마커 잔액</span>
-                <div className="flex items-center gap-1">
-                  <MarkerIcon className="w-4 h-4" />
-                  <span className="font-bold text-gp-gold">{balance}</span>
-                </div>
-              </div>
-              
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowMarkerConfirm(null)}
