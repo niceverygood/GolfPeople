@@ -3,6 +3,21 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, Calendar, Users, Plus, Bookmark, Trash2, Edit2, MoreVertical } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useMarker } from '../context/MarkerContext'
+
+// 마커 아이콘
+const MarkerIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="url(#markerGradientJoin)" />
+    <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D" />
+    <defs>
+      <linearGradient id="markerGradientJoin" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#D4AF37" />
+        <stop offset="1" stopColor="#B8962E" />
+      </linearGradient>
+    </defs>
+  </svg>
+)
 
 const REGIONS = ['전체', '서울', '경기', '인천']
 
@@ -15,9 +30,11 @@ const TABS = [
 export default function Join() {
   const navigate = useNavigate()
   const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin } = useApp()
+  const { balance, addMarkers } = useMarker()
   const [selectedRegion, setSelectedRegion] = useState('전체')
   const [activeTab, setActiveTab] = useState('all')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
+  const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId, userName }
 
   // 모든 조인 필터링
   const filteredJoins = joins.filter(join => {
@@ -43,6 +60,45 @@ export default function Join() {
   const handleDelete = (joinId) => {
     deleteMyJoin(joinId)
     setShowDeleteConfirm(null)
+  }
+  
+  // 프로필 사진 클릭 - 마커 확인 모달 표시
+  const handleProfileClick = (userId) => {
+    // 이미 본 프로필인지 확인 (localStorage에 저장)
+    const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
+    if (viewedProfiles.includes(userId)) {
+      // 이미 본 프로필은 무료로 이동
+      navigate(`/user/${userId}`)
+      return
+    }
+    
+    setShowMarkerConfirm({ userId })
+  }
+  
+  // 마커 사용 확인 후 프로필 보기
+  const confirmViewProfile = async () => {
+    if (!showMarkerConfirm) return
+    
+    if (balance < 3) {
+      alert('마커가 부족합니다. 스토어에서 충전해 주세요.')
+      setShowMarkerConfirm(null)
+      navigate('/store')
+      return
+    }
+    
+    // 마커 3개 차감
+    await addMarkers(-3, 'spend', '조인 프로필 열람')
+    
+    // 본 프로필 목록에 추가
+    const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
+    if (!viewedProfiles.includes(showMarkerConfirm.userId)) {
+      viewedProfiles.push(showMarkerConfirm.userId)
+      localStorage.setItem('gp_viewed_profiles', JSON.stringify(viewedProfiles))
+    }
+    
+    // 프로필 페이지로 이동
+    navigate(`/user/${showMarkerConfirm.userId}`)
+    setShowMarkerConfirm(null)
   }
 
   return (
@@ -121,6 +177,7 @@ export default function Join() {
                     isSaved={savedJoins.includes(join.id)}
                     onSave={handleSave}
                     onClick={() => navigate(`/join/${join.id}`)}
+                    onProfileClick={handleProfileClick}
                   />
                 ))
               )}
@@ -207,12 +264,77 @@ export default function Join() {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* 마커 사용 확인 모달 */}
+      <AnimatePresence>
+        {showMarkerConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setShowMarkerConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gp-card rounded-2xl p-6 mx-6 max-w-sm w-full"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center">
+                  <MarkerIcon className="w-10 h-10" />
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-bold mb-2 text-center">프로필 열람</h3>
+              <p className="text-gp-text-secondary mb-2 text-center">
+                이 골퍼의 프로필을 확인하시겠습니까?
+              </p>
+              <p className="text-center mb-6">
+                <span className="text-gp-gold font-bold">마커 3개</span>
+                <span className="text-gp-text-secondary text-sm">가 사용됩니다</span>
+              </p>
+              
+              <div className="bg-gp-dark rounded-xl p-3 mb-4 flex items-center justify-between">
+                <span className="text-sm text-gp-text-secondary">내 마커 잔액</span>
+                <div className="flex items-center gap-1">
+                  <MarkerIcon className="w-4 h-4" />
+                  <span className="font-bold text-gp-gold">{balance}</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowMarkerConfirm(null)}
+                  className="flex-1 py-3 rounded-xl bg-gp-border font-semibold"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmViewProfile}
+                  disabled={balance < 3}
+                  className={`flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 ${
+                    balance >= 3 
+                      ? 'btn-gold' 
+                      : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
+                  }`}
+                >
+                  <MarkerIcon className="w-4 h-4" />
+                  프로필 보기
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 // 조인 카드 (모든 조인)
-function JoinCard({ join, index, isSaved, onSave, onClick }) {
+function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -223,11 +345,22 @@ function JoinCard({ join, index, isSaved, onSave, onClick }) {
     >
       {/* 상단: 주최자 정보 */}
       <div className="flex items-center gap-3 p-4 border-b border-gp-border">
-        <img
-          src={join.hostPhoto}
-          alt={join.hostName}
-          className="w-12 h-12 rounded-full object-cover"
-        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onProfileClick(join.hostId)
+          }}
+          className="relative group"
+        >
+          <img
+            src={join.hostPhoto}
+            alt={join.hostName}
+            className="w-12 h-12 rounded-full object-cover ring-2 ring-transparent group-hover:ring-gp-gold transition-all"
+          />
+          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gp-dark rounded-full flex items-center justify-center border border-gp-border">
+            <MarkerIcon className="w-3 h-3" />
+          </div>
+        </button>
         <div className="flex-1">
           <h3 className="font-semibold">{join.title}</h3>
           <p className="text-gp-text-secondary text-sm">{join.hostName} 주최</p>
@@ -270,12 +403,20 @@ function JoinCard({ join, index, isSaved, onSave, onClick }) {
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {join.participants.slice(0, 3).map((p) => (
-                <img
+                <button
                   key={p.id}
-                  src={p.photo}
-                  alt={p.name}
-                  className="w-8 h-8 rounded-full border-2 border-gp-card object-cover"
-                />
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onProfileClick(p.id)
+                  }}
+                  className="relative group"
+                >
+                  <img
+                    src={p.photo}
+                    alt={p.name}
+                    className="w-8 h-8 rounded-full border-2 border-gp-card object-cover group-hover:border-gp-gold transition-all"
+                  />
+                </button>
               ))}
             </div>
             <span className="text-sm">
