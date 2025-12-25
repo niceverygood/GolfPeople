@@ -16,6 +16,8 @@ import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import PhoneVerification from './pages/PhoneVerification'
 import Store from './pages/Store'
+import ScoreRecord from './pages/ScoreRecord'
+import ScoreStats from './pages/ScoreStats'
 
 // Components
 import TabBar from './components/TabBar'
@@ -144,6 +146,8 @@ function AppContent() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/user/:userId" element={<ProfileDetail />} />
               <Route path="/store" element={<Store />} />
+              <Route path="/score" element={<ScoreRecord />} />
+              <Route path="/score-stats" element={<ScoreStats />} />
               <Route path="/phone-verify" element={<PhoneVerification />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />

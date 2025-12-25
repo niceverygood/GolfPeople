@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut, 
-  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone
+  Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone,
+  TrendingUp, Target
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
+import { db } from '../lib/supabase'
 
 // 지역 옵션
 const REGIONS = ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주', '강원', '충청', '전라', '경상']
@@ -99,6 +101,7 @@ export default function Profile() {
   const { user, profile: authProfile, isAuthenticated, signOut, loading: authLoading } = useAuth()
   const { balance } = useMarker()
   const [profile, setProfile] = useState(null)
+  const [scoreStats, setScoreStats] = useState(null)
   
   // 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)
@@ -117,6 +120,17 @@ export default function Profile() {
       }
     }
   }, [authProfile])
+
+  // 스코어 통계 로드
+  useEffect(() => {
+    const loadScoreStats = async () => {
+      if (user?.id) {
+        const { data } = await db.scores.getStats(user.id)
+        if (data) setScoreStats(data)
+      }
+    }
+    loadScoreStats()
+  }, [user?.id])
 
   const stats = [
     { label: '관심받음', value: 23 },
@@ -284,6 +298,58 @@ export default function Profile() {
             <Plus className="w-4 h-4" />
             <span>충전</span>
           </div>
+        </motion.button>
+      </div>
+
+      {/* 스코어 기록 카드 */}
+      <div className="px-6 mt-4">
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          onClick={() => navigate('/score')}
+          className="w-full bg-gradient-to-r from-green-500/10 to-emerald-600/5 rounded-2xl p-4 border border-green-500/20 hover:border-green-500/40 transition-all"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <Target className="w-5 h-5 text-green-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-white">스코어 기록</p>
+                <p className="text-xs text-gp-text-secondary">나의 성장 기록하기</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
+          </div>
+          
+          {scoreStats ? (
+            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-green-500/10">
+              <div className="text-center">
+                <p className="text-lg font-bold text-green-400">{scoreStats.totalRounds}</p>
+                <p className="text-[10px] text-gp-text-secondary">라운드</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-gp-gold">{scoreStats.avgScore}</p>
+                <p className="text-[10px] text-gp-text-secondary">평균</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-purple-400">{scoreStats.bestScore}</p>
+                <p className="text-[10px] text-gp-text-secondary">베스트</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-blue-400">
+                  {scoreStats.handicap !== null ? scoreStats.handicap : '-'}
+                </p>
+                <p className="text-[10px] text-gp-text-secondary">핸디캡</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 pt-3 border-t border-green-500/10 text-gp-text-secondary text-sm">
+              <TrendingUp className="w-4 h-4" />
+              <span>첫 라운딩 스코어를 기록해보세요!</span>
+            </div>
+          )}
         </motion.button>
       </div>
 

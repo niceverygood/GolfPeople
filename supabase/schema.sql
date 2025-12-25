@@ -603,3 +603,50 @@ CREATE TRIGGER push_tokens_updated_at
   BEFORE UPDATE ON push_tokens
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- =============================================
+-- 20. 스코어 기록 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS scores (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  course_name VARCHAR(100) NOT NULL,
+  course_region VARCHAR(50),
+  total_score INTEGER NOT NULL, -- 총 스코어
+  front_nine INTEGER, -- 전반 스코어
+  back_nine INTEGER, -- 후반 스코어
+  par INTEGER DEFAULT 72, -- 코스 파
+  putts INTEGER, -- 총 퍼팅 수
+  fairway_hits INTEGER, -- 페어웨이 안착 수
+  greens_in_regulation INTEGER, -- GIR 수
+  weather VARCHAR(20), -- 'sunny', 'cloudy', 'rainy', 'windy'
+  note TEXT, -- 메모
+  partners TEXT[] DEFAULT '{}', -- 함께 라운딩한 파트너들
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scores_user ON scores(user_id);
+CREATE INDEX IF NOT EXISTS idx_scores_date ON scores(date DESC);
+CREATE INDEX IF NOT EXISTS idx_scores_course ON scores(course_name);
+
+-- 스코어 RLS
+ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "본인 스코어만 조회" ON scores
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 스코어만 생성" ON scores
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "본인 스코어만 수정" ON scores
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "본인 스코어만 삭제" ON scores
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- 스코어 updated_at 트리거
+CREATE TRIGGER scores_updated_at
+  BEFORE UPDATE ON scores
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+

@@ -479,6 +479,111 @@ export const db = {
       return { data, error }
     },
   },
+
+  scores: {
+    create: async (scoreData) => {
+      if (!supabase) return notConnected()
+      const { data, error } = await supabase
+        .from('scores')
+        .insert(scoreData)
+        .select()
+        .single()
+      return { data, error }
+    },
+
+    getAll: async (userId) => {
+      if (!supabase) return { data: [], error: null }
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false })
+      return { data, error }
+    },
+
+    get: async (scoreId) => {
+      if (!supabase) return notConnected()
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('id', scoreId)
+        .single()
+      return { data, error }
+    },
+
+    update: async (scoreId, updates) => {
+      if (!supabase) return notConnected()
+      const { data, error } = await supabase
+        .from('scores')
+        .update(updates)
+        .eq('id', scoreId)
+        .select()
+        .single()
+      return { data, error }
+    },
+
+    delete: async (scoreId) => {
+      if (!supabase) return notConnectedVoid()
+      const { error } = await supabase.from('scores').delete().eq('id', scoreId)
+      return { error }
+    },
+
+    getStats: async (userId) => {
+      if (!supabase) return { data: null, error: null }
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: true })
+      
+      if (error || !data || data.length === 0) {
+        return { data: null, error }
+      }
+
+      // 통계 계산
+      const totalRounds = data.length
+      const scores = data.map(s => s.total_score)
+      const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / totalRounds)
+      const bestScore = Math.min(...scores)
+      const recentScores = data.slice(-10) // 최근 10라운드
+      
+      // 핸디캡 계산 (최근 20라운드 중 상위 10개 평균 - 72)
+      const recent20 = data.slice(-20).map(s => s.total_score - (s.par || 72))
+      recent20.sort((a, b) => a - b)
+      const best10 = recent20.slice(0, Math.min(10, recent20.length))
+      const handicap = best10.length > 0 
+        ? Math.round((best10.reduce((a, b) => a + b, 0) / best10.length) * 0.96 * 10) / 10
+        : null
+
+      // 월별 평균
+      const monthlyAvg = {}
+      data.forEach(s => {
+        const month = s.date.substring(0, 7) // YYYY-MM
+        if (!monthlyAvg[month]) {
+          monthlyAvg[month] = { total: 0, count: 0 }
+        }
+        monthlyAvg[month].total += s.total_score
+        monthlyAvg[month].count++
+      })
+
+      const monthlyData = Object.entries(monthlyAvg).map(([month, val]) => ({
+        month,
+        avgScore: Math.round(val.total / val.count)
+      }))
+
+      return {
+        data: {
+          totalRounds,
+          avgScore,
+          bestScore,
+          handicap,
+          recentScores,
+          monthlyData
+        },
+        error: null
+      }
+    },
+  },
 }
 
 // Storage helpers
