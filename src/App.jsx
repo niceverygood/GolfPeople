@@ -132,7 +132,7 @@ function AppContent() {
 
   // 6. 메인 앱
   // 탭바 표시 여부
-  const showTabBar = ['/', '/join', '/saved', '/profile'].includes(location.pathname)
+  const showTabBar = ['/', '/join', '/chat', '/saved', '/profile'].includes(location.pathname)
 
   return (
     <AppProvider>
