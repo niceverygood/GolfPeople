@@ -230,6 +230,23 @@ export default function Profile() {
                 </div>
               </div>
             )}
+            
+            {/* 인증된 전화번호 */}
+            {isPhoneVerified && (
+              <button
+                onClick={() => navigate('/phone-verify?mode=change')}
+                className="mt-3 flex items-center gap-2 px-4 py-2 bg-gp-green/20 rounded-full text-sm"
+              >
+                <div className="flex items-center gap-1 text-gp-green">
+                  <Shield className="w-4 h-4" />
+                  <span className="font-medium">인증됨</span>
+                </div>
+                <span className="text-gp-text-secondary">
+                  {profile?.phone || localStorage.getItem('gp_verified_phone') || '번호 변경'}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gp-text-secondary" />
+              </button>
+            )}
           </div>
 
           {/* 스타일 태그 */}

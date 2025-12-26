@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Phone, ArrowRight, Check, Loader2, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Phone, ArrowRight, Check, Loader2, RefreshCw, ShieldCheck, ChevronLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { setupRecaptcha, sendVerificationCode, verifyCode, isFirebaseConfigured } from '../lib/firebase'
 import { db } from '../lib/supabase'
 
 export default function PhoneVerification() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isChangeMode = searchParams.get('mode') === 'change'
+  
   const { user, profile, refreshProfile } = useAuth()
   const [step, setStep] = useState('phone') // 'phone' | 'code' | 'success'
   const [phoneNumber, setPhoneNumber] = useState('')
@@ -17,13 +20,16 @@ export default function PhoneVerification() {
   const [countdown, setCountdown] = useState(0)
   const codeInputRefs = useRef([])
   const recaptchaContainerRef = useRef(null)
+  
+  // 현재 인증된 전화번호
+  const currentPhone = profile?.phone || localStorage.getItem('gp_verified_phone')
 
-  // 이미 인증된 사용자는 홈으로 리다이렉트
+  // 이미 인증된 사용자는 홈으로 리다이렉트 (번호 변경 모드 제외)
   useEffect(() => {
-    if (profile?.phone_verified) {
+    if (profile?.phone_verified && !isChangeMode) {
       navigate('/', { replace: true })
     }
-  }, [profile, navigate])
+  }, [profile, navigate, isChangeMode])
 
   // reCAPTCHA 초기화
   useEffect(() => {
@@ -140,15 +146,20 @@ export default function PhoneVerification() {
           }
         }
         
-        // 로컬스토리지에 인증 완료 플래그 저장
+        // 로컬스토리지에 인증 완료 플래그 및 전화번호 저장
         localStorage.setItem('gp_phone_verified', 'true')
+        localStorage.setItem('gp_verified_phone', phoneNumber)
         
         setStep('success')
         setLoading(false)
         
-        // 2초 후 페이지 새로고침으로 이동
+        // 2초 후 페이지 이동
         setTimeout(() => {
-          window.location.href = '/'
+          if (isChangeMode) {
+            navigate('/profile', { replace: true })
+          } else {
+            window.location.href = '/'
+          }
         }, 2000)
       } else {
         setLoading(false)
@@ -199,6 +210,17 @@ export default function PhoneVerification() {
     >
       {/* Header */}
       <div className="px-6 pt-12 pb-8">
+        {/* 뒤로가기 버튼 (번호 변경 모드일 때만) */}
+        {isChangeMode && (
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-4 flex items-center gap-1 text-gp-text-secondary hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>돌아가기</span>
+          </button>
+        )}
+        
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -208,10 +230,22 @@ export default function PhoneVerification() {
             <Phone className="w-6 h-6 text-black" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">전화번호 인증</h1>
-            <p className="text-sm text-gp-text-secondary">안전한 서비스 이용을 위해</p>
+            <h1 className="text-xl font-bold">
+              {isChangeMode ? '전화번호 변경' : '전화번호 인증'}
+            </h1>
+            <p className="text-sm text-gp-text-secondary">
+              {isChangeMode ? '새로운 번호로 변경해주세요' : '안전한 서비스 이용을 위해'}
+            </p>
           </div>
         </motion.div>
+        
+        {/* 현재 번호 표시 (변경 모드일 때) */}
+        {isChangeMode && currentPhone && (
+          <div className="bg-gp-card rounded-xl p-4">
+            <p className="text-sm text-gp-text-secondary mb-1">현재 인증된 번호</p>
+            <p className="font-semibold text-gp-gold">{currentPhone}</p>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -397,16 +431,23 @@ export default function PhoneVerification() {
                 transition={{ delay: 0.4 }}
                 className="text-2xl font-bold mb-2"
               >
-                인증 완료!
+                {isChangeMode ? '번호 변경 완료!' : '인증 완료!'}
               </motion.h2>
               
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="text-gp-text-secondary"
+                className="text-gp-text-secondary text-center"
               >
-                골프피플에 오신 것을 환영합니다
+                {isChangeMode ? (
+                  <>
+                    <span className="text-gp-gold font-semibold">{phoneNumber}</span>
+                    <br />으로 변경되었습니다
+                  </>
+                ) : (
+                  '골프피플에 오신 것을 환영합니다'
+                )}
               </motion.p>
             </motion.div>
           )}
