@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, Sparkles, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
+import { useAuth } from '../context/AuthContext'
+import PhoneVerifyModal from '../components/PhoneVerifyModal'
 
 // 마커 아이콘
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
@@ -49,6 +51,12 @@ export default function Home({ onPropose }) {
     saveDailyRecommendation
   } = useApp()
   const { balance } = useMarker()
+  const { profile } = useAuth()
+  
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
+  
   const [activeTab, setActiveTab] = useState('today') // 'today' | 'past'
   const [recommendations, setRecommendations] = useState({})
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -178,6 +186,12 @@ export default function Home({ onPropose }) {
   const handleCardClick = (timeId, cardIndex) => {
     const card = recommendations[timeId]?.cards[cardIndex]
     if (!card || !card.user) return
+    
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
     
     if (card.state === 'hidden') {
       // 숨겨진 카드면 뒤집기만 (약식 프로필 보여주기)
@@ -320,6 +334,13 @@ export default function Home({ onPropose }) {
           />
         )}
       </AnimatePresence>
+      
+      {/* 전화번호 인증 모달 */}
+      <PhoneVerifyModal
+        isOpen={showPhoneVerifyModal}
+        onClose={() => setShowPhoneVerifyModal(false)}
+        message="친구 카드를 확인하려면 전화번호 인증이 필요해요."
+      />
       
       {/* 알림 모달 */}
       <AnimatePresence>

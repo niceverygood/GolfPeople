@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, Calendar, Users, Plus, Bookmark, Trash2, Edit2, MoreVertical } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
+import { useAuth } from '../context/AuthContext'
+import PhoneVerifyModal from '../components/PhoneVerifyModal'
 
 // 마커 아이콘
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
@@ -31,6 +33,12 @@ export default function Join() {
   const navigate = useNavigate()
   const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin } = useApp()
   const { balance, addMarkers } = useMarker()
+  const { profile } = useAuth()
+  
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
+  
   const [selectedRegion, setSelectedRegion] = useState('전체')
   const [activeTab, setActiveTab] = useState('all')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
@@ -64,6 +72,12 @@ export default function Join() {
   
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
+    
     // 이미 본 프로필인지 확인 (localStorage에 저장)
     const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
     if (viewedProfiles.includes(userId)) {
@@ -73,6 +87,16 @@ export default function Join() {
     }
     
     setShowMarkerConfirm({ userId })
+  }
+  
+  // 조인 상세 보기 클릭
+  const handleJoinClick = (joinId) => {
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
+    navigate(`/join/${joinId}`)
   }
   
   // 마커 사용 확인 후 프로필 보기
@@ -176,7 +200,7 @@ export default function Join() {
                     index={index}
                     isSaved={savedJoins.includes(join.id)}
                     onSave={handleSave}
-                    onClick={() => navigate(`/join/${join.id}`)}
+                    onClick={() => handleJoinClick(join.id)}
                     onProfileClick={handleProfileClick}
                   />
                 ))
@@ -207,7 +231,7 @@ export default function Join() {
                     join={join} 
                     index={index}
                     onDelete={() => setShowDeleteConfirm(join.id)}
-                    onClick={() => navigate(`/join/${join.id}`)}
+                    onClick={() => handleJoinClick(join.id)}
                   />
                 ))
               )}
@@ -321,6 +345,13 @@ export default function Join() {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* 전화번호 인증 모달 */}
+      <PhoneVerifyModal
+        isOpen={showPhoneVerifyModal}
+        onClose={() => setShowPhoneVerifyModal(false)}
+        message="조인에 참여하려면 전화번호 인증이 필요해요."
+      />
     </div>
   )
 }
