@@ -240,15 +240,15 @@ export default function ChatRoom() {
                     />
                   )}
                   
-                  <div className={`flex flex-col max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
                     <div
-                      className={`inline-block px-4 py-2.5 rounded-2xl ${
+                      className={`px-4 py-2.5 rounded-2xl ${
                         isMe
                           ? 'bg-gp-gold text-gp-black rounded-br-md'
                           : 'bg-gp-card text-gp-text rounded-bl-md'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                      <p className="text-sm whitespace-pre-wrap break-keep leading-relaxed">{msg.text}</p>
                     </div>
                     
                     {showTime && (
