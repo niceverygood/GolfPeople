@@ -4,17 +4,39 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
+import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
+
+// 마커 아이콘
+const MarkerIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="url(#markerGradientPD)" />
+    <path d="M12 6L14.5 11H17L12 18L7 11H9.5L12 6Z" fill="#0D0D0D" />
+    <defs>
+      <linearGradient id="markerGradientPD" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#D4AF37" />
+        <stop offset="1" stopColor="#B8962E" />
+      </linearGradient>
+    </defs>
+  </svg>
+)
+
+// 친구 요청 마커 비용
+const FRIEND_REQUEST_COST = 5
 
 export default function ProfileDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const { users, sendFriendRequest, friendRequests, likedUsers, likeUser, unlikeUser } = useApp()
   const { profile } = useAuth()
+  const { balance, useMarkers } = useMarker()
   
   // 전화번호 인증 여부
   const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
   const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
+  
+  // 마커 확인 모달
+  const [showMarkerModal, setShowMarkerModal] = useState(false)
   
   const user = users.find(u => u.id === parseInt(userId))
   const [friendRequested, setFriendRequested] = useState(false)
@@ -45,8 +67,27 @@ export default function ProfileDetail() {
     }
     
     if (!friendRequested) {
-      setShowRequestModal(true)
+      // 마커 확인 모달 표시
+      setShowMarkerModal(true)
     }
+  }
+  
+  // 마커 확인 후 친구 요청 진행
+  const handleConfirmMarker = () => {
+    setShowMarkerModal(false)
+    
+    // 마커 잔액 확인
+    if (balance < FRIEND_REQUEST_COST) {
+      alert('마커가 부족합니다. 충전 후 다시 시도해주세요.')
+      navigate('/store')
+      return
+    }
+    
+    // 마커 차감
+    useMarkers(FRIEND_REQUEST_COST)
+    
+    // 친구 요청 모달 표시
+    setShowRequestModal(true)
   }
   
   const handleSendRequest = (message) => {
@@ -311,6 +352,87 @@ export default function ProfileDetail() {
             onClose={() => setShowRequestModal(false)}
             onSend={handleSendRequest}
           />
+        )}
+      </AnimatePresence>
+      
+      {/* 마커 확인 모달 */}
+      <AnimatePresence>
+        {showMarkerModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-50"
+              onClick={() => setShowMarkerModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-gp-card rounded-2xl p-6 z-50"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center mx-auto mb-4">
+                  <MarkerIcon className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">친구 요청</h3>
+                <p className="text-gp-text-secondary text-sm mb-4">
+                  친구 요청을 보내시겠습니까?
+                </p>
+                
+                <div className="bg-gp-black/30 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gp-text-secondary">필요 마커</span>
+                    <span className="font-bold text-gp-gold flex items-center gap-1">
+                      <MarkerIcon className="w-4 h-4" />
+                      {FRIEND_REQUEST_COST}개
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gp-text-secondary">보유 마커</span>
+                    <span className={`font-bold flex items-center gap-1 ${balance < FRIEND_REQUEST_COST ? 'text-red-400' : 'text-white'}`}>
+                      <MarkerIcon className="w-4 h-4" />
+                      {balance}개
+                    </span>
+                  </div>
+                </div>
+                
+                {balance < FRIEND_REQUEST_COST && (
+                  <p className="text-red-400 text-sm mb-4">
+                    마커가 부족합니다
+                  </p>
+                )}
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowMarkerModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+                  >
+                    취소
+                  </button>
+                  {balance < FRIEND_REQUEST_COST ? (
+                    <button
+                      onClick={() => {
+                        setShowMarkerModal(false)
+                        navigate('/store')
+                      }}
+                      className="flex-1 py-3 rounded-xl btn-gold font-semibold"
+                    >
+                      충전하기
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleConfirmMarker}
+                      className="flex-1 py-3 rounded-xl btn-gold font-semibold"
+                    >
+                      요청하기
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
       
