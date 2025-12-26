@@ -340,6 +340,168 @@ export function AppProvider({ children }) {
     localStorage.setItem('gp_my_joins', JSON.stringify(updated))
   }
 
+  // 채팅방 데이터
+  const [chatRooms, setChatRooms] = useState(() => {
+    const saved = localStorage.getItem('gp_chat_rooms')
+    if (saved) {
+      return JSON.parse(saved)
+    }
+    // 기본 데모 데이터
+    return [
+      {
+        id: 'chat-1',
+        type: 'friend',
+        partnerId: 1,
+        partnerName: '민준',
+        partnerPhoto: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
+        lastMessage: '네, 좋습니다! 토요일 몇 시에 만날까요?',
+        lastMessageTime: new Date(Date.now() - 3600000).toISOString(),
+        unreadCount: 2,
+        messages: [
+          { id: 1, senderId: 1, text: '안녕하세요! 친구 수락해주셔서 감사합니다 😊', timestamp: new Date(Date.now() - 86400000).toISOString() },
+          { id: 2, senderId: 'me', text: '네 반갑습니다! 언제 한번 라운딩 하실래요?', timestamp: new Date(Date.now() - 82800000).toISOString() },
+          { id: 3, senderId: 1, text: '이번 주말 어떠세요?', timestamp: new Date(Date.now() - 7200000).toISOString() },
+          { id: 4, senderId: 'me', text: '토요일 오전이면 좋을 것 같아요', timestamp: new Date(Date.now() - 5400000).toISOString() },
+          { id: 5, senderId: 1, text: '네, 좋습니다! 토요일 몇 시에 만날까요?', timestamp: new Date(Date.now() - 3600000).toISOString() },
+        ]
+      },
+      {
+        id: 'chat-2',
+        type: 'friend',
+        partnerId: 3,
+        partnerName: '서윤',
+        partnerPhoto: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=400',
+        lastMessage: '감사합니다! 잘 부탁드려요 ⛳',
+        lastMessageTime: new Date(Date.now() - 86400000).toISOString(),
+        unreadCount: 0,
+        messages: [
+          { id: 1, senderId: 'me', text: '친구 수락했습니다!', timestamp: new Date(Date.now() - 172800000).toISOString() },
+          { id: 2, senderId: 3, text: '감사합니다! 잘 부탁드려요 ⛳', timestamp: new Date(Date.now() - 86400000).toISOString() },
+        ]
+      },
+      {
+        id: 'chat-3',
+        type: 'join',
+        partnerId: 2,
+        partnerName: '서준',
+        partnerPhoto: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+        joinId: 101,
+        joinTitle: '주말 오전 여유롭게',
+        joinInfo: {
+          date: '12월 28일 (토)',
+          location: '남서울CC',
+        },
+        lastMessage: '네, 그럼 그 날 뵙겠습니다!',
+        lastMessageTime: new Date(Date.now() - 43200000).toISOString(),
+        unreadCount: 1,
+        messages: [
+          { id: 1, senderId: 'me', text: '조인 신청 수락했습니다!', timestamp: new Date(Date.now() - 172800000).toISOString() },
+          { id: 2, senderId: 2, text: '감사합니다! 당일 몇 시에 도착하면 될까요?', timestamp: new Date(Date.now() - 86400000).toISOString() },
+          { id: 3, senderId: 'me', text: '7시 30분까지 오시면 됩니다', timestamp: new Date(Date.now() - 82800000).toISOString() },
+          { id: 4, senderId: 2, text: '네, 그럼 그 날 뵙겠습니다!', timestamp: new Date(Date.now() - 43200000).toISOString() },
+        ]
+      },
+    ]
+  })
+
+  // 채팅 메시지 보내기
+  const sendMessage = (chatId, message) => {
+    setChatRooms(prev => {
+      const updated = prev.map(chat => {
+        if (chat.id === chatId) {
+          const newMessage = { ...message, id: Date.now() }
+          return {
+            ...chat,
+            messages: [...chat.messages, newMessage],
+            lastMessage: message.text,
+            lastMessageTime: message.timestamp,
+          }
+        }
+        return chat
+      })
+      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  // 채팅방 읽음 처리
+  const markChatAsRead = (chatId) => {
+    setChatRooms(prev => {
+      const updated = prev.map(chat => 
+        chat.id === chatId ? { ...chat, unreadCount: 0 } : chat
+      )
+      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  // 새 채팅방 생성 (친구)
+  const createFriendChat = (user) => {
+    // 이미 존재하는 채팅방인지 확인
+    const existingChat = chatRooms.find(c => c.type === 'friend' && c.partnerId === user.userId)
+    if (existingChat) {
+      return existingChat.id
+    }
+
+    const newChat = {
+      id: `chat-${Date.now()}`,
+      type: 'friend',
+      partnerId: user.userId,
+      partnerName: user.userName,
+      partnerPhoto: user.userPhoto,
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+      messages: [],
+    }
+    
+    setChatRooms(prev => {
+      const updated = [newChat, ...prev]
+      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
+      return updated
+    })
+    
+    return newChat.id
+  }
+
+  // 새 채팅방 생성 (조인)
+  const createJoinChat = (join, user) => {
+    // 이미 존재하는 채팅방인지 확인
+    const existingChat = chatRooms.find(c => c.type === 'join' && c.joinId === join.joinId && c.partnerId === user.userId)
+    if (existingChat) {
+      return existingChat.id
+    }
+
+    const newChat = {
+      id: `chat-${Date.now()}`,
+      type: 'join',
+      partnerId: user.userId,
+      partnerName: user.userName,
+      partnerPhoto: user.userPhoto,
+      joinId: join.joinId,
+      joinTitle: join.joinTitle,
+      joinInfo: {
+        date: join.date || join.joinDate,
+        location: join.location || join.joinRegion,
+      },
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+      messages: [],
+    }
+    
+    setChatRooms(prev => {
+      const updated = [newChat, ...prev]
+      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
+      return updated
+    })
+    
+    return newChat.id
+  }
+
+  // 총 읽지 않은 메시지 수
+  const totalUnreadMessages = chatRooms.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0)
+
   const value = {
     users,
     joins,
@@ -377,6 +539,12 @@ export function AppProvider({ children }) {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     deleteNotification,
+    chatRooms,
+    sendMessage,
+    markChatAsRead,
+    createFriendChat,
+    createJoinChat,
+    totalUnreadMessages,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

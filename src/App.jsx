@@ -18,6 +18,8 @@ import PhoneVerification from './pages/PhoneVerification'
 import Store from './pages/Store'
 import ScoreRecord from './pages/ScoreRecord'
 import ScoreStats from './pages/ScoreStats'
+import ChatList from './pages/ChatList'
+import ChatRoom from './pages/ChatRoom'
 
 // Components
 import TabBar from './components/TabBar'
@@ -149,6 +151,8 @@ function AppContent() {
               <Route path="/score" element={<ScoreRecord />} />
               <Route path="/score-stats" element={<ScoreStats />} />
               <Route path="/phone-verify" element={<PhoneVerification />} />
+              <Route path="/chat" element={<ChatList />} />
+              <Route path="/chat/:chatId" element={<ChatRoom />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
             </Routes>

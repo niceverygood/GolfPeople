@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History } from 'lucide-react'
+import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History, MessageCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useMarker } from '../context/MarkerContext'
 
 // 메인 탭 정의
 const TABS = [
@@ -105,7 +106,31 @@ export default function Saved({ onPropose }) {
     acceptJoinRequest,
     rejectJoinRequest,
     pastCards,
+    createFriendChat,
+    createJoinChat,
   } = useApp()
+  
+  // 친구 채팅 시작 핸들러
+  const handleStartFriendChat = (request) => {
+    const chatId = createFriendChat(request)
+    navigate(`/chat/${chatId}`)
+  }
+  
+  // 조인 채팅 시작 핸들러
+  const handleStartJoinChat = (request, type) => {
+    const joinInfo = {
+      joinId: request.joinId,
+      joinTitle: request.joinTitle,
+      date: request.joinDate,
+      location: request.joinRegion,
+    }
+    const userInfo = type === 'sent' 
+      ? { userId: request.hostId, userName: request.hostName, userPhoto: request.hostPhoto }
+      : { userId: request.userId, userName: request.userName, userPhoto: request.userPhoto }
+    
+    const chatId = createJoinChat(joinInfo, userInfo)
+    navigate(`/chat/${chatId}`)
+  }
   
   const [activeTab, setActiveTab] = useState('saved')
   const [savedSubTab, setSavedSubTab] = useState('people')
@@ -435,6 +460,7 @@ export default function Saved({ onPropose }) {
                               key={request.id}
                               request={request}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
+                              onStartChat={handleStartFriendChat}
                             />
                           ))}
                         </Section>
@@ -452,6 +478,7 @@ export default function Saved({ onPropose }) {
                               key={request.id}
                               request={request}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
+                              onStartChat={handleStartFriendChat}
                             />
                           ))}
                         </Section>
@@ -485,6 +512,7 @@ export default function Saved({ onPropose }) {
                               request={request}
                               type="received"
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
+                              onStartChat={handleStartJoinChat}
                             />
                           ))}
                         </Section>
@@ -504,6 +532,7 @@ export default function Saved({ onPropose }) {
                               type="sent"
                               onClick={() => navigate(`/join/${application.joinId}`)}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
+                              onStartChat={handleStartJoinChat}
                             />
                           ))}
                         </Section>
@@ -769,7 +798,7 @@ function ReceivedFriendCard({ request, onAccept, onReject, onProfileClick }) {
 }
 
 // 매칭완료 친구 카드
-function MatchedFriendCard({ request, onProfileClick }) {
+function MatchedFriendCard({ request, onProfileClick, onStartChat }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -812,8 +841,12 @@ function MatchedFriendCard({ request, onProfileClick }) {
         </div>
       </div>
       
-      <button className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold">
-        💬 대화 시작하기
+      <button 
+        onClick={() => onStartChat && onStartChat(request)}
+        className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold flex items-center justify-center gap-2"
+      >
+        <MessageCircle className="w-4 h-4" />
+        대화 시작하기
       </button>
     </motion.div>
   )
@@ -963,7 +996,7 @@ function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick }) {
 }
 
 // 매칭완료 조인 카드
-function MatchedJoinCard({ request, type, onClick, onProfileClick }) {
+function MatchedJoinCard({ request, type, onClick, onProfileClick, onStartChat }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -972,8 +1005,7 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick }) {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="bg-gp-card rounded-2xl p-4 cursor-pointer"
-      onClick={onClick}
+      className="bg-gp-card rounded-2xl p-4"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -1027,8 +1059,12 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick }) {
       
       <p className="text-gp-text-secondary text-xs">{timeAgo}</p>
       
-      <button className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold">
-        💬 대화방 입장
+      <button 
+        onClick={() => onStartChat && onStartChat(request, type)}
+        className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold flex items-center justify-center gap-2"
+      >
+        <MessageCircle className="w-4 h-4" />
+        대화방 입장
       </button>
     </motion.div>
   )
