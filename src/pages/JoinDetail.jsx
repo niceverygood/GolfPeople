@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Bookmark, BookmarkCheck, Share2, Copy, MessageCircle, Link, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
+import { useAuth } from '../context/AuthContext'
+import PhoneVerifyModal from '../components/PhoneVerifyModal'
 
 // 마커 아이콘
 const MarkerIcon = ({ className = "w-5 h-5" }) => (
@@ -24,6 +26,12 @@ export default function JoinDetail() {
   const navigate = useNavigate()
   const { joins, savedJoins, saveJoin, unsaveJoin, applyToJoin, joinApplications } = useApp()
   const { balance, addMarkers } = useMarker()
+  const { profile } = useAuth()
+  
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
+  
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // userId
@@ -34,6 +42,12 @@ export default function JoinDetail() {
   
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
+    
     // 이미 본 프로필인지 확인 (localStorage에 저장)
     const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
     if (viewedProfiles.includes(userId)) {
@@ -43,6 +57,16 @@ export default function JoinDetail() {
     }
     
     setShowMarkerConfirm(userId)
+  }
+  
+  // 조인 신청 버튼 클릭
+  const handleApplyClick = () => {
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
+    setShowApplyModal(true)
   }
   
   // 마커 사용 확인 후 프로필 보기
@@ -256,7 +280,7 @@ export default function JoinDetail() {
       <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
         <div className="max-w-[430px] mx-auto">
           <button
-            onClick={() => setShowApplyModal(true)}
+            onClick={handleApplyClick}
             disabled={spotsLeft === 0 || isApplied}
             className={`w-full py-4 rounded-2xl font-semibold text-lg ${
               isApplied
@@ -343,6 +367,13 @@ export default function JoinDetail() {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* 전화번호 인증 모달 */}
+      <PhoneVerifyModal
+        isOpen={showPhoneVerifyModal}
+        onClose={() => setShowPhoneVerifyModal(false)}
+        message="조인 신청을 하려면 전화번호 인증이 필요해요."
+      />
     </motion.div>
   )
 }

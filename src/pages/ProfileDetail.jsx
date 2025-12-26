@@ -3,11 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import PhoneVerifyModal from '../components/PhoneVerifyModal'
 
 export default function ProfileDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const { users, sendFriendRequest, friendRequests, likedUsers, likeUser, unlikeUser } = useApp()
+  const { profile } = useAuth()
+  
+  // 전화번호 인증 여부
+  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
+  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
   
   const user = users.find(u => u.id === parseInt(userId))
   const [friendRequested, setFriendRequested] = useState(false)
@@ -31,6 +38,12 @@ export default function ProfileDetail() {
   }
   
   const handleFriendRequest = () => {
+    // 전화번호 미인증 시 인증 모달 표시
+    if (!isPhoneVerified) {
+      setShowPhoneVerifyModal(true)
+      return
+    }
+    
     if (!friendRequested) {
       setShowRequestModal(true)
     }
@@ -300,6 +313,13 @@ export default function ProfileDetail() {
           />
         )}
       </AnimatePresence>
+      
+      {/* 전화번호 인증 모달 */}
+      <PhoneVerifyModal
+        isOpen={showPhoneVerifyModal}
+        onClose={() => setShowPhoneVerifyModal(false)}
+        message="친구 요청을 보내려면 전화번호 인증이 필요해요."
+      />
     </motion.div>
   )
 }
