@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase, auth, db, isConnected } from '../lib/supabase'
-import { isNative, app } from '../lib/native'
+import { isNative, app, appleSignIn } from '../lib/native'
 
 const AuthContext = createContext({})
 
@@ -263,6 +263,47 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Apple 로그인 (iOS만)
+  const signInWithApple = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // 네이티브 Apple Sign In 실행
+      const result = await appleSignIn.signIn()
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Apple 로그인에 실패했습니다')
+      }
+      
+      // Apple Identity Token을 사용해 Supabase에 로그인
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: result.user.identityToken,
+        nonce: 'golfpeople_nonce_' + Date.now(), // 보안을 위한 nonce
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      // 사용자 정보가 있으면 프로필 업데이트 (Apple은 최초 로그인 시에만 이름/이메일 제공)
+      if (data.user && result.user.name) {
+        await db.profiles.update(data.user.id, {
+          name: result.user.name,
+          email: result.user.email,
+        }).catch(console.error)
+      }
+      
+      return { data, error: null }
+    } catch (err) {
+      setError(err.message)
+      return { data: null, error: err }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 로그아웃
   const signOut = async () => {
     setLoading(true)
@@ -375,6 +416,7 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signInWithKakao,
     signInWithGoogle,
+    signInWithApple,
     signOut,
     resetPassword,
     updatePassword,

@@ -11,6 +11,7 @@ import { App } from '@capacitor/app'
 import { Keyboard } from '@capacitor/keyboard'
 import { PushNotifications } from '@capacitor/push-notifications'
 import { LocalNotifications } from '@capacitor/local-notifications'
+import { SignInWithApple } from '@capacitor-community/apple-sign-in'
 
 /**
  * 네이티브 환경인지 확인
@@ -357,6 +358,52 @@ export const localNotifications = {
 }
 
 // ============================================
+// Apple Sign In (iOS only)
+// ============================================
+export const appleSignIn = {
+  // Apple 로그인 가능 여부 (iOS만)
+  isAvailable: () => isIOS(),
+  
+  // Apple 로그인 실행
+  signIn: async () => {
+    if (!isIOS()) {
+      return { success: false, error: 'Apple Sign In is only available on iOS' }
+    }
+    
+    try {
+      const result = await SignInWithApple.authorize({
+        clientId: 'com.golfpeople.app', // 앱 번들 ID
+        redirectURI: 'https://golf-people.vercel.app/auth/callback',
+        scopes: 'email name',
+        state: 'golfpeople_state',
+        nonce: 'golfpeople_nonce_' + Date.now(),
+      })
+      
+      return {
+        success: true,
+        response: result.response,
+        // Apple은 최초 로그인 시에만 이메일/이름을 제공
+        user: {
+          id: result.response.user,
+          email: result.response.email || null,
+          name: result.response.givenName 
+            ? `${result.response.givenName} ${result.response.familyName || ''}`.trim()
+            : null,
+          identityToken: result.response.identityToken,
+          authorizationCode: result.response.authorizationCode,
+        }
+      }
+    } catch (error) {
+      console.error('Apple Sign In error:', error)
+      return {
+        success: false,
+        error: error.message || 'Apple Sign In failed'
+      }
+    }
+  }
+}
+
+// ============================================
 // 네이티브 초기화
 // ============================================
 export const initializeNative = async () => {
@@ -408,6 +455,7 @@ export default {
   app,
   pushNotifications,
   localNotifications,
+  appleSignIn,
   initializeNative
 }
 
