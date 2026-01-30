@@ -15,8 +15,9 @@ const DEFAULT_PRODUCTS = [
 
 // 기본 가격 설정 (마커 개수)
 const DEFAULT_PRICES = {
-  friend_request: 3,
-  join_application: 5,
+  friend_request: 3,      // 친구 요청
+  join_application: 5,    // 조인 신청
+  profile_view: 3,        // 프로필 열람
 }
 
 export const useMarker = () => {
@@ -101,28 +102,76 @@ export const MarkerProvider = ({ children }) => {
     }
   }, [user])
 
-  // 마커 사용
-  const spendMarkers = useCallback((actionType) => {
+  // 마커 사용 (서버 검증 포함)
+  const spendMarkers = useCallback(async (actionType) => {
     const cost = prices[actionType]
     if (!cost) {
       return { success: false, error: 'Invalid action type' }
     }
 
+    // 클라이언트 사전 검증 (UX용)
     if (balance < cost) {
       return { success: false, error: 'insufficient_balance', message: '마커가 부족합니다' }
     }
 
+    // 서버 검증 (Supabase RPC 호출)
+    if (isConnected() && user) {
+      try {
+        const { data, error } = await supabase.rpc('spend_markers', {
+          p_user_id: user.id,
+          p_action_type: actionType,
+          p_cost: cost
+        })
+
+        if (error) {
+          console.error('서버 마커 검증 실패:', error)
+          // 서버 에러 시에도 로컬에서 처리 (오프라인 지원)
+        } else if (data && !data.success) {
+          // 서버에서 잔액 부족 판정
+          return { success: false, error: 'insufficient_balance', message: data.message || '마커가 부족합니다' }
+        } else if (data && data.success) {
+          // 서버 검증 성공 - 서버 잔액으로 동기화
+          const serverBalance = data.new_balance
+          setBalance(serverBalance)
+          localStorage.setItem('gp_marker_balance', serverBalance.toString())
+
+          const actionDescriptions = {
+            friend_request: '친구 요청',
+            join_application: '조인 신청',
+            profile_view: '프로필 열람'
+          }
+
+          saveTransaction({
+            amount: -cost,
+            type: actionType,
+            description: actionDescriptions[actionType] || actionType
+          })
+
+          return { success: true, cost, newBalance: serverBalance }
+        }
+      } catch (e) {
+        console.error('서버 마커 검증 예외:', e)
+        // 네트워크 오류 시 로컬에서 처리
+      }
+    }
+
+    // 로컬 처리 (오프라인 또는 서버 연결 안됨)
+    const actionDescriptions = {
+      friend_request: '친구 요청',
+      join_application: '조인 신청',
+      profile_view: '프로필 열람'
+    }
     const newBalance = balance - cost
     saveBalance(newBalance)
-    
+
     saveTransaction({
       amount: -cost,
       type: actionType,
-      description: actionType === 'friend_request' ? '친구 요청' : '조인 신청'
+      description: actionDescriptions[actionType] || actionType
     })
-    
+
     return { success: true, cost, newBalance }
-  }, [balance, prices, saveBalance, saveTransaction])
+  }, [balance, prices, saveBalance, saveTransaction, user])
 
   // 마커 충전 (결제 후 호출)
   const addMarkers = useCallback((amount, type = 'purchase', description = '마커 충전') => {
@@ -170,6 +219,7 @@ export const MarkerProvider = ({ children }) => {
     prices,
     transactions,
     spendMarkers,
+    useMarkers: spendMarkers, // alias (하위 호환성)
     addMarkers,
     hasEnoughMarkers,
     getCost,
