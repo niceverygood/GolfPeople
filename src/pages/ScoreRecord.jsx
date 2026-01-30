@@ -6,6 +6,8 @@ import { db } from '../lib/supabase'
 import { haptic } from '../lib/native'
 import golfCourses from '../data/golfCourses.json'
 import { showToast } from '../utils/errorHandler'
+import { validateRequired, validateGolfScore } from '../utils/validation'
+import { ButtonLoading } from '../components/LoadingSpinner'
 
 // 날씨 옵션
 const WEATHER_OPTIONS = [
@@ -81,8 +83,16 @@ export default function ScoreRecord() {
   }
 
   const handleSubmit = async () => {
-    if (!form.course_name || !form.total_score) {
-      showToast.warning('코스명과 총 스코어를 입력해주세요')
+    // 입력값 검증
+    const courseValidation = validateRequired(form.course_name, '코스명')
+    if (!courseValidation.valid) {
+      showToast.warning(courseValidation.message)
+      return
+    }
+
+    const scoreValidation = validateGolfScore(form.total_score)
+    if (!scoreValidation.valid) {
+      showToast.warning(scoreValidation.message)
       return
     }
 
