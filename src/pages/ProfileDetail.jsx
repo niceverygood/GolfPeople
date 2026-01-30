@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
+import MarkerConfirmModal from '../components/MarkerConfirmModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
+import { usePhoneVerification } from '../hooks/usePhoneVerification'
+import { showToast, getErrorMessage } from '../utils/errorHandler'
 
 // 친구 요청 마커 비용
 const FRIEND_REQUEST_COST = 3
@@ -15,28 +17,27 @@ export default function ProfileDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const { users, sendFriendRequest, friendRequests, likedUsers, likeUser, unlikeUser } = useApp()
-  const { profile } = useAuth()
   const { balance, useMarkers } = useMarker()
-  
-  // 전화번호 인증 여부
-  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
-  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
-  
+
+  // 전화번호 인증 훅
+  const phoneVerify = usePhoneVerification()
+
   // 마커 확인 모달
   const [showMarkerModal, setShowMarkerModal] = useState(false)
-  
+  const [isProcessing, setIsProcessing] = useState(false)
+
   const user = users.find(u => u.id === parseInt(userId))
   const [friendRequested, setFriendRequested] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const isLiked = user ? likedUsers.includes(user.id) : false
-  
+
   useEffect(() => {
     if (user) {
       setFriendRequested(friendRequests.some(req => req.userId === user.id))
     }
   }, [user, friendRequests])
-  
+
   const handleToggleLike = () => {
     if (!user) return
     if (isLiked) {
@@ -45,64 +46,69 @@ export default function ProfileDetail() {
       likeUser(user.id)
     }
   }
-  
+
   const handleFriendRequest = () => {
     // 전화번호 미인증 시 인증 모달 표시
-    if (!isPhoneVerified) {
-      setShowPhoneVerifyModal(true)
-      return
-    }
-    
+    if (!phoneVerify.checkVerification()) return
+
     if (!friendRequested) {
       // 마커 확인 모달 표시
       setShowMarkerModal(true)
     }
   }
-  
+
   // 마커 확인 후 친구 요청 진행
   const handleConfirmMarker = async () => {
-    setShowMarkerModal(false)
+    if (isProcessing) return
 
     // 마커 잔액 확인
     if (balance < FRIEND_REQUEST_COST) {
-      alert('마커가 부족합니다. 충전 후 다시 시도해주세요.')
+      showToast.error(getErrorMessage('insufficient_balance'))
+      setShowMarkerModal(false)
       navigate('/store')
       return
     }
 
+    setIsProcessing(true)
+
     // 마커 차감 (서버 검증 포함)
     const result = await useMarkers('friend_request')
     if (!result.success) {
-      alert(result.message || '마커 사용에 실패했습니다.')
+      showToast.error(result.message || getErrorMessage('marker_spend_failed'))
       if (result.error === 'insufficient_balance') {
         navigate('/store')
       }
+      setShowMarkerModal(false)
+      setIsProcessing(false)
       return
     }
 
+    setShowMarkerModal(false)
+    setIsProcessing(false)
     // 친구 요청 모달 표시
     setShowRequestModal(true)
   }
-  
+
   const handleSendRequest = (message) => {
     if (user) {
       const success = sendFriendRequest(user, message)
       if (success) {
         setFriendRequested(true)
+        showToast.success('친구 요청을 보냈습니다!')
       }
     }
     setShowRequestModal(false)
   }
-  
+
   const handleReport = () => {
     setShowMoreMenu(false)
-    alert('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
+    showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
   }
-  
+
   const handleBlock = () => {
     setShowMoreMenu(false)
     if (confirm(`${user?.name}님을 차단하시겠습니까?`)) {
-      alert('차단되었습니다. 더 이상 이 사용자를 볼 수 없습니다.')
+      showToast.success('차단되었습니다.')
       navigate(-1)
     }
   }
@@ -432,8 +438,8 @@ export default function ProfileDetail() {
       
       {/* 전화번호 인증 모달 */}
       <PhoneVerifyModal
-        isOpen={showPhoneVerifyModal}
-        onClose={() => setShowPhoneVerifyModal(false)}
+        isOpen={phoneVerify.showModal}
+        onClose={phoneVerify.closeModal}
         message="친구 요청을 보내려면 전화번호 인증이 필요해요."
       />
     </motion.div>

@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
-import { useAuth } from '../context/AuthContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
+import { usePhoneVerification } from '../hooks/usePhoneVerification'
+import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
+import { getTimeAgo } from '../utils/formatTime'
+import { showToast, getErrorMessage } from '../utils/errorHandler'
 
 // 추천 시간대
 const RECOMMENDATION_TIMES = [
@@ -26,45 +29,43 @@ const FILTER_OPTIONS = {
 
 export default function Home({ onPropose }) {
   const navigate = useNavigate()
-  const { 
-    users, 
-    notifications, 
-    unreadNotificationCount, 
-    markNotificationAsRead, 
-    markAllNotificationsAsRead, 
-    deleteNotification, 
+  const {
+    users,
+    notifications,
+    unreadNotificationCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    deleteNotification,
     addPastCard,
     recommendationHistory,
     saveDailyRecommendation
   } = useApp()
   const { balance } = useMarker()
-  const { profile } = useAuth()
-  
-  // 전화번호 인증 여부
-  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
-  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
-  
+
+  // 전화번호 인증 훅
+  const phoneVerify = usePhoneVerification()
+
   const [activeTab, setActiveTab] = useState('today') // 'today' | 'past'
   const [recommendations, setRecommendations] = useState({})
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [revealedCards, setRevealedCards] = useState(() => {
     // localStorage에서 뒤집힌 카드 상태 복원 (날짜가 같을 때만)
-    const saved = localStorage.getItem('gp_revealed_cards')
-    const savedDate = localStorage.getItem('gp_revealed_date')
+    const saved = getItem(STORAGE_KEYS.REVEALED_CARDS, [])
+    const savedDate = getItem(STORAGE_KEYS.REVEALED_DATE, '')
     const today = new Date().toISOString().split('T')[0]
-    
-    if (saved && savedDate === today) {
-      return new Set(JSON.parse(saved))
+
+    if (saved.length > 0 && savedDate === today) {
+      return new Set(saved)
     }
     return new Set()
   })
-  
+
   // 뒤집힌 카드 상태가 바뀔 때마다 날짜와 함께 저장
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
-    localStorage.setItem('gp_revealed_cards', JSON.stringify([...revealedCards]))
-    localStorage.setItem('gp_revealed_date', today)
+    setItem(STORAGE_KEYS.REVEALED_CARDS, [...revealedCards])
+    setItem(STORAGE_KEYS.REVEALED_DATE, today)
   }, [revealedCards])
   
   // 필터 상태
@@ -175,10 +176,7 @@ export default function Home({ onPropose }) {
     if (!card || !card.user) return
     
     // 전화번호 미인증 시 인증 모달 표시
-    if (!isPhoneVerified) {
-      setShowPhoneVerifyModal(true)
-      return
-    }
+    if (!phoneVerify.checkVerification()) return
     
     if (card.state === 'hidden') {
       // 숨겨진 카드면 뒤집기만 (약식 프로필 보여주기)
@@ -324,8 +322,8 @@ export default function Home({ onPropose }) {
       
       {/* 전화번호 인증 모달 */}
       <PhoneVerifyModal
-        isOpen={showPhoneVerifyModal}
-        onClose={() => setShowPhoneVerifyModal(false)}
+        isOpen={phoneVerify.showModal}
+        onClose={phoneVerify.closeModal}
         message="친구 카드를 확인하려면 전화번호 인증이 필요해요."
       />
       
@@ -891,21 +889,6 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
     }
   }
 
-  const getTimeAgo = (dateString) => {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-    
-    if (diffMins < 1) return '방금 전'
-    if (diffMins < 60) return `${diffMins}분 전`
-    if (diffHours < 24) return `${diffHours}시간 전`
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
-  }
-  
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'friend_request': return <UserPlus className="w-5 h-5 text-blue-400" />

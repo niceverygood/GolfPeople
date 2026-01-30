@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { db } from '../lib/supabase'
 import { haptic } from '../lib/native'
 import golfCourses from '../data/golfCourses.json'
+import { showToast } from '../utils/errorHandler'
 
 // 날씨 옵션
 const WEATHER_OPTIONS = [
@@ -81,7 +82,7 @@ export default function ScoreRecord() {
 
   const handleSubmit = async () => {
     if (!form.course_name || !form.total_score) {
-      alert('코스명과 총 스코어를 입력해주세요')
+      showToast.warning('코스명과 총 스코어를 입력해주세요')
       return
     }
 
@@ -117,9 +118,10 @@ export default function ScoreRecord() {
       resetForm()
       setShowAddModal(false)
       setEditingScore(null)
+      showToast.success('스코어가 저장되었습니다!')
     } catch (error) {
       console.error('스코어 저장 실패:', error)
-      alert('저장에 실패했습니다')
+      showToast.error('저장에 실패했습니다')
     } finally {
       setLoading(false)
     }

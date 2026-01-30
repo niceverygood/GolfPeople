@@ -4,9 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, Calendar, Users, Plus, Bookmark, Trash2, Edit2, MoreVertical } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
-import { useAuth } from '../context/AuthContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
+import MarkerConfirmModal from '../components/MarkerConfirmModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
+import { usePhoneVerification } from '../hooks/usePhoneVerification'
+import { getSimpleTimeAgo } from '../utils/formatTime'
+import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
+import { showToast, getErrorMessage } from '../utils/errorHandler'
 
 const REGIONS = ['전체', '서울', '경기', '인천']
 
@@ -20,16 +24,15 @@ export default function Join() {
   const navigate = useNavigate()
   const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin } = useApp()
   const { balance, spendMarkers } = useMarker()
-  const { profile } = useAuth()
-  
-  // 전화번호 인증 여부
-  const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
-  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false)
-  
+
+  // 전화번호 인증 훅
+  const phoneVerify = usePhoneVerification()
+
   const [selectedRegion, setSelectedRegion] = useState('전체')
   const [activeTab, setActiveTab] = useState('all')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
-  const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId, userName }
+  const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId }
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // 모든 조인 필터링
   const filteredJoins = joins.filter(join => {
@@ -60,64 +63,62 @@ export default function Join() {
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
     // 전화번호 미인증 시 인증 모달 표시
-    if (!isPhoneVerified) {
-      setShowPhoneVerifyModal(true)
-      return
-    }
-    
-    // 이미 본 프로필인지 확인 (localStorage에 저장)
-    const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
+    if (!phoneVerify.checkVerification()) return
+
+    // 이미 본 프로필인지 확인
+    const viewedProfiles = getItem(STORAGE_KEYS.VIEWED_PROFILES, [])
     if (viewedProfiles.includes(userId)) {
       // 이미 본 프로필은 무료로 이동
       navigate(`/user/${userId}`)
       return
     }
-    
+
     setShowMarkerConfirm({ userId })
   }
-  
+
   // 조인 상세 보기 클릭
   const handleJoinClick = (joinId) => {
     // 전화번호 미인증 시 인증 모달 표시
-    if (!isPhoneVerified) {
-      setShowPhoneVerifyModal(true)
-      return
-    }
+    if (!phoneVerify.checkVerification()) return
     navigate(`/join/${joinId}`)
   }
   
   // 마커 사용 확인 후 프로필 보기
   const confirmViewProfile = async () => {
-    if (!showMarkerConfirm) return
+    if (!showMarkerConfirm || isProcessing) return
 
     if (balance < 3) {
-      alert('마커가 부족합니다. 스토어에서 충전해 주세요.')
+      showToast.error(getErrorMessage('insufficient_balance'))
       setShowMarkerConfirm(null)
       navigate('/store')
       return
     }
 
+    setIsProcessing(true)
+
     // 마커 3개 차감 (서버 검증 포함)
     const result = await spendMarkers('profile_view')
     if (!result.success) {
-      alert(result.message || '마커 사용에 실패했습니다.')
+      showToast.error(result.message || getErrorMessage('marker_spend_failed'))
       if (result.error === 'insufficient_balance') {
         navigate('/store')
       }
       setShowMarkerConfirm(null)
+      setIsProcessing(false)
       return
     }
 
     // 본 프로필 목록에 추가
-    const viewedProfiles = JSON.parse(localStorage.getItem('gp_viewed_profiles') || '[]')
+    const viewedProfiles = getItem(STORAGE_KEYS.VIEWED_PROFILES, [])
     if (!viewedProfiles.includes(showMarkerConfirm.userId)) {
       viewedProfiles.push(showMarkerConfirm.userId)
-      localStorage.setItem('gp_viewed_profiles', JSON.stringify(viewedProfiles))
+      setItem(STORAGE_KEYS.VIEWED_PROFILES, viewedProfiles)
     }
 
     // 프로필 페이지로 이동
     navigate(`/user/${showMarkerConfirm.userId}`)
     setShowMarkerConfirm(null)
+    setIsProcessing(false)
   }
 
   return (
@@ -285,66 +286,20 @@ export default function Join() {
       </AnimatePresence>
       
       {/* 마커 사용 확인 모달 */}
-      <AnimatePresence>
-        {showMarkerConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-            onClick={() => setShowMarkerConfirm(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gp-card rounded-2xl p-6 mx-6 max-w-sm w-full"
-            >
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center">
-                  <MarkerIcon className="w-10 h-10" />
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-bold mb-2 text-center">프로필 열람</h3>
-              <p className="text-gp-text-secondary mb-2 text-center">
-                이 골퍼의 프로필을 확인하시겠습니까?
-              </p>
-              <p className="text-center mb-6">
-                <span className="text-gp-gold font-bold">마커 3개</span>
-                <span className="text-gp-text-secondary text-sm">가 사용됩니다</span>
-              </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowMarkerConfirm(null)}
-                  className="flex-1 py-3 rounded-xl bg-gp-border font-semibold"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmViewProfile}
-                  disabled={balance < 3}
-                  className={`flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 ${
-                    balance >= 3 
-                      ? 'btn-gold' 
-                      : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
-                  }`}
-                >
-                  <MarkerIcon className="w-4 h-4" />
-                  프로필 보기
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
+      <MarkerConfirmModal
+        isOpen={!!showMarkerConfirm}
+        onClose={() => setShowMarkerConfirm(null)}
+        onConfirm={confirmViewProfile}
+        actionType="profile_view"
+        cost={3}
+        balance={balance}
+        isProcessing={isProcessing}
+      />
+
       {/* 전화번호 인증 모달 */}
       <PhoneVerifyModal
-        isOpen={showPhoneVerifyModal}
-        onClose={() => setShowPhoneVerifyModal(false)}
+        isOpen={phoneVerify.showModal}
+        onClose={phoneVerify.closeModal}
         message="조인에 참여하려면 전화번호 인증이 필요해요."
       />
     </div>
@@ -460,18 +415,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
 // 내가 올린 조인 카드
 function MyJoinCard({ join, index, onDelete, onClick }) {
   const [showMenu, setShowMenu] = useState(false)
-  
-  const getTimeAgo = (dateString) => {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diffMs = now - date
-    const diffDays = Math.floor(diffMs / 86400000)
-    
-    if (diffDays < 1) return '오늘'
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
-  }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -492,7 +436,7 @@ function MyJoinCard({ join, index, onDelete, onClick }) {
             </span>
           </div>
           <p className="text-gp-text-secondary text-xs mt-0.5">
-            {getTimeAgo(join.createdAt)}에 생성
+            {getSimpleTimeAgo(join.createdAt)}에 생성
           </p>
         </div>
         

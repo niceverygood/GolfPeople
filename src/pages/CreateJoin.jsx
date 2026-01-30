@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Search, X, Check, Ch
 import golfCourses from '../data/golfCourses.json'
 import { useApp } from '../context/AppContext'
 import TimePicker from '../components/TimePicker'
+import { showToast } from '../utils/errorHandler'
 
 // 지역 필터 옵션
 const REGIONS = ['전체', '경기', '인천', '강원', '충남', '충북', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주']
@@ -214,7 +215,7 @@ export default function CreateJoin() {
       const created = createJoin(joinData)
       console.log('Created join:', created)
       
-      alert('조인이 생성되었습니다!')
+      showToast.success('조인이 생성되었습니다!')
       navigate('/join')
     }
   }

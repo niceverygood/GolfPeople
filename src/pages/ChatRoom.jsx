@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, Image, MoreVertical, Phone, Calendar, MapPin, X, Flag, Ban, Trash2 } from 'lucide-react'
 import DOMPurify from 'dompurify'
 import { useApp } from '../context/AppContext'
+import { formatChatTime } from '../utils/formatTime'
+import { showToast } from '../utils/errorHandler'
 
 // 메시지 sanitize 함수 (XSS 방지)
 const sanitizeMessage = (text) => {
@@ -61,13 +63,13 @@ export default function ChatRoom() {
 
   const handleReport = () => {
     setShowMenu(false)
-    alert('신고가 접수되었습니다.')
+    showToast.success('신고가 접수되었습니다.')
   }
 
   const handleBlock = () => {
     setShowMenu(false)
     if (confirm(`${chat?.partnerName}님을 차단하시겠습니까?`)) {
-      alert('차단되었습니다.')
+      showToast.success('차단되었습니다.')
       navigate(-1)
     }
   }
@@ -85,11 +87,6 @@ export default function ChatRoom() {
         <p className="text-gp-text-secondary">채팅방을 찾을 수 없습니다</p>
       </div>
     )
-  }
-
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp)
-    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   }
 
   const formatDate = (timestamp) => {
@@ -266,7 +263,7 @@ export default function ChatRoom() {
                     
                     {showTime && (
                       <span className="text-xs text-gp-text-secondary mt-1 px-1">
-                        {formatTime(msg.timestamp)}
+                        {formatChatTime(msg.timestamp)}
                       </span>
                     )}
                   </div>
