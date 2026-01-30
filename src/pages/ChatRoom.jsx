@@ -2,7 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, Image, MoreVertical, Phone, Calendar, MapPin, X, Flag, Ban, Trash2 } from 'lucide-react'
+import DOMPurify from 'dompurify'
 import { useApp } from '../context/AppContext'
+
+// 메시지 sanitize 함수 (XSS 방지)
+const sanitizeMessage = (text) => {
+  return DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: [], // HTML 태그 모두 제거
+    ALLOWED_ATTR: []  // 모든 속성 제거
+  })
+}
 
 export default function ChatRoom() {
   const { chatId } = useParams()
@@ -29,9 +38,13 @@ export default function ChatRoom() {
 
   const handleSend = () => {
     if (!message.trim()) return
-    
+
+    // XSS 방지: 메시지 sanitize
+    const sanitizedText = sanitizeMessage(message.trim())
+    if (!sanitizedText) return
+
     sendMessage(chatId, {
-      text: message.trim(),
+      text: sanitizedText,
       senderId: 'me',
       timestamp: new Date().toISOString()
     })

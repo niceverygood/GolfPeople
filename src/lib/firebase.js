@@ -1,16 +1,16 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
 
-// Firebase 설정
+// Firebase 설정 (환경변수에서 로드)
 const firebaseConfig = {
-  apiKey: "AIzaSyAMJ8gdZ6hvZhVnZ-DpEWDzpsu1LlrSHKs",
-  authDomain: "golfpeople-9cbb0.firebaseapp.com",
-  databaseURL: "https://golfpeople-9cbb0.firebaseio.com",
-  projectId: "golfpeople-9cbb0",
-  storageBucket: "golfpeople-9cbb0.firebasestorage.app",
-  messagingSenderId: "625021580962",
-  appId: "1:625021580962:web:e9167bd102a25c7f5b89fb",
-  measurementId: "G-MFZVF6BZV5"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 }
 
 // Firebase 초기화

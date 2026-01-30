@@ -2,8 +2,9 @@
  * 포트원 결제 모듈 (V1 - KG이니시스)
  */
 
-// 가맹점 식별코드
-const IMP_CODE = 'imp20122888'
+// 가맹점 식별코드 (환경변수에서 로드)
+const IMP_CODE = import.meta.env.VITE_PORTONE_IMP_CODE || ''
+const PG_MID = import.meta.env.VITE_PORTONE_PG_MID || ''
 
 /**
  * 포트원 초기화
@@ -45,7 +46,7 @@ export const requestPayment = ({
     console.log('결제 요청 시작:', { orderName, totalAmount, merchantUid })
     
     window.IMP.request_pay({
-      pg: 'html5_inicis.MOIplay998', // KG이니시스 MID
+      pg: PG_MID, // KG이니시스 MID (환경변수)
       pay_method: 'card',
       merchant_uid: merchantUid,
       name: orderName,

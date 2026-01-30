@@ -17,9 +17,9 @@
 import { Capacitor } from '@capacitor/core'
 import { isNative, isWeb, haptic } from './native'
 
-// RevenueCat API 키 (설정 필요)
-const REVENUECAT_IOS_KEY = 'appl_YmCshYUnuNscYlSndLqAOmWbT'
-const REVENUECAT_ANDROID_KEY = 'goog_FswVxUpumVzslOdUBTcSSqcNtbD'
+// RevenueCat API 키 (환경변수에서 로드)
+const REVENUECAT_IOS_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY || ''
+const REVENUECAT_ANDROID_KEY = import.meta.env.VITE_REVENUECAT_ANDROID_KEY || ''
 
 // 상품 ID (App Store Connect / Google Play Console에서 설정)
 export const PRODUCTS = {
