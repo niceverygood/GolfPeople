@@ -26,6 +26,7 @@ interface AligoRequest {
 }
 
 // 알림톡 템플릿 정의 (알리고에서 승인받은 템플릿과 동일해야 함)
+// 템플릿 코드는 알리고에서 자동 생성됨
 const TEMPLATES: Record<string, {
   tplCode: string
   subject: string
@@ -33,50 +34,50 @@ const TEMPLATES: Record<string, {
   buttonName?: string
   buttonUrl?: string
 }> = {
-  FRIEND_REQUEST_01: {
-    tplCode: 'FRIEND_REQUEST_01',
+  FRIEND_REQUEST: {
+    tplCode: 'UF_2416',
     subject: '새로운 친구 요청',
     message: '[골프피플] 새로운 친구 요청\n\n#{senderName}님이 친구 요청을 보냈습니다.\n\n앱에서 확인해보세요!',
     buttonName: '앱에서 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  FRIEND_ACCEPTED_01: {
-    tplCode: 'FRIEND_ACCEPTED_01',
+  FRIEND_ACCEPTED: {
+    tplCode: 'UF_2418',
     subject: '친구 요청 수락',
     message: '[골프피플] 친구 요청 수락\n\n#{senderName}님이 친구 요청을 수락했습니다.\n\n이제 함께 라운딩을 즐겨보세요!',
     buttonName: '앱에서 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  JOIN_APPLICATION_01: {
-    tplCode: 'JOIN_APPLICATION_01',
+  JOIN_APPLICATION: {
+    tplCode: 'UF_2419',
     subject: '새로운 조인 신청',
     message: '[골프피플] 새로운 조인 신청\n\n#{senderName}님이 "#{joinTitle}" 조인에 신청했습니다.\n\n앱에서 확인하고 수락/거절해주세요.',
     buttonName: '신청 확인하기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  JOIN_ACCEPTED_01: {
-    tplCode: 'JOIN_ACCEPTED_01',
+  JOIN_ACCEPTED: {
+    tplCode: 'UF_2420',
     subject: '조인 참가 확정',
     message: '[골프피플] 조인 참가 확정\n\n"#{joinTitle}" 조인 참가가 확정되었습니다!\n\n일시: #{joinDate}\n장소: #{joinLocation}\n\n즐거운 라운딩 되세요!',
     buttonName: '상세 정보 보기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  JOIN_REJECTED_01: {
-    tplCode: 'JOIN_REJECTED_01',
+  JOIN_REJECTED: {
+    tplCode: 'UF_2421',
     subject: '조인 신청 결과',
     message: '[골프피플] 조인 신청 결과\n\n아쉽게도 "#{joinTitle}" 조인 신청이 거절되었습니다.\n\n다른 조인을 찾아보세요!',
     buttonName: '다른 조인 찾기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  NEW_MESSAGE_01: {
-    tplCode: 'NEW_MESSAGE_01',
+  NEW_MESSAGE: {
+    tplCode: 'UF_2422',
     subject: '새 메시지',
     message: '[골프피플] 새 메시지\n\n#{senderName}님의 새 메시지가 있습니다.\n\n앱에서 확인해보세요!',
     buttonName: '메시지 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  JOIN_REMINDER_01: {
-    tplCode: 'JOIN_REMINDER_01',
+  JOIN_REMINDER: {
+    tplCode: 'UF_2423',
     subject: '라운딩 리마인더',
     message: '[골프피플] 라운딩 리마인더\n\n내일 "#{joinTitle}" 라운딩이 예정되어 있습니다.\n\n일시: #{joinDate}\n장소: #{joinLocation}\n\n준비 잘 하시고, 즐거운 라운딩 되세요!',
     buttonName: '상세 정보 보기',

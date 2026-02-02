@@ -20,42 +20,42 @@ export const NOTIFICATION_TYPES = {
   JOIN_REMINDER: 'join_reminder',        // 조인 리마인더 (D-1)
 }
 
-// 알림 템플릿
+// 알림 템플릿 (알리고 템플릿 코드 연동)
 const NOTIFICATION_TEMPLATES = {
   [NOTIFICATION_TYPES.FRIEND_REQUEST]: {
     title: '새로운 친구 요청',
     body: '{senderName}님이 친구 요청을 보냈습니다.',
-    kakaoTemplate: 'FRIEND_REQUEST_01',  // 카카오 템플릿 코드 (승인 후 설정)
+    kakaoTemplate: 'FRIEND_REQUEST',  // 알리고 UF_2416
   },
   [NOTIFICATION_TYPES.FRIEND_ACCEPTED]: {
     title: '친구 요청 수락',
     body: '{senderName}님이 친구 요청을 수락했습니다.',
-    kakaoTemplate: 'FRIEND_ACCEPTED_01',
+    kakaoTemplate: 'FRIEND_ACCEPTED',  // 알리고 UF_2418
   },
   [NOTIFICATION_TYPES.JOIN_APPLICATION]: {
     title: '새로운 조인 신청',
     body: '{senderName}님이 "{joinTitle}" 조인에 신청했습니다.',
-    kakaoTemplate: 'JOIN_APPLICATION_01',
+    kakaoTemplate: 'JOIN_APPLICATION',  // 알리고 UF_2419
   },
   [NOTIFICATION_TYPES.JOIN_ACCEPTED]: {
     title: '조인 참가 확정',
     body: '"{joinTitle}" 조인 참가가 확정되었습니다.',
-    kakaoTemplate: 'JOIN_ACCEPTED_01',
+    kakaoTemplate: 'JOIN_ACCEPTED',  // 알리고 UF_2420
   },
   [NOTIFICATION_TYPES.JOIN_REJECTED]: {
     title: '조인 신청 결과',
     body: '"{joinTitle}" 조인 신청이 거절되었습니다.',
-    kakaoTemplate: 'JOIN_REJECTED_01',
+    kakaoTemplate: 'JOIN_REJECTED',  // 알리고 UF_2421
   },
   [NOTIFICATION_TYPES.NEW_MESSAGE]: {
     title: '새 메시지',
     body: '{senderName}님의 새 메시지가 있습니다.',
-    kakaoTemplate: 'NEW_MESSAGE_01',
+    kakaoTemplate: 'NEW_MESSAGE',  // 알리고 UF_2422
   },
   [NOTIFICATION_TYPES.JOIN_REMINDER]: {
     title: '내일 라운딩 리마인더',
     body: '내일 "{joinTitle}" 라운딩이 예정되어 있습니다.',
-    kakaoTemplate: 'JOIN_REMINDER_01',
+    kakaoTemplate: 'JOIN_REMINDER',  // 알리고 UF_2423
   },
 }
 
