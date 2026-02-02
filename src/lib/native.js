@@ -258,24 +258,44 @@ export const pushNotifications = {
     }
   },
   
+  // 푸시 알림 등록 (FCM 토큰 받기)
+  register: async () => {
+    if (!isNative()) return
+    try {
+      await PushNotifications.register()
+    } catch (e) {
+      console.log('Push register error:', e)
+    }
+  },
+
   // 토큰 수신 리스너
   onRegistration: (callback) => {
-    return () => {}
+    if (!isNative()) return () => {}
+    const listener = PushNotifications.addListener('registration', (token) => {
+      callback(token.value)
+    })
+    return () => listener.remove()
   },
-  
+
   // 푸시 알림 수신 리스너 (앱이 열려있을 때)
   onPushReceived: (callback) => {
-    return () => {}
+    if (!isNative()) return () => {}
+    const listener = PushNotifications.addListener('pushNotificationReceived', callback)
+    return () => listener.remove()
   },
-  
+
   // 푸시 알림 탭 리스너
   onPushActionPerformed: (callback) => {
-    return () => {}
+    if (!isNative()) return () => {}
+    const listener = PushNotifications.addListener('pushNotificationActionPerformed', callback)
+    return () => listener.remove()
   },
-  
+
   // 에러 리스너
   onRegistrationError: (callback) => {
-    return () => {}
+    if (!isNative()) return () => {}
+    const listener = PushNotifications.addListener('registrationError', callback)
+    return () => listener.remove()
   }
 }
 
