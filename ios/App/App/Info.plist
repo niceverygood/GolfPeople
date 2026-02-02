@@ -53,6 +53,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>golfpeople</string>
+				<string>kr.golfpeople.app</string>
 			</array>
 		</dict>
 	</array>
