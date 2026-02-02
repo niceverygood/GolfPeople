@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "7AXRWTV5YW.com.bottle.golfpeople",
+        "paths": [
+          "/auth/callback/native",
+          "/auth/callback/native/*",
+          "/auth/callback/native*"
+        ]
+      }
+    ]
+  }
+}
