@@ -76,7 +76,11 @@ export const auth = {
         },
       })
       if (data?.url) {
-        await Browser.open({ url: data.url, windowName: '_self' })
+        await Browser.open({
+          url: data.url,
+          toolbarColor: '#0D0D0D',
+          presentationStyle: 'fullscreen'
+        })
       }
       return { data, error }
     }
@@ -102,11 +106,11 @@ export const auth = {
         },
       })
       if (data?.url) {
-        // Chrome Custom Tab으로 열기
-        await Browser.open({ 
+        // 외부 브라우저로 열기 (fullscreen 모드로 앱 간 통신 허용)
+        await Browser.open({
           url: data.url,
           toolbarColor: '#0D0D0D',
-          presentationStyle: 'popover'
+          presentationStyle: 'fullscreen'
         })
       }
       return { data, error }
