@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
+import { App } from '@capacitor/app'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -65,13 +66,13 @@ export const auth = {
 
   signInWithKakao: async () => {
     if (!supabase) return notConnected()
-    
-    // 네이티브 앱: 구글과 동일하게 중간 페이지를 거치는 가장 안정적인 방식 사용
+
+    // 네이티브 앱에서는 커스텀 URL Scheme으로 직접 리다이렉트
     if (Capacitor.isNativePlatform()) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: 'https://golf-people.vercel.app/auth/callback/native',
+          redirectTo: 'golfpeople://auth/callback',
           skipBrowserRedirect: true,
         },
       })
@@ -95,18 +96,17 @@ export const auth = {
 
   signInWithGoogle: async () => {
     if (!supabase) return notConnected()
-    
-    // 네이티브 앱에서는 외부 브라우저로 OAuth 열기 (Google은 WebView 차단)
+
+    // 네이티브 앱에서는 커스텀 URL Scheme으로 직접 리다이렉트
     if (Capacitor.isNativePlatform()) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { 
-          redirectTo: 'https://golf-people.vercel.app/auth/callback/native',
+        options: {
+          redirectTo: 'golfpeople://auth/callback',
           skipBrowserRedirect: true
         },
       })
       if (data?.url) {
-        // 외부 브라우저로 열기 (fullscreen 모드로 앱 간 통신 허용)
         await Browser.open({
           url: data.url,
           toolbarColor: '#0D0D0D',
@@ -115,7 +115,7 @@ export const auth = {
       }
       return { data, error }
     }
-    
+
     // 웹에서는 기본 동작
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

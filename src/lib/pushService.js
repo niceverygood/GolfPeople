@@ -34,17 +34,21 @@ export const initializePush = async (userId) => {
   try {
     // 권한 요청
     const permission = await pushNotifications.requestPermission()
-    
+
     if (!permission.granted) {
       console.log('푸시 알림 권한이 거부되었습니다')
       return { success: false, reason: 'permission_denied' }
     }
-    
-    // 토큰 수신 리스너 설정
+
+    // 토큰 수신 리스너 설정 (register() 호출 전에 리스너 등록)
     const unsubscribeToken = pushNotifications.onRegistration(async (token) => {
       console.log('📱 FCM 토큰 수신:', token)
       await savePushToken(token, userId)
     })
+
+    // FCM 등록 (토큰 요청)
+    await pushNotifications.register()
+    console.log('📱 FCM 등록 요청됨')
     
     // 푸시 알림 수신 리스너
     const unsubscribePush = pushNotifications.onPushReceived((notification) => {
