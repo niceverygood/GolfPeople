@@ -1,5 +1,5 @@
 {
-  "appId": "com.golfpeople.app",
+  "appId": "com.bottle.golfpeople",
   "appName": "GolfPeople",
   "webDir": "dist",
   "server": {

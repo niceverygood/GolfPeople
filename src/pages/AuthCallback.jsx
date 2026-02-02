@@ -27,6 +27,7 @@ export default function AuthCallback() {
         
         try {
           // 프로필 확인 및 생성
+          // 참고: handle_new_user() 트리거가 auth.users 생성 시 자동으로 프로필 생성
           const userId = session.user.id
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -35,14 +36,20 @@ export default function AuthCallback() {
             .single()
 
           if (profileError && profileError.code === 'PGRST116') {
-            // 프로필이 없으면 생성
+            // 트리거가 실패했거나 프로필이 없으면 수동 생성
             const userMeta = session.user.user_metadata
-            await supabase.from('profiles').insert({
+            const avatarUrl = userMeta.avatar_url || userMeta.picture
+
+            const { error: insertError } = await supabase.from('profiles').insert({
               id: userId,
               name: userMeta.name || userMeta.full_name || '골퍼',
               email: session.user.email,
-              avatar_url: userMeta.avatar_url || userMeta.picture,
+              photos: avatarUrl ? [avatarUrl] : [],
             })
+
+            if (insertError) {
+              console.error('Profile insert error:', insertError)
+            }
           }
         } catch (err) {
           console.error('Profile error:', err)

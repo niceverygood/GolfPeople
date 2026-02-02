@@ -14,6 +14,7 @@ import Profile from './pages/Profile'
 import ProfileDetail from './pages/ProfileDetail'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
+import AuthCallbackNative from './pages/AuthCallbackNative'
 import PhoneVerification from './pages/PhoneVerification'
 import Store from './pages/Store'
 import ScoreRecord from './pages/ScoreRecord'
@@ -111,11 +112,13 @@ function AppContent() {
   }
 
   // 3. 로그인 안 되어 있으면 로그인 화면 (콜백 페이지 제외)
-  if (!isAuthenticated && location.pathname !== '/auth/callback') {
+  const isCallbackPage = location.pathname.startsWith('/auth/callback')
+  if (!isAuthenticated && !isCallbackPage) {
     return (
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </AnimatePresence>
@@ -155,6 +158,7 @@ function AppContent() {
               <Route path="/chat/:chatId" element={<ChatRoom />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
             </Routes>
           </AnimatePresence>
 
