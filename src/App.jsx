@@ -37,6 +37,7 @@ import { ChatProvider } from './context/ChatContext'
 import { initializeNative, isNative, app, haptic } from './lib/native'
 import { initializePush } from './lib/pushService'
 import { initializeIAP, setUserId as setIAPUserId } from './lib/iap'
+import { supabase } from './lib/supabase'
 
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
@@ -73,11 +74,46 @@ function AppContent() {
         window.history.back()
       }
     })
-    
+
+    // 딥링크 처리 (OAuth 콜백)
+    const unsubscribeAppUrlOpen = app.onAppUrlOpen(async ({ url }) => {
+      console.log('Deep link received:', url)
+
+      // OAuth 콜백 URL인지 확인
+      if (url.includes('auth/callback')) {
+        try {
+          // URL에서 토큰 추출
+          const urlObj = new URL(url)
+          const params = new URLSearchParams(urlObj.search || urlObj.hash?.substring(1))
+          const accessToken = params.get('access_token')
+          const refreshToken = params.get('refresh_token')
+
+          if (accessToken && supabase) {
+            console.log('Setting session from deep link...')
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || ''
+            })
+
+            if (error) {
+              console.error('Failed to set session:', error)
+            } else {
+              console.log('Session set successfully from deep link')
+            }
+          }
+        } catch (e) {
+          console.error('Deep link handling error:', e)
+        }
+      }
+    })
+
     return () => {
       clearTimeout(timer)
       if (typeof unsubscribeBackButton === 'function') {
         unsubscribeBackButton()
+      }
+      if (typeof unsubscribeAppUrlOpen === 'function') {
+        unsubscribeAppUrlOpen()
       }
     }
   }, [profile])
