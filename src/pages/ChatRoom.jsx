@@ -1,56 +1,69 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Send, Image, MoreVertical, Phone, Calendar, MapPin, X, Flag, Ban, Trash2 } from 'lucide-react'
+import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2 } from 'lucide-react'
 import DOMPurify from 'dompurify'
-import { useApp } from '../context/AppContext'
+import { useChat } from '../context/ChatContext'
+import { useAuth } from '../context/AuthContext'
 import { formatChatTime } from '../utils/formatTime'
 import { showToast } from '../utils/errorHandler'
 
 // 메시지 sanitize 함수 (XSS 방지)
 const sanitizeMessage = (text) => {
   return DOMPurify.sanitize(text, {
-    ALLOWED_TAGS: [], // HTML 태그 모두 제거
-    ALLOWED_ATTR: []  // 모든 속성 제거
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: []
   })
 }
 
 export default function ChatRoom() {
   const { chatId } = useParams()
   const navigate = useNavigate()
-  const { chatRooms, sendMessage, markChatAsRead } = useApp()
-  const [message, setMessage] = useState('')
+  const { user } = useAuth()
+  const { chatRooms, messages, loading, enterRoom, leaveRoom, sendMessage } = useChat()
+
+  const [messageInput, setMessageInput] = useState('')
   const [showMenu, setShowMenu] = useState(false)
+  const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
+  // 현재 채팅방 정보
   const chat = chatRooms.find(c => c.id === chatId)
 
-  // 채팅방 진입 시 읽음 처리
+  // 채팅방 입장
   useEffect(() => {
-    if (chat) {
-      markChatAsRead(chatId)
+    if (chatId) {
+      enterRoom(chatId)
     }
-  }, [chatId, chat, markChatAsRead])
+
+    return () => {
+      leaveRoom()
+    }
+  }, [chatId, enterRoom, leaveRoom])
 
   // 새 메시지 시 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chat?.messages])
+  }, [messages])
 
-  const handleSend = () => {
-    if (!message.trim()) return
+  const handleSend = async () => {
+    if (!messageInput.trim() || sending) return
 
-    // XSS 방지: 메시지 sanitize
-    const sanitizedText = sanitizeMessage(message.trim())
+    const sanitizedText = sanitizeMessage(messageInput.trim())
     if (!sanitizedText) return
 
-    sendMessage(chatId, {
-      text: sanitizedText,
-      senderId: 'me',
-      timestamp: new Date().toISOString()
-    })
-    setMessage('')
+    setSending(true)
+    setMessageInput('')
+
+    const result = await sendMessage(sanitizedText)
+
+    if (!result.success) {
+      showToast.error('메시지 전송에 실패했습니다')
+      setMessageInput(sanitizedText)
+    }
+
+    setSending(false)
     inputRef.current?.focus()
   }
 
@@ -77,14 +90,44 @@ export default function ChatRoom() {
   const handleLeave = () => {
     setShowMenu(false)
     if (confirm('채팅방을 나가시겠습니까?')) {
-      navigate('/saved?tab=matched')
+      navigate('/chat')
     }
   }
 
-  if (!chat) {
+  // 로딩 중
+  if (loading && messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-gp-text-secondary">채팅방을 찾을 수 없습니다</p>
+      <div className="flex flex-col h-full bg-gp-black">
+        <div className="flex items-center px-4 py-3 bg-gp-card border-b border-gp-border safe-top">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 hover:bg-gp-border rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-gp-gold animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  // 채팅방 없음
+  if (!chat && !loading) {
+    return (
+      <div className="flex flex-col h-full bg-gp-black">
+        <div className="flex items-center px-4 py-3 bg-gp-card border-b border-gp-border safe-top">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 hover:bg-gp-border rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gp-text-secondary">채팅방을 찾을 수 없습니다</p>
+        </div>
       </div>
     )
   }
@@ -104,7 +147,7 @@ export default function ChatRoom() {
   }
 
   // 메시지를 날짜별로 그룹화
-  const groupedMessages = chat.messages.reduce((groups, msg) => {
+  const groupedMessages = messages.reduce((groups, msg) => {
     const date = formatDate(msg.timestamp)
     if (!groups[date]) {
       groups[date] = []
@@ -129,19 +172,19 @@ export default function ChatRoom() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          
-          <button 
-            onClick={() => navigate(`/user/${chat.partnerId}`)}
+
+          <button
+            onClick={() => chat?.partnerId && navigate(`/user/${chat.partnerId}`)}
             className="flex items-center gap-3"
           >
             <img
-              src={chat.partnerPhoto}
-              alt={chat.partnerName}
+              src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
+              alt={chat?.partnerName || ''}
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="text-left">
-              <h2 className="font-semibold">{chat.partnerName}</h2>
-              {chat.type === 'join' && (
+              <h2 className="font-semibold">{chat?.partnerName || '채팅'}</h2>
+              {chat?.type === 'join' && chat?.joinTitle && (
                 <p className="text-xs text-gp-text-secondary">{chat.joinTitle}</p>
               )}
             </div>
@@ -156,7 +199,6 @@ export default function ChatRoom() {
             <MoreVertical className="w-5 h-5" />
           </button>
 
-          {/* 메뉴 드롭다운 */}
           <AnimatePresence>
             {showMenu && (
               <>
@@ -201,8 +243,8 @@ export default function ChatRoom() {
         </div>
       </div>
 
-      {/* 조인 정보 (조인 채팅방인 경우) */}
-      {chat.type === 'join' && chat.joinInfo && (
+      {/* 조인 정보 */}
+      {chat?.type === 'join' && chat?.joinInfo && (
         <div className="px-4 py-3 bg-gp-card/50 border-b border-gp-border">
           <div className="flex items-center gap-4 text-sm text-gp-text-secondary">
             <div className="flex items-center gap-1">
@@ -219,59 +261,63 @@ export default function ChatRoom() {
 
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {Object.entries(groupedMessages).map(([date, messages]) => (
-          <div key={date}>
-            {/* 날짜 구분선 */}
-            <div className="flex items-center justify-center my-4">
-              <span className="px-3 py-1 bg-gp-card rounded-full text-xs text-gp-text-secondary">
-                {date}
-              </span>
-            </div>
-
-            {/* 메시지들 */}
-            {messages.map((msg, idx) => {
-              const isMe = msg.senderId === 'me'
-              const showTime = idx === messages.length - 1 || 
-                messages[idx + 1]?.senderId !== msg.senderId ||
-                new Date(messages[idx + 1]?.timestamp).getMinutes() !== new Date(msg.timestamp).getMinutes()
-
-              return (
-                <motion.div
-                  key={msg.id || idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isMe && (
-                    <img
-                      src={chat.partnerPhoto}
-                      alt=""
-                      className="w-8 h-8 rounded-full object-cover mr-2 mt-1"
-                    />
-                  )}
-                  
-                  <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
-                    <div
-                      className={`px-4 py-2.5 rounded-2xl ${
-                        isMe
-                          ? 'bg-gp-gold text-gp-black rounded-br-md'
-                          : 'bg-gp-card text-gp-text rounded-bl-md'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-keep leading-relaxed">{msg.text}</p>
-                    </div>
-                    
-                    {showTime && (
-                      <span className="text-xs text-gp-text-secondary mt-1 px-1">
-                        {formatChatTime(msg.timestamp)}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              )
-            })}
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gp-text-secondary text-sm">메시지를 보내 대화를 시작하세요</p>
           </div>
-        ))}
+        ) : (
+          Object.entries(groupedMessages).map(([date, dateMessages]) => (
+            <div key={date}>
+              <div className="flex items-center justify-center my-4">
+                <span className="px-3 py-1 bg-gp-card rounded-full text-xs text-gp-text-secondary">
+                  {date}
+                </span>
+              </div>
+
+              {dateMessages.map((msg, idx) => {
+                const isMe = msg.senderId === user?.id
+                const showTime = idx === dateMessages.length - 1 ||
+                  dateMessages[idx + 1]?.senderId !== msg.senderId ||
+                  new Date(dateMessages[idx + 1]?.timestamp).getMinutes() !== new Date(msg.timestamp).getMinutes()
+
+                return (
+                  <motion.div
+                    key={msg.id || idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {!isMe && (
+                      <img
+                        src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-cover mr-2 mt-1"
+                      />
+                    )}
+
+                    <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
+                      <div
+                        className={`px-4 py-2.5 rounded-2xl ${
+                          isMe
+                            ? 'bg-gp-gold text-gp-black rounded-br-md'
+                            : 'bg-gp-card text-gp-text rounded-bl-md'
+                        } ${msg.pending ? 'opacity-70' : ''}`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-keep leading-relaxed">{msg.text}</p>
+                      </div>
+
+                      {showTime && (
+                        <span className="text-xs text-gp-text-secondary mt-1 px-1">
+                          {formatChatTime(msg.timestamp)}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -281,8 +327,8 @@ export default function ChatRoom() {
           <div className="flex-1 bg-gp-surface rounded-2xl">
             <textarea
               ref={inputRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="메시지를 입력하세요..."
               rows={1}
@@ -290,21 +336,24 @@ export default function ChatRoom() {
               style={{ minHeight: '44px' }}
             />
           </div>
-          
+
           <button
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!messageInput.trim() || sending}
             className={`p-3 rounded-full transition-all ${
-              message.trim()
+              messageInput.trim() && !sending
                 ? 'bg-gp-gold text-gp-black'
                 : 'bg-gp-border text-gp-text-secondary'
             }`}
           >
-            <Send className="w-5 h-5" />
+            {sending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
     </motion.div>
   )
 }
-

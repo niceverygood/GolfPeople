@@ -20,43 +20,102 @@ export const NOTIFICATION_TYPES = {
   JOIN_REMINDER: 'join_reminder',        // 조인 리마인더 (D-1)
 }
 
-// 알림 템플릿 (알리고 템플릿 코드 연동)
+// 알림 템플릿 (인앱/푸시용 - 영문 변수)
+// 카카오 알림톡은 convertToKakaoVariables에서 한글 변수로 변환
 const NOTIFICATION_TEMPLATES = {
   [NOTIFICATION_TYPES.FRIEND_REQUEST]: {
     title: '새로운 친구 요청',
     body: '{senderName}님이 친구 요청을 보냈습니다.',
-    kakaoTemplate: 'FRIEND_REQUEST',  // 알리고 UF_2416
+    kakaoTemplate: 'FRIEND_REQUEST',
   },
   [NOTIFICATION_TYPES.FRIEND_ACCEPTED]: {
     title: '친구 요청 수락',
     body: '{senderName}님이 친구 요청을 수락했습니다.',
-    kakaoTemplate: 'FRIEND_ACCEPTED',  // 알리고 UF_2418
+    kakaoTemplate: 'FRIEND_ACCEPTED',
   },
   [NOTIFICATION_TYPES.JOIN_APPLICATION]: {
     title: '새로운 조인 신청',
     body: '{senderName}님이 "{joinTitle}" 조인에 신청했습니다.',
-    kakaoTemplate: 'JOIN_APPLICATION',  // 알리고 UF_2419
+    kakaoTemplate: 'JOIN_APPLICATION',
   },
   [NOTIFICATION_TYPES.JOIN_ACCEPTED]: {
     title: '조인 참가 확정',
     body: '"{joinTitle}" 조인 참가가 확정되었습니다.',
-    kakaoTemplate: 'JOIN_ACCEPTED',  // 알리고 UF_2420
+    kakaoTemplate: 'JOIN_ACCEPTED',
   },
   [NOTIFICATION_TYPES.JOIN_REJECTED]: {
     title: '조인 신청 결과',
     body: '"{joinTitle}" 조인 신청이 거절되었습니다.',
-    kakaoTemplate: 'JOIN_REJECTED',  // 알리고 UF_2421
+    kakaoTemplate: 'JOIN_REJECTED',
   },
   [NOTIFICATION_TYPES.NEW_MESSAGE]: {
     title: '새 메시지',
     body: '{senderName}님의 새 메시지가 있습니다.',
-    kakaoTemplate: 'NEW_MESSAGE',  // 알리고 UF_2422
+    kakaoTemplate: 'NEW_MESSAGE',
   },
   [NOTIFICATION_TYPES.JOIN_REMINDER]: {
-    title: '내일 라운딩 리마인더',
+    title: '라운딩 일정 안내',
     body: '내일 "{joinTitle}" 라운딩이 예정되어 있습니다.',
-    kakaoTemplate: 'JOIN_REMINDER',  // 알리고 UF_2423
+    kakaoTemplate: 'JOIN_REMINDER',
   },
+}
+
+/**
+ * 알림 데이터를 알리고 변수명으로 변환
+ */
+const convertToKakaoVariables = (type, data) => {
+  const now = new Date().toLocaleString('ko-KR')
+
+  switch (type) {
+    case NOTIFICATION_TYPES.FRIEND_REQUEST:
+      return {
+        회원명: data.recipientName || '',
+        요청자명: data.senderName || '',
+        요청일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.FRIEND_ACCEPTED:
+      return {
+        회원명: data.recipientName || '',
+        수락자명: data.senderName || '',
+        수락일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.JOIN_APPLICATION:
+      return {
+        회원명: data.recipientName || '',
+        조인명: data.joinTitle || '',
+        신청자명: data.senderName || '',
+        신청일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.JOIN_ACCEPTED:
+      return {
+        회원명: data.recipientName || '',
+        조인명: data.joinTitle || '',
+        라운딩일시: data.roundingDate || '',
+        장소: data.location || '',
+        확정일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.JOIN_REJECTED:
+      return {
+        회원명: data.recipientName || '',
+        조인명: data.joinTitle || '',
+        처리일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.NEW_MESSAGE:
+      return {
+        회원명: data.recipientName || '',
+        발신자명: data.senderName || '',
+        수신일시: data.timestamp || now,
+      }
+    case NOTIFICATION_TYPES.JOIN_REMINDER:
+      return {
+        회원명: data.recipientName || '',
+        조인명: data.joinTitle || '',
+        라운딩일시: data.roundingDate || '',
+        장소: data.location || '',
+      }
+    default:
+      return data
+  }
 }
 
 /**
@@ -131,10 +190,11 @@ export const createNotification = async ({
 
     // 카카오 알림톡 요청 (Edge Function 호출)
     if (options.kakao) {
+      const kakaoVariables = convertToKakaoVariables(type, data)
       await requestKakaoNotification({
         recipientId,
         templateCode: template.kakaoTemplate,
-        variables: data
+        variables: kakaoVariables
       })
     }
 
