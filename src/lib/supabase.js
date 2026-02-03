@@ -72,7 +72,7 @@ export const auth = {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: 'golfpeople://auth/callback',
+          redirectTo: 'kr.golfpeople.app://auth/callback',
           skipBrowserRedirect: true,
         },
       })
@@ -102,7 +102,7 @@ export const auth = {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'golfpeople://auth/callback',
+          redirectTo: 'kr.golfpeople.app://auth/callback',
           skipBrowserRedirect: true
         },
       })
