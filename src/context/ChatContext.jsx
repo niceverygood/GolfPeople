@@ -1,0 +1,223 @@
+/**
+ * 채팅 Context - Supabase Realtime 연동
+ */
+
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { useAuth } from './AuthContext'
+import {
+  getChatRooms,
+  getMessages,
+  sendMessage as sendChatMessage,
+  markAsRead,
+  subscribeToRoom,
+  subscribeToAllRooms,
+  getOrCreateDirectRoom,
+  unsubscribeAll
+} from '../lib/chatService'
+
+const ChatContext = createContext()
+
+export function ChatProvider({ children }) {
+  const { user } = useAuth()
+  const [chatRooms, setChatRooms] = useState([])
+  const [currentRoom, setCurrentRoom] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const roomUnsubscribeRef = useRef(null)
+  const allRoomsUnsubscribeRef = useRef(null)
+
+  // 채팅방 목록 로드
+  const loadChatRooms = useCallback(async () => {
+    if (!user?.id) return
+
+    setLoading(true)
+    const result = await getChatRooms(user.id)
+
+    if (result.success) {
+      setChatRooms(result.rooms)
+    } else {
+      setError(result.error)
+    }
+    setLoading(false)
+  }, [user?.id])
+
+  // 채팅방 입장
+  const enterRoom = useCallback(async (roomId) => {
+    if (!user?.id || !roomId) return
+
+    setLoading(true)
+
+    // 기존 구독 해제
+    if (roomUnsubscribeRef.current) {
+      roomUnsubscribeRef.current()
+    }
+
+    // 메시지 로드
+    const result = await getMessages(roomId)
+
+    if (result.success) {
+      setMessages(result.messages)
+      setCurrentRoom(roomId)
+
+      // 읽음 처리
+      await markAsRead(roomId, user.id)
+
+      // 채팅방 목록 업데이트 (unread count 갱신)
+      setChatRooms(prev =>
+        prev.map(room =>
+          room.id === roomId ? { ...room, unreadCount: 0 } : room
+        )
+      )
+
+      // 실시간 구독
+      roomUnsubscribeRef.current = subscribeToRoom(roomId, user.id, (newMessage) => {
+        setMessages(prev => {
+          // 중복 체크
+          if (prev.some(m => m.id === newMessage.id)) {
+            return prev
+          }
+          return [...prev, newMessage]
+        })
+
+        // 채팅방 목록의 마지막 메시지 업데이트
+        setChatRooms(prev =>
+          prev.map(room =>
+            room.id === roomId
+              ? {
+                  ...room,
+                  lastMessage: newMessage.text,
+                  lastMessageTime: newMessage.timestamp
+                }
+              : room
+          )
+        )
+      })
+    } else {
+      setError(result.error)
+    }
+
+    setLoading(false)
+  }, [user?.id])
+
+  // 채팅방 퇴장
+  const leaveRoom = useCallback(() => {
+    if (roomUnsubscribeRef.current) {
+      roomUnsubscribeRef.current()
+      roomUnsubscribeRef.current = null
+    }
+    setCurrentRoom(null)
+    setMessages([])
+  }, [])
+
+  // 메시지 전송
+  const sendMessage = useCallback(async (content) => {
+    if (!user?.id || !currentRoom || !content.trim()) {
+      return { success: false }
+    }
+
+    // 낙관적 업데이트 - 즉시 UI에 표시
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      text: content.trim(),
+      senderId: user.id,
+      timestamp: new Date().toISOString(),
+      pending: true
+    }
+
+    setMessages(prev => [...prev, tempMessage])
+
+    // 실제 전송
+    const result = await sendChatMessage(currentRoom, user.id, content)
+
+    if (result.success) {
+      // 임시 메시지를 실제 메시지로 교체 (Realtime에서 처리됨)
+      setMessages(prev =>
+        prev.filter(m => m.id !== tempMessage.id)
+      )
+    } else {
+      // 전송 실패 - 임시 메시지 제거
+      setMessages(prev =>
+        prev.filter(m => m.id !== tempMessage.id)
+      )
+      setError(result.error)
+    }
+
+    return result
+  }, [user?.id, currentRoom])
+
+  // 1:1 채팅 시작
+  const startDirectChat = useCallback(async (partnerId) => {
+    if (!user?.id || !partnerId) return { success: false }
+
+    const result = await getOrCreateDirectRoom(user.id, partnerId)
+
+    if (result.success) {
+      await loadChatRooms()
+    }
+
+    return result
+  }, [user?.id, loadChatRooms])
+
+  // 읽지 않은 메시지 총 개수
+  const totalUnreadCount = chatRooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0)
+
+  // 초기 로드 및 전체 채팅방 구독
+  useEffect(() => {
+    if (user?.id) {
+      loadChatRooms()
+
+      // 전체 채팅방 새 메시지 구독
+      allRoomsUnsubscribeRef.current = subscribeToAllRooms(user.id, () => {
+        loadChatRooms()
+      })
+    }
+
+    return () => {
+      if (allRoomsUnsubscribeRef.current) {
+        allRoomsUnsubscribeRef.current()
+      }
+      unsubscribeAll()
+    }
+  }, [user?.id, loadChatRooms])
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (roomUnsubscribeRef.current) {
+        roomUnsubscribeRef.current()
+      }
+    }
+  }, [])
+
+  const value = {
+    chatRooms,
+    currentRoom,
+    messages,
+    loading,
+    error,
+    totalUnreadCount,
+    loadChatRooms,
+    enterRoom,
+    leaveRoom,
+    sendMessage,
+    startDirectChat
+  }
+
+  return (
+    <ChatContext.Provider value={value}>
+      {children}
+    </ChatContext.Provider>
+  )
+}
+
+export const useChat = () => {
+  const context = useContext(ChatContext)
+  if (!context) {
+    throw new Error('useChat must be used within a ChatProvider')
+  }
+  return context
+}
+
+export default ChatContext
