@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut, 
+import {
+  Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut,
   Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone,
-  TrendingUp, Target
+  TrendingUp, Target, Users
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -129,13 +129,14 @@ export default function Profile() {
   const isPhoneVerified = profile?.phone_verified || localStorage.getItem('gp_phone_verified')
 
   const menuItems = [
+    { icon: Users, label: '내 친구', action: () => navigate('/friends') },
     { icon: Edit2, label: '프로필 수정', action: () => setShowEditModal(true) },
     // 전화번호 미인증시 인증 메뉴 표시
-    ...(!isPhoneVerified ? [{ 
-      icon: Phone, 
-      label: '전화번호 인증', 
+    ...(!isPhoneVerified ? [{
+      icon: Phone,
+      label: '전화번호 인증',
       action: () => navigate('/phone-verify'),
-      highlight: true 
+      highlight: true
     }] : []),
     { icon: Settings, label: '설정', action: () => setShowSettingsModal(true) },
     { icon: Shield, label: '차단 관리', action: () => setShowBlockModal(true) },

@@ -21,6 +21,7 @@ import ScoreRecord from './pages/ScoreRecord'
 import ScoreStats from './pages/ScoreStats'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
+import Friends from './pages/Friends'
 
 // Components
 import TabBar from './components/TabBar'
@@ -30,6 +31,7 @@ import ProposalModal from './components/ProposalModal'
 import { AppProvider } from './context/AppContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { MarkerProvider } from './context/MarkerContext'
+import { ChatProvider } from './context/ChatContext'
 
 // Native
 import { initializeNative, isNative, app, haptic } from './lib/native'
@@ -140,6 +142,7 @@ function AppContent() {
   return (
     <AppProvider>
       <MarkerProvider>
+        <ChatProvider>
         <div className="app-container">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -156,6 +159,7 @@ function AppContent() {
               <Route path="/phone-verify" element={<PhoneVerification />} />
               <Route path="/chat" element={<ChatList />} />
               <Route path="/chat/:chatId" element={<ChatRoom />} />
+              <Route path="/friends" element={<Friends />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
@@ -170,6 +174,7 @@ function AppContent() {
             onClose={closeProposalModal}
           />
         </div>
+        </ChatProvider>
       </MarkerProvider>
     </AppProvider>
   )

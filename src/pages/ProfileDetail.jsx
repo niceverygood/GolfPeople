@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react'
+import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
+import { useAuth } from '../context/AuthContext'
+import { useChat } from '../context/ChatContext'
+import * as friendService from '../lib/friendService'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerConfirmModal from '../components/MarkerConfirmModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
@@ -16,6 +19,8 @@ const FRIEND_REQUEST_COST = 3
 export default function ProfileDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
+  const { startDirectChat } = useChat()
   const { users, sendFriendRequest, friendRequests, likedUsers, likeUser, unlikeUser } = useApp()
   const { balance, useMarkers } = useMarker()
 
@@ -31,6 +36,29 @@ export default function ProfileDetail() {
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const isLiked = user ? likedUsers.includes(user.id) : false
+
+  // 친구 여부 상태 (Supabase)
+  const [friendshipStatus, setFriendshipStatus] = useState({
+    isFriend: false,
+    isPending: false,
+    sentByMe: false,
+    loading: true
+  })
+
+  // 친구 여부 확인
+  const checkFriendship = useCallback(async () => {
+    if (!currentUser?.id || !userId) return
+
+    const result = await friendService.checkFriendship(currentUser.id, userId)
+    setFriendshipStatus({
+      ...result,
+      loading: false
+    })
+  }, [currentUser?.id, userId])
+
+  useEffect(() => {
+    checkFriendship()
+  }, [checkFriendship])
 
   useEffect(() => {
     if (user) {
@@ -112,7 +140,19 @@ export default function ProfileDetail() {
       navigate(-1)
     }
   }
-  
+
+  // 채팅 시작 핸들러
+  const handleStartChat = async () => {
+    if (!currentUser?.id || !userId) return
+
+    const result = await startDirectChat(userId)
+    if (result.success) {
+      navigate(`/chat/${result.roomId}`)
+    } else {
+      showToast.error('채팅방을 열 수 없습니다.')
+    }
+  }
+
   const handleBack = () => {
     navigate(-1)
   }
@@ -327,20 +367,49 @@ export default function ProfileDetail() {
           </div>
         )}
         
-        {/* 친구 요청 버튼 */}
+        {/* 하단 버튼 - 친구 여부에 따라 다르게 표시 */}
         <div className="sticky bottom-0 pt-4 pb-6 bg-gradient-to-t from-gp-black via-gp-black to-transparent">
-          <button
-            onClick={handleFriendRequest}
-            disabled={friendRequested}
-            className={`w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-              friendRequested
-                ? 'bg-gp-green/20 text-gp-green'
-                : 'btn-gold'
-            }`}
-          >
-            <UserPlus className="w-5 h-5" />
-            {friendRequested ? '친구 요청 완료!' : '친구 요청하기'}
-          </button>
+          {friendshipStatus.loading ? (
+            <div className="w-full py-4 rounded-xl bg-gp-card flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-gp-gold border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : friendshipStatus.isFriend ? (
+            // 친구인 경우 - 채팅하기 버튼
+            <button
+              onClick={handleStartChat}
+              className="w-full py-4 rounded-xl btn-gold font-semibold flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-5 h-5" />
+              채팅하기
+            </button>
+          ) : friendshipStatus.isPending ? (
+            // 친구 요청 대기 중
+            <button
+              disabled
+              className="w-full py-4 rounded-xl bg-gp-card text-gp-text-secondary font-semibold flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-5 h-5" />
+              {friendshipStatus.sentByMe ? '친구 요청 대기 중...' : '상대방이 친구 요청을 보냈어요'}
+            </button>
+          ) : friendRequested ? (
+            // Mock 데이터에서 이미 요청한 경우
+            <button
+              disabled
+              className="w-full py-4 rounded-xl bg-gp-green/20 text-gp-green font-semibold flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-5 h-5" />
+              친구 요청 완료!
+            </button>
+          ) : (
+            // 친구가 아닌 경우 - 친구 요청하기 버튼
+            <button
+              onClick={handleFriendRequest}
+              className="w-full py-4 rounded-xl btn-gold font-semibold flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-5 h-5" />
+              친구 요청하기
+            </button>
+          )}
         </div>
       </div>
       
