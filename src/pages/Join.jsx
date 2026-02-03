@@ -222,11 +222,12 @@ export default function Join() {
                 />
               ) : (
                 filteredMyJoins.map((join, index) => (
-                  <MyJoinCard 
-                    key={join.id} 
-                    join={join} 
+                  <MyJoinCard
+                    key={join.id}
+                    join={join}
                     index={index}
                     onDelete={() => setShowDeleteConfirm(join.id)}
+                    onEdit={() => navigate(`/join/create?edit=${join.id}`)}
                     onClick={() => handleJoinClick(join.id)}
                   />
                 ))
@@ -413,7 +414,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
 }
 
 // 내가 올린 조인 카드
-function MyJoinCard({ join, index, onDelete, onClick }) {
+function MyJoinCard({ join, index, onDelete, onEdit, onClick }) {
   const [showMenu, setShowMenu] = useState(false)
 
   return (
@@ -470,7 +471,7 @@ function MyJoinCard({ join, index, onDelete, onClick }) {
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowMenu(false)
-                      // TODO: 수정 기능
+                      onEdit()
                     }}
                     className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gp-card transition-colors text-sm"
                   >

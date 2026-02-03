@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut,
   Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone,
-  TrendingUp, Target, Users
+  TrendingUp, Target, Users, Star
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -130,6 +130,7 @@ export default function Profile() {
 
   const menuItems = [
     { icon: Users, label: '내 친구', action: () => navigate('/friends') },
+    { icon: Star, label: '라운딩 리뷰', action: () => navigate('/review') },
     { icon: Edit2, label: '프로필 수정', action: () => setShowEditModal(true) },
     // 전화번호 미인증시 인증 메뉴 표시
     ...(!isPhoneVerified ? [{

@@ -4,6 +4,7 @@
  */
 
 import { supabase, isConnected } from './supabase'
+import { createNotification, NOTIFICATION_TYPES } from './notificationService'
 
 /**
  * 조인 목록 가져오기
@@ -295,6 +296,33 @@ export const applyToJoin = async (userId, joinId, message = '') => {
 
     if (error) throw error
 
+    // 알림 발송 (호스트에게 새 신청 알림)
+    const { data: joinData } = await supabase
+      .from('joins')
+      .select('host_id, title')
+      .eq('id', joinId)
+      .single()
+
+    const { data: applicantProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .single()
+
+    if (joinData?.host_id) {
+      createNotification({
+        type: NOTIFICATION_TYPES.JOIN_APPLICATION,
+        recipientId: joinData.host_id,
+        data: {
+          senderName: applicantProfile?.name || '골퍼',
+          senderId: userId,
+          joinTitle: joinData.title,
+          joinId: joinId,
+        },
+        options: { push: true, kakao: false, inApp: true }
+      })
+    }
+
     return { success: true, application: data }
   } catch (e) {
     console.error('조인 신청 에러:', e)
@@ -325,6 +353,25 @@ export const acceptJoinApplication = async (applicationId) => {
 
     if (error) throw error
 
+    // 알림 발송 (신청자에게 수락 알림)
+    const { data: joinData } = await supabase
+      .from('joins')
+      .select('title, date, time, location')
+      .eq('id', data.join_id)
+      .single()
+
+    createNotification({
+      type: NOTIFICATION_TYPES.JOIN_ACCEPTED,
+      recipientId: data.user_id,
+      data: {
+        joinTitle: joinData?.title || '',
+        joinId: data.join_id,
+        roundingDate: joinData?.date ? `${joinData.date} ${joinData.time || ''}` : '',
+        location: joinData?.location || '',
+      },
+      options: { push: true, kakao: false, inApp: true }
+    })
+
     return { success: true, application: data }
   } catch (e) {
     console.error('조인 신청 수락 에러:', e)
@@ -341,12 +388,38 @@ export const rejectJoinApplication = async (applicationId) => {
   }
 
   try {
+    // 먼저 신청 정보 가져오기
+    const { data: appData } = await supabase
+      .from('join_applications')
+      .select('user_id, join_id')
+      .eq('id', applicationId)
+      .single()
+
     const { error } = await supabase
       .from('join_applications')
       .update({ status: 'rejected' })
       .eq('id', applicationId)
 
     if (error) throw error
+
+    // 알림 발송 (신청자에게 거절 알림)
+    if (appData) {
+      const { data: joinData } = await supabase
+        .from('joins')
+        .select('title')
+        .eq('id', appData.join_id)
+        .single()
+
+      createNotification({
+        type: NOTIFICATION_TYPES.JOIN_REJECTED,
+        recipientId: appData.user_id,
+        data: {
+          joinTitle: joinData?.title || '',
+          joinId: appData.join_id,
+        },
+        options: { push: true, kakao: false, inApp: true }
+      })
+    }
 
     return { success: true }
   } catch (e) {

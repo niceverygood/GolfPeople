@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Search, X, Check, ChevronRight, UserPlus, Heart } from 'lucide-react'
 import golfCourses from '../data/golfCourses.json'
 import { useApp } from '../context/AppContext'
 import TimePicker from '../components/TimePicker'
 import { showToast } from '../utils/errorHandler'
+import { getJoinDetail, updateJoin } from '../lib/joinService'
+import { useAuth } from '../context/AuthContext'
 
 // 지역 필터 옵션
 const REGIONS = ['전체', '경기', '인천', '강원', '충남', '충북', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주']
@@ -33,9 +35,15 @@ const MEETING_TYPES = [
 
 export default function CreateJoin() {
   const navigate = useNavigate()
-  const { createJoin } = useApp()
-  
+  const [searchParams] = useSearchParams()
+  const editJoinId = searchParams.get('edit')
+  const isEditMode = !!editJoinId
+
+  const { createJoin, myJoins } = useApp()
+  const { user } = useAuth()
+
   const [step, setStep] = useState(0) // 0: 골프장, 1: 일정, 2: 상세
+  const [loading, setLoading] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRegion, setSelectedRegion] = useState('전체')
@@ -89,7 +97,30 @@ export default function CreateJoin() {
   const [styles, setStyles] = useState([])
   const [meetingType, setMeetingType] = useState('') // 만남 유형 (선택사항)
   const [description, setDescription] = useState('')
-  
+
+  // 수정 모드일 때 기존 데이터 로드
+  useEffect(() => {
+    if (isEditMode && editJoinId) {
+      // myJoins에서 찾기
+      const existingJoin = myJoins.find(j => j.id === editJoinId)
+      if (existingJoin) {
+        // 골프장 정보
+        const course = golfCourses.find(c => c.name === existingJoin.courseName)
+        if (course) setSelectedCourse(course)
+
+        // 일정 정보
+        setDate(existingJoin.date || '')
+        setTime(existingJoin.time || '07:00')
+
+        // 상세 정보
+        setHandicapRange(existingJoin.handicapRange || '')
+        setStyles(existingJoin.styles || existingJoin.style || [])
+        setMeetingType(existingJoin.meetingType || '')
+        setDescription(existingJoin.description || '')
+      }
+    }
+  }, [isEditMode, editJoinId, myJoins])
+
   // 원하는 성별 토글 (인덱스별)
   const toggleWantedGender = (index, gender) => {
     const newConditions = [...wantedConditions]
@@ -183,11 +214,11 @@ export default function CreateJoin() {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 2) {
       setStep(step + 1)
     } else {
-      // 조인 생성 완료
+      // 조인 생성/수정 완료
       const joinData = {
         title: `${selectedCourse.name} 라운딩`,
         courseId: selectedCourse.id,
@@ -210,12 +241,25 @@ export default function CreateJoin() {
         meetingType: meetingType || null,
         description,
       }
-      
-      // AppContext에 저장
-      const created = createJoin(joinData)
-      console.log('Created join:', created)
-      
-      showToast.success('조인이 생성되었습니다!')
+
+      if (isEditMode && editJoinId) {
+        // 수정 모드
+        setLoading(true)
+        const result = await updateJoin(editJoinId, user?.id, joinData)
+        setLoading(false)
+
+        if (result.success) {
+          showToast.success('조인이 수정되었습니다!')
+        } else {
+          showToast.error('조인 수정에 실패했습니다.')
+        }
+      } else {
+        // 생성 모드
+        const created = createJoin(joinData)
+        console.log('Created join:', created)
+        showToast.success('조인이 생성되었습니다!')
+      }
+
       navigate('/join')
     }
   }

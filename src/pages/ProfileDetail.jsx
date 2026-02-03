@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle } from 'lucide-react'
+import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle, Star } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 import * as friendService from '../lib/friendService'
+import { getUserRating, REVIEW_TAGS } from '../lib/reviewService'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerConfirmModal from '../components/MarkerConfirmModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
@@ -45,6 +46,13 @@ export default function ProfileDetail() {
     loading: true
   })
 
+  // 유저 평점 상태
+  const [userRating, setUserRating] = useState({
+    avgRating: 0,
+    reviewCount: 0,
+    commonTags: []
+  })
+
   // 친구 여부 확인
   const checkFriendship = useCallback(async () => {
     if (!currentUser?.id || !userId) return
@@ -59,6 +67,17 @@ export default function ProfileDetail() {
   useEffect(() => {
     checkFriendship()
   }, [checkFriendship])
+
+  // 유저 평점 로드
+  useEffect(() => {
+    const loadRating = async () => {
+      if (userId) {
+        const rating = await getUserRating(userId)
+        setUserRating(rating)
+      }
+    }
+    loadRating()
+  }, [userId])
 
   useEffect(() => {
     if (user) {
@@ -310,7 +329,43 @@ export default function ProfileDetail() {
             {user.intro}
           </p>
         </div>
-        
+
+        {/* 동반자 평가 */}
+        {userRating.reviewCount > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm text-gp-text-secondary mb-3 flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              동반자 평가
+            </h3>
+            <div className="bg-gp-card rounded-xl p-4">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="flex items-center gap-2">
+                  <Star className="w-6 h-6 text-gp-gold fill-gp-gold" />
+                  <span className="text-2xl font-bold">{userRating.avgRating}</span>
+                </div>
+                <span className="text-gp-text-secondary text-sm">
+                  ({userRating.reviewCount}개의 리뷰)
+                </span>
+              </div>
+              {userRating.commonTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {userRating.commonTags.map((tagId) => {
+                    const tagInfo = REVIEW_TAGS.find(t => t.id === tagId)
+                    return tagInfo ? (
+                      <span
+                        key={tagId}
+                        className="px-2.5 py-1 bg-gp-gold/10 text-gp-gold rounded-lg text-xs"
+                      >
+                        {tagInfo.emoji} {tagInfo.label}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 스코어 기록 */}
         {user.scoreStats && (
           <div className="mb-6">

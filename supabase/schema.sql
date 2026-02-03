@@ -782,3 +782,51 @@ CREATE TRIGGER scores_updated_at
   BEFORE UPDATE ON scores
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- =============================================
+-- 21. 라운딩 리뷰/평가 테이블
+-- =============================================
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reviewer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  reviewed_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  join_id UUID REFERENCES joins(id) ON DELETE SET NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5), -- 1-5점
+  tags TEXT[] DEFAULT '{}', -- 평가 태그 (매너, 시간약속, 실력 등)
+  comment TEXT, -- 한줄 코멘트
+  is_public BOOLEAN DEFAULT TRUE, -- 공개 여부
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(reviewer_id, reviewed_id, join_id) -- 동일 조인에서 중복 리뷰 방지
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON reviews(reviewer_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewed ON reviews(reviewed_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_join ON reviews(join_id);
+
+-- 리뷰 RLS
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "공개 리뷰는 누구나 조회" ON reviews
+  FOR SELECT USING (is_public = TRUE OR auth.uid() = reviewer_id OR auth.uid() = reviewed_id);
+
+CREATE POLICY "본인 리뷰만 생성" ON reviews
+  FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+
+CREATE POLICY "본인 리뷰만 수정" ON reviews
+  FOR UPDATE USING (auth.uid() = reviewer_id);
+
+CREATE POLICY "본인 리뷰만 삭제" ON reviews
+  FOR DELETE USING (auth.uid() = reviewer_id);
+
+-- =============================================
+-- 22. 프로필 평점 뷰 (평균 평점, 리뷰 수)
+-- =============================================
+CREATE OR REPLACE VIEW profile_ratings AS
+SELECT
+  reviewed_id AS user_id,
+  ROUND(AVG(rating)::numeric, 1) AS avg_rating,
+  COUNT(*) AS review_count,
+  ARRAY_AGG(DISTINCT tag) FILTER (WHERE tag IS NOT NULL) AS common_tags
+FROM reviews, UNNEST(COALESCE(NULLIF(tags, '{}'), ARRAY[''])) AS tag
+WHERE is_public = TRUE
+GROUP BY reviewed_id;
+

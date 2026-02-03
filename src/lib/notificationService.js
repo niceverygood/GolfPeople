@@ -18,6 +18,7 @@ export const NOTIFICATION_TYPES = {
   JOIN_REJECTED: 'join_rejected',        // 조인 신청 거절됨
   NEW_MESSAGE: 'new_message',            // 새 메시지
   JOIN_REMINDER: 'join_reminder',        // 조인 리마인더 (D-1)
+  REVIEW_RECEIVED: 'review_received',    // 리뷰 받음
 }
 
 // 알림 템플릿 (인앱/푸시용 - 영문 변수)
@@ -57,6 +58,11 @@ const NOTIFICATION_TEMPLATES = {
     title: '라운딩 일정 안내',
     body: '내일 "{joinTitle}" 라운딩이 예정되어 있습니다.',
     kakaoTemplate: 'JOIN_REMINDER',
+  },
+  [NOTIFICATION_TYPES.REVIEW_RECEIVED]: {
+    title: '새로운 리뷰 도착',
+    body: '{reviewerName}님이 회원님에게 {rating}점 리뷰를 남겼습니다.',
+    kakaoTemplate: 'REVIEW_RECEIVED',
   },
 }
 
@@ -112,6 +118,13 @@ const convertToKakaoVariables = (type, data) => {
         조인명: data.joinTitle || '',
         라운딩일시: data.roundingDate || '',
         장소: data.location || '',
+      }
+    case NOTIFICATION_TYPES.REVIEW_RECEIVED:
+      return {
+        회원명: data.recipientName || '',
+        평가자명: data.reviewerName || '',
+        평점: data.rating || '',
+        평가일시: data.timestamp || now,
       }
     default:
       return data
