@@ -26,7 +26,7 @@ interface AligoRequest {
 }
 
 // 알림톡 템플릿 정의 (알리고에서 승인받은 템플릿과 동일해야 함)
-// 템플릿 코드는 알리고에서 자동 생성됨
+// 변수명은 한글로 통일 (알리고 검수 요구사항)
 const TEMPLATES: Record<string, {
   tplCode: string
   subject: string
@@ -37,49 +37,49 @@ const TEMPLATES: Record<string, {
   FRIEND_REQUEST: {
     tplCode: 'UF_2416',
     subject: '새로운 친구 요청',
-    message: '[골프피플] 새로운 친구 요청\n\n#{senderName}님이 친구 요청을 보냈습니다.\n\n앱에서 확인해보세요!',
+    message: '[골프피플] 새로운 친구 요청\n\n#{회원명}님, 회원님의 프로필을 본 골퍼가 친구 요청을 보냈습니다.\n\n- 요청자: #{요청자명}\n- 요청일시: #{요청일시}\n\n앱에서 요청을 확인하고 수락 또는 거절해주세요.\n\n※ 본 메시지는 골프피플 앱 가입 회원에게만 발송됩니다.',
     buttonName: '앱에서 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   FRIEND_ACCEPTED: {
     tplCode: 'UF_2418',
     subject: '친구 요청 수락',
-    message: '[골프피플] 친구 요청 수락\n\n#{senderName}님이 친구 요청을 수락했습니다.\n\n이제 함께 라운딩을 즐겨보세요!',
+    message: '[골프피플] 친구 요청 수락\n\n#{회원명}님, 회원님이 보낸 친구 요청이 수락되었습니다.\n\n- 수락자: #{수락자명}\n- 수락일시: #{수락일시}\n\n앱에서 대화를 시작해보세요!\n\n※ 본 메시지는 골프피플 앱에서 친구 요청을 보낸 회원에게 발송됩니다.',
     buttonName: '앱에서 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   JOIN_APPLICATION: {
     tplCode: 'UF_2419',
     subject: '새로운 조인 신청',
-    message: '[골프피플] 새로운 조인 신청\n\n#{senderName}님이 "#{joinTitle}" 조인에 신청했습니다.\n\n앱에서 확인하고 수락/거절해주세요.',
+    message: '[골프피플] 새로운 조인 신청\n\n#{회원명}님, 회원님이 만든 조인에 새로운 신청이 있습니다.\n\n- 조인명: #{조인명}\n- 신청자: #{신청자명}\n- 신청일시: #{신청일시}\n\n앱에서 신청을 확인하고 수락 또는 거절해주세요.\n\n※ 본 메시지는 골프피플 앱에서 조인을 생성한 회원에게 발송됩니다.',
     buttonName: '신청 확인하기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   JOIN_ACCEPTED: {
     tplCode: 'UF_2420',
     subject: '조인 참가 확정',
-    message: '[골프피플] 조인 참가 확정\n\n"#{joinTitle}" 조인 참가가 확정되었습니다!\n\n일시: #{joinDate}\n장소: #{joinLocation}\n\n즐거운 라운딩 되세요!',
+    message: '[골프피플] 조인 참가 확정\n\n#{회원명}님, 조인 참가가 확정되었습니다.\n\n- 조인명: #{조인명}\n- 일시: #{라운딩일시}\n- 장소: #{장소}\n- 확정일시: #{확정일시}\n\n앱에서 조인 채팅방을 확인해주세요.\n\n※ 본 메시지는 골프피플 앱에서 조인 신청을 한 회원에게 발송됩니다.',
     buttonName: '상세 정보 보기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   JOIN_REJECTED: {
     tplCode: 'UF_2421',
     subject: '조인 신청 결과',
-    message: '[골프피플] 조인 신청 결과\n\n아쉽게도 "#{joinTitle}" 조인 신청이 거절되었습니다.\n\n다른 조인을 찾아보세요!',
+    message: '[골프피플] 조인 신청 결과\n\n#{회원명}님, 조인 신청 결과를 안내드립니다.\n\n- 조인명: #{조인명}\n- 결과: 참가 불가\n- 처리일시: #{처리일시}\n\n다른 조인을 찾아보세요.\n\n※ 본 메시지는 골프피플 앱에서 조인 신청을 한 회원에게 발송됩니다.',
     buttonName: '다른 조인 찾기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   NEW_MESSAGE: {
     tplCode: 'UF_2422',
-    subject: '새 메시지',
-    message: '[골프피플] 새 메시지\n\n#{senderName}님의 새 메시지가 있습니다.\n\n앱에서 확인해보세요!',
+    subject: '새 메시지 도착',
+    message: '[골프피플] 새 메시지 도착\n\n#{회원명}님, 새로운 메시지가 도착했습니다.\n\n- 발신자: #{발신자명}\n- 수신일시: #{수신일시}\n\n앱에서 메시지를 확인해주세요.\n\n※ 본 메시지는 골프피플 앱에서 채팅 중인 회원에게 발송됩니다.',
     buttonName: '메시지 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
   JOIN_REMINDER: {
     tplCode: 'UF_2423',
-    subject: '라운딩 리마인더',
-    message: '[골프피플] 라운딩 리마인더\n\n내일 "#{joinTitle}" 라운딩이 예정되어 있습니다.\n\n일시: #{joinDate}\n장소: #{joinLocation}\n\n준비 잘 하시고, 즐거운 라운딩 되세요!',
+    subject: '라운딩 일정 안내',
+    message: '[골프피플] 라운딩 일정 안내\n\n#{회원명}님, 내일 라운딩 일정이 있습니다.\n\n- 조인명: #{조인명}\n- 일시: #{라운딩일시}\n- 장소: #{장소}\n\n즐거운 라운딩 되세요!\n\n※ 본 메시지는 골프피플 앱에서 조인에 참가 확정된 회원에게 발송됩니다.',
     buttonName: '상세 정보 보기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
