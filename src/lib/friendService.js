@@ -4,6 +4,7 @@
  */
 
 import { supabase, isConnected } from './supabase'
+import { createNotification, NOTIFICATION_TYPES } from './notificationService'
 
 /**
  * 보낸 친구 요청 목록 가져오기
@@ -140,6 +141,23 @@ export const sendFriendRequest = async (fromUserId, toUserId, message = '') => {
 
     if (error) throw error
 
+    // 알림 발송 (친구 요청 받음)
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', fromUserId)
+      .single()
+
+    createNotification({
+      type: NOTIFICATION_TYPES.FRIEND_REQUEST,
+      recipientId: toUserId,
+      data: {
+        senderName: senderProfile?.name || '골퍼',
+        senderId: fromUserId,
+      },
+      options: { push: true, kakao: false, inApp: true }
+    })
+
     return { success: true, request: data }
   } catch (e) {
     console.error('친구 요청 보내기 에러:', e)
@@ -168,6 +186,23 @@ export const acceptFriendRequest = async (requestId) => {
       .single()
 
     if (error) throw error
+
+    // 알림 발송 (친구 요청 수락됨 - 요청자에게)
+    const { data: acceptorProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', data.to_user_id)
+      .single()
+
+    createNotification({
+      type: NOTIFICATION_TYPES.FRIEND_ACCEPTED,
+      recipientId: data.from_user_id,
+      data: {
+        senderName: acceptorProfile?.name || '골퍼',
+        senderId: data.to_user_id,
+      },
+      options: { push: true, kakao: false, inApp: true }
+    })
 
     return { success: true, request: data }
   } catch (e) {

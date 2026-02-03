@@ -22,6 +22,7 @@ import ScoreStats from './pages/ScoreStats'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
 import Friends from './pages/Friends'
+import Review from './pages/Review'
 
 // Components
 import TabBar from './components/TabBar'
@@ -82,6 +83,14 @@ function AppContent() {
       // OAuth 콜백 URL인지 확인
       if (url.includes('auth/callback')) {
         try {
+          // 브라우저 닫기 (OAuth 완료)
+          try {
+            const { Browser } = await import('@capacitor/browser')
+            await Browser.close()
+          } catch (browserErr) {
+            console.log('Browser close skipped:', browserErr)
+          }
+
           // URL에서 토큰 추출
           const urlObj = new URL(url)
           const params = new URLSearchParams(urlObj.search || urlObj.hash?.substring(1))
@@ -196,6 +205,7 @@ function AppContent() {
               <Route path="/chat" element={<ChatList />} />
               <Route path="/chat/:chatId" element={<ChatRoom />} />
               <Route path="/friends" element={<Friends />} />
+              <Route path="/review" element={<Review />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
