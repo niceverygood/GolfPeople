@@ -27,6 +27,7 @@ import Review from './pages/Review'
 // Components
 import TabBar from './components/TabBar'
 import ProposalModal from './components/ProposalModal'
+import ToastContainer from './components/ToastContainer'
 
 // Context
 import { AppProvider } from './context/AppContext'
@@ -219,6 +220,7 @@ function AppContent() {
             user={proposalModal.user}
             onClose={closeProposalModal}
           />
+          <ToastContainer />
         </div>
         </ChatProvider>
       </MarkerProvider>

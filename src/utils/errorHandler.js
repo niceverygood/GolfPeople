@@ -147,27 +147,11 @@ export const safeApiCall = async (apiCall, options = {}) => {
 }
 
 /**
- * 간단한 토스트 알림 (alert 대체)
- * 추후 실제 토스트 라이브러리로 교체 가능
+ * 토스트 알림 (toastStore 기반)
  */
-export const showToast = {
-  error: (message) => {
-    // TODO: 실제 토스트 컴포넌트로 교체
-    alert(message)
-  },
-  success: (message) => {
-    // TODO: 실제 토스트 컴포넌트로 교체
-    alert(message)
-  },
-  warning: (message) => {
-    // TODO: 실제 토스트 컴포넌트로 교체
-    alert(message)
-  },
-  info: (message) => {
-    // TODO: 실제 토스트 컴포넌트로 교체
-    alert(message)
-  },
-}
+import { toast } from '../lib/toastStore'
+
+export const showToast = toast
 
 export default {
   ERROR_MESSAGES,
