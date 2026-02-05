@@ -146,5 +146,10 @@ EXCEPTION
 END;
 $$;
 
--- 5. add_markers 클라이언트 직접 호출 차단
-REVOKE EXECUTE ON FUNCTION add_markers(UUID, INTEGER, TEXT, TEXT) FROM authenticated;
+-- 5. add_markers 클라이언트 직접 호출 차단 (함수가 존재하는 경우에만)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'add_markers') THEN
+    REVOKE EXECUTE ON FUNCTION add_markers(UUID, INTEGER, TEXT, TEXT) FROM authenticated;
+  END IF;
+END $$;
