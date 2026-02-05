@@ -13,7 +13,9 @@
     "ios": "npx cap open ios",
     "android": "npx cap open android",
     "ios:run": "npx cap run ios",
-    "android:run": "npx cap run android"
+    "android:run": "npx cap run android",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
@@ -41,13 +43,17 @@
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^28.0.0",
     "postcss": "^8.4.47",
     "puppeteer": "^24.36.1",
     "tailwindcss": "^3.4.14",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vitest": "^4.0.18"
   }
 }
