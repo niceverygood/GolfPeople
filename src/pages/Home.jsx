@@ -10,6 +10,7 @@ import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { getTimeAgo } from '../utils/formatTime'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
+import VerificationBadges from '../components/VerificationBadges'
 
 // 추천 시간대
 const RECOMMENDATION_TIMES = [
@@ -568,9 +569,12 @@ function FlipCard({ card, isUnlocked, onClick }) {
               </div>
               
               <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="font-bold text-white">
-                  {card.user.name}, {card.user.age}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-white">
+                    {card.user.name}, {card.user.age}
+                  </p>
+                  <VerificationBadges user={card.user} scoreStats={card.user.scoreStats} compact />
+                </div>
                 <p className="text-xs text-white/70 flex items-center gap-1 mb-1">
                   <MapPin className="w-3 h-3" />
                   {card.user.region}
