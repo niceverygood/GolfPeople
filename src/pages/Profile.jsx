@@ -990,6 +990,22 @@ function SettingsModal({ onClose }) {
     }
   })
 
+  // 다크모드 설정
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return (localStorage.getItem('gp_theme') || 'dark') === 'dark'
+  })
+
+  const handleThemeToggle = () => {
+    const newDark = !isDarkMode
+    setIsDarkMode(newDark)
+    localStorage.setItem('gp_theme', newDark ? 'dark' : 'light')
+    if (newDark) {
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.add('light')
+    }
+  }
+
   // 알림 설정 (서버 연동)
   const [notifSettings, setNotifSettings] = useState({
     push_enabled: true,
@@ -1115,6 +1131,21 @@ function SettingsModal({ onClose }) {
               )
             })
           )}
+        </div>
+
+        {/* 외관 설정 */}
+        <h3 className="text-sm text-gp-text-secondary mb-2 px-2">외관</h3>
+        <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Moon className="w-5 h-5 text-gp-text-secondary flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium">다크 모드</p>
+                <p className="text-xs text-gp-text-secondary">어두운 테마 사용</p>
+              </div>
+            </div>
+            {renderToggle(isDarkMode, handleThemeToggle)}
+          </div>
         </div>
 
         {/* 개인정보 설정 */}

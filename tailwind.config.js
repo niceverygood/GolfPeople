@@ -9,12 +9,12 @@ export default {
       colors: {
         // 프리미엄 골프 테마 - 다크 베이스 + 골드 액센트
         'gp': {
-          'black': '#0A0A0A',
-          'dark': '#141414',
-          'card': '#1C1C1E',
-          'border': '#2C2C2E',
-          'text': '#F5F5F7',
-          'text-secondary': '#8E8E93',
+          'black': 'var(--gp-black)',
+          'dark': 'var(--gp-dark)',
+          'card': 'var(--gp-card)',
+          'border': 'var(--gp-border)',
+          'text': 'var(--gp-text)',
+          'text-secondary': 'var(--gp-text-secondary)',
           'gold': '#D4AF37',
           'gold-light': '#F4E4BA',
           'green': '#34C759',
