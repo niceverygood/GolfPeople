@@ -21,6 +21,7 @@ import { requestPayment, generatePaymentId } from '../lib/portone'
 import { isNative, isAndroid, isIOS } from '../lib/native'
 import { purchaseProduct as nativePurchase, PRODUCT_INFO, PRODUCTS } from '../lib/iap'
 import { haptic } from '../lib/native'
+import { verifyPortOnePayment, pollPurchaseConfirmation } from '../lib/paymentVerify'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
 // 상품 카드 컴포넌트
@@ -139,7 +140,7 @@ export default function Store() {
       navigate(-1)
     }
   }
-  const { balance, products, prices, transactions, refreshTransactions, addMarkers } = useMarker()
+  const { balance, products, prices, transactions, refreshTransactions, addMarkers, refreshWalletFromServer } = useMarker()
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showPayment, setShowPayment] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -192,9 +193,15 @@ export default function Store() {
         if (result.success) {
           await haptic.success()
           const totalMarkers = result.markers || (selectedProduct.marker_amount + selectedProduct.bonus_amount)
-          // 서버에 마커 충전 기록 (실제 검증은 서버에서 진행해야 함)
-          addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (인앱결제)`)
+          // 웹훅 처리 대기 (RevenueCat → webhook-revenuecat → credit_markers_verified)
           setPurchaseResult({ success: true, amount: totalMarkers })
+          const confirmed = await pollPurchaseConfirmation(result.transactionId)
+          if (confirmed) {
+            await refreshWalletFromServer()
+          } else {
+            // 웹훅 지연 시 로컬 반영 (다음 앱 실행 시 서버 동기화)
+            addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (인앱결제)`)
+          }
         } else if (result.cancelled) {
           // 사용자가 시스템 결제창에서 취소한 경우
           setShowPayment(false)
@@ -225,9 +232,19 @@ export default function Store() {
       setPurchasing(false)
       
       if (paymentResult.success) {
-        const totalMarkers = selectedProduct.marker_amount + selectedProduct.bonus_amount
-        addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (카드결제)`)
-        setPurchaseResult({ success: true, amount: totalMarkers })
+        // 서버 검증 (verify-portone Edge Function)
+        const verifyResult = await verifyPortOnePayment(
+          paymentResult.impUid,
+          paymentResult.paymentId,
+          selectedProduct.id
+        )
+        if (verifyResult.success) {
+          await refreshWalletFromServer()
+          setPurchaseResult({ success: true, amount: verifyResult.credited || (selectedProduct.marker_amount + selectedProduct.bonus_amount) })
+        } else {
+          setPurchaseResult({ success: false, error: verifyResult.error || '결제 검증에 실패했습니다' })
+          setTimeout(() => setPurchaseResult(null), 3000)
+        }
       } else {
         if (paymentResult.error) {
           setPurchaseResult({ success: false, error: paymentResult.error })

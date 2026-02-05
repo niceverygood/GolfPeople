@@ -173,8 +173,9 @@ export const MarkerProvider = ({ children }) => {
     return { success: true, cost, newBalance }
   }, [balance, prices, saveBalance, saveTransaction, user])
 
-  // 마커 충전 (결제 후 호출)
+  // 마커 충전 (로컬 폴백 — 서버 검증 우선 사용 권장)
   const addMarkers = useCallback((amount, type = 'purchase', description = '마커 충전') => {
+    console.warn('⚠️ addMarkers 직접 호출 (서버 검증 경로 사용 권장)')
     console.log('💰 마커 충전:', { amount, type, description })
     
     const newBalance = balance + amount
@@ -207,6 +208,25 @@ export const MarkerProvider = ({ children }) => {
     console.log('거래 내역:', transactions.length, '건')
   }, [transactions])
 
+  // 서버에서 실제 잔액 동기화
+  const refreshWalletFromServer = useCallback(async () => {
+    if (!isConnected() || !user) return
+    try {
+      const { data, error } = await supabase
+        .from('marker_wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (!error && data) {
+        setBalance(data.balance)
+        localStorage.setItem('gp_marker_balance', data.balance.toString())
+        console.log('서버 잔액 동기화:', data.balance)
+      }
+    } catch (e) {
+      console.error('서버 잔액 조회 실패:', e)
+    }
+  }, [user])
+
   // 지갑 새로고침
   const refreshWallet = useCallback(() => {
     console.log('현재 잔액:', balance)
@@ -224,6 +244,7 @@ export const MarkerProvider = ({ children }) => {
     hasEnoughMarkers,
     getCost,
     refreshWallet,
+    refreshWalletFromServer,
     refreshTransactions
   }
 

@@ -1,0 +1,90 @@
+/**
+ * 결제 서버 검증 라이브러리
+ *
+ * PortOne / RevenueCat 결제 완료 후 서버에서 검증하고 마커를 지급받는 함수들
+ */
+
+import { supabase, isConnected } from './supabase'
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+
+/**
+ * PortOne 결제 서버 검증
+ * Edge Function을 호출하여 결제를 검증하고 마커를 지급받음
+ *
+ * @param {string} impUid - PortOne imp_uid
+ * @param {string} merchantUid - 주문번호
+ * @param {number} productId - 상품 ID (1~5)
+ * @returns {Promise<{success: boolean, new_balance?: number, credited?: number, error?: string}>}
+ */
+export const verifyPortOnePayment = async (impUid, merchantUid, productId) => {
+  if (!isConnected() || !SUPABASE_URL) {
+    return { success: false, error: 'not_connected' }
+  }
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      return { success: false, error: 'not_authenticated' }
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-portone`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        imp_uid: impUid,
+        merchant_uid: merchantUid,
+        product_id: productId,
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      return { success: false, error: result.error || '결제 검증에 실패했습니다' }
+    }
+
+    return result
+  } catch (error) {
+    console.error('PortOne 검증 요청 실패:', error)
+    return { success: false, error: error.message || '네트워크 오류' }
+  }
+}
+
+/**
+ * RevenueCat 구매 후 서버 처리 대기 (폴링)
+ * 웹훅이 처리될 때까지 purchase_records를 확인
+ *
+ * @param {string} transactionId - RevenueCat transaction ID
+ * @param {number} timeout - 최대 대기 시간 (ms), 기본 15초
+ * @returns {Promise<boolean>} - 서버 처리 완료 여부
+ */
+export const pollPurchaseConfirmation = async (transactionId, timeout = 15000) => {
+  if (!isConnected() || !supabase) return false
+
+  const startTime = Date.now()
+  const interval = 2000 // 2초 간격
+
+  while (Date.now() - startTime < timeout) {
+    try {
+      const { data } = await supabase
+        .from('purchase_records')
+        .select('verification_status')
+        .eq('transaction_id', transactionId)
+        .single()
+
+      if (data?.verification_status === 'verified') {
+        return true
+      }
+    } catch {
+      // 아직 레코드 없음 → 계속 폴링
+    }
+
+    await new Promise(resolve => setTimeout(resolve, interval))
+  }
+
+  return false
+}
