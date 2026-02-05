@@ -4,12 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut,
   Shield, Edit2, X, Bell, Eye, Moon, Trash2, ChevronLeft, Coins, Plus, Phone,
-  TrendingUp, Target, Users, Star
+  TrendingUp, Target, Users, Star, MessageSquare, Calendar
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
 import { db } from '../lib/supabase'
+import { getNotificationSettings, updateNotificationSettings } from '../lib/notificationService'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
 // 지역 옵션
@@ -977,32 +978,93 @@ function EditProfileModal({ profile, onClose, onSave }) {
 
 // 설정 모달
 function SettingsModal({ onClose }) {
-  const [settings, setSettings] = useState(() => {
+  const { user } = useAuth()
+
+  // 로컬 설정 (개인정보)
+  const [localSettings, setLocalSettings] = useState(() => {
     const saved = localStorage.getItem('gp_settings')
     return saved ? JSON.parse(saved) : {
-      pushNotification: true,
-      matchNotification: true,
-      messageNotification: true,
       profilePublic: true,
       showOnline: true,
-      darkMode: true,
     }
   })
-  
-  const handleToggle = (key) => {
-    const newSettings = { ...settings, [key]: !settings[key] }
-    setSettings(newSettings)
+
+  // 알림 설정 (서버 연동)
+  const [notifSettings, setNotifSettings] = useState({
+    push_enabled: true,
+    friend_request: true,
+    join_application: true,
+    new_message: true,
+    join_reminder: true,
+  })
+  const [loadingNotif, setLoadingNotif] = useState(true)
+
+  // 서버에서 알림 설정 로드
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (user?.id) {
+        const settings = await getNotificationSettings(user.id)
+        setNotifSettings({
+          push_enabled: settings.push_enabled ?? true,
+          friend_request: settings.friend_request ?? true,
+          join_application: settings.join_application ?? true,
+          new_message: settings.new_message ?? true,
+          join_reminder: settings.join_reminder ?? true,
+        })
+      }
+      setLoadingNotif(false)
+    }
+    loadSettings()
+  }, [user?.id])
+
+  // 알림 설정 토글
+  const handleNotifToggle = async (key) => {
+    const newSettings = { ...notifSettings, [key]: !notifSettings[key] }
+    setNotifSettings(newSettings)
+
+    // 서버 저장
+    if (user?.id) {
+      await updateNotificationSettings(user.id, newSettings)
+    }
+    // 로컬 폴백 저장
+    localStorage.setItem('gp_notif_settings', JSON.stringify(newSettings))
+  }
+
+  // 로컬 설정 토글
+  const handleLocalToggle = (key) => {
+    const newSettings = { ...localSettings, [key]: !localSettings[key] }
+    setLocalSettings(newSettings)
     localStorage.setItem('gp_settings', JSON.stringify(newSettings))
   }
-  
-  const settingItems = [
-    { key: 'pushNotification', label: '푸시 알림', icon: Bell, description: '앱 알림을 받습니다' },
-    { key: 'matchNotification', label: '매칭 알림', icon: Bell, description: '새로운 추천이 있을 때 알림' },
-    { key: 'messageNotification', label: '메시지 알림', icon: Bell, description: '새 메시지 알림' },
+
+  const pushEnabled = notifSettings.push_enabled
+
+  const notificationItems = [
+    { key: 'push_enabled', label: '푸시 알림', icon: Bell, description: '앱 푸시 알림을 받습니다', isMaster: true },
+    { key: 'friend_request', label: '친구 요청 알림', icon: Users, description: '새로운 친구 요청이 올 때' },
+    { key: 'join_application', label: '조인 신청 알림', icon: Calendar, description: '조인 신청이 올 때' },
+    { key: 'new_message', label: '메시지 알림', icon: MessageSquare, description: '새 메시지가 올 때' },
+    { key: 'join_reminder', label: '라운딩 리마인더', icon: Clock, description: '라운딩 하루 전 알림' },
+  ]
+
+  const privacyItems = [
     { key: 'profilePublic', label: '프로필 공개', icon: Eye, description: '다른 사용자에게 프로필 노출' },
     { key: 'showOnline', label: '온라인 상태 표시', icon: Eye, description: '접속 중임을 표시' },
-    { key: 'darkMode', label: '다크 모드', icon: Moon, description: '어두운 테마 사용' },
   ]
+
+  const renderToggle = (value, onToggle, disabled = false) => (
+    <button
+      onClick={disabled ? undefined : onToggle}
+      className={`w-12 h-7 rounded-full transition-all flex-shrink-0 ${
+        disabled ? 'bg-gp-border cursor-not-allowed' :
+        value ? 'bg-gp-gold' : 'bg-gp-border'
+      }`}
+    >
+      <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+        value && !disabled ? 'translate-x-6' : 'translate-x-1'
+      }`} />
+    </button>
+  )
 
   return (
     <motion.div
@@ -1019,50 +1081,73 @@ function SettingsModal({ onClose }) {
         <h2 className="text-lg font-bold">설정</h2>
         <div className="w-10" />
       </div>
-      
-      <div className="p-4 overflow-y-auto">
-        <div className="bg-gp-card rounded-2xl overflow-hidden">
-          {settingItems.map((item, index) => (
+
+      <div className="p-4 overflow-y-auto" style={{ height: 'calc(100vh - 60px)' }}>
+        {/* 알림 설정 */}
+        <h3 className="text-sm text-gp-text-secondary mb-2 px-2">알림 설정</h3>
+        <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">
+          {loadingNotif ? (
+            <div className="p-4 text-center text-gp-text-secondary text-sm">설정 불러오는 중...</div>
+          ) : (
+            notificationItems.map((item, index) => {
+              const disabled = !item.isMaster && !pushEnabled
+              return (
+                <div
+                  key={item.key}
+                  className={`flex items-center justify-between p-4 ${
+                    index !== notificationItems.length - 1 ? 'border-b border-gp-border' : ''
+                  } ${disabled ? 'opacity-40' : ''}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <item.icon className="w-5 h-5 text-gp-text-secondary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-medium">{item.label}</p>
+                      <p className="text-xs text-gp-text-secondary">{item.description}</p>
+                    </div>
+                  </div>
+                  {renderToggle(
+                    notifSettings[item.key],
+                    () => handleNotifToggle(item.key),
+                    disabled
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* 개인정보 설정 */}
+        <h3 className="text-sm text-gp-text-secondary mb-2 px-2">개인정보 설정</h3>
+        <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">
+          {privacyItems.map((item, index) => (
             <div
               key={item.key}
               className={`flex items-center justify-between p-4 ${
-                index !== settingItems.length - 1 ? 'border-b border-gp-border' : ''
+                index !== privacyItems.length - 1 ? 'border-b border-gp-border' : ''
               }`}
             >
-              <div className="flex items-center gap-3">
-                <item.icon className="w-5 h-5 text-gp-text-secondary" />
-                <div>
+              <div className="flex items-center gap-3 min-w-0">
+                <item.icon className="w-5 h-5 text-gp-text-secondary flex-shrink-0" />
+                <div className="min-w-0">
                   <p className="font-medium">{item.label}</p>
                   <p className="text-xs text-gp-text-secondary">{item.description}</p>
                 </div>
               </div>
-              <button
-                onClick={() => handleToggle(item.key)}
-                className={`w-12 h-7 rounded-full transition-all ${
-                  settings[item.key] ? 'bg-gp-gold' : 'bg-gp-border'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                  settings[item.key] ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
+              {renderToggle(
+                localSettings[item.key],
+                () => handleLocalToggle(item.key)
+              )}
             </div>
           ))}
         </div>
-        
+
         {/* 계정 관리 */}
-        <div className="mt-6">
-          <h3 className="text-sm text-gp-text-secondary mb-2 px-2">계정 관리</h3>
-          <div className="bg-gp-card rounded-2xl overflow-hidden">
-            <button className="w-full flex items-center justify-between p-4 border-b border-gp-border">
-              <span>비밀번호 변경</span>
-              <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
-            </button>
-            <button className="w-full flex items-center justify-between p-4 text-gp-red">
-              <span>계정 탈퇴</span>
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+        <h3 className="text-sm text-gp-text-secondary mb-2 px-2">계정 관리</h3>
+        <div className="bg-gp-card rounded-2xl overflow-hidden">
+          <button className="w-full flex items-center justify-between p-4 text-gp-red">
+            <span>계정 탈퇴</span>
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </motion.div>
