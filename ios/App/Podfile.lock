@@ -8,6 +8,13 @@ PODS:
   - CapacitorCommunityAppleSignIn (7.1.0):
     - Capacitor
   - CapacitorCordova (7.4.5)
+  - CapacitorFirebaseAuthentication (7.5.0):
+    - Capacitor
+    - CapacitorFirebaseAuthentication/Lite (= 7.5.0)
+    - FirebaseAuth (~> 11.7.0)
+  - CapacitorFirebaseAuthentication/Lite (7.5.0):
+    - Capacitor
+    - FirebaseAuth (~> 11.7.0)
   - CapacitorHaptics (7.0.3):
     - Capacitor
   - CapacitorKeyboard (7.0.4):
@@ -20,8 +27,50 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (7.0.4):
     - Capacitor
+  - FirebaseAppCheckInterop (11.15.0)
+  - FirebaseAuth (11.7.0):
+    - FirebaseAppCheckInterop (~> 11.0)
+    - FirebaseAuthInterop (~> 11.0)
+    - FirebaseCore (~> 11.7.0)
+    - FirebaseCoreExtension (~> 11.7.0)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GTMSessionFetcher/Core (< 5.0, >= 3.4)
+    - RecaptchaInterop (~> 100.0)
+  - FirebaseAuthInterop (11.15.0)
+  - FirebaseCore (11.7.0):
+    - FirebaseCoreInternal (~> 11.7.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/Logger (~> 8.0)
+  - FirebaseCoreExtension (11.7.0):
+    - FirebaseCore (~> 11.7.0)
+  - FirebaseCoreInternal (11.7.0):
+    - "GoogleUtilities/NSData+zlib (~> 8.0)"
+  - GoogleUtilities/AppDelegateSwizzler (8.1.0):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Network
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Environment (8.1.0):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.1.0):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Network (8.1.0):
+    - GoogleUtilities/Logger
+    - "GoogleUtilities/NSData+zlib"
+    - GoogleUtilities/Privacy
+    - GoogleUtilities/Reachability
+  - "GoogleUtilities/NSData+zlib (8.1.0)":
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.1.0)
+  - GoogleUtilities/Reachability (8.1.0):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - GTMSessionFetcher/Core (4.5.0)
   - PurchasesHybridCommon (17.24.0):
     - RevenueCat (= 5.50.1)
+  - RecaptchaInterop (100.0.0)
   - RevenueCat (5.50.1)
   - RevenuecatPurchasesCapacitor (11.3.1):
     - Capacitor
@@ -33,6 +82,7 @@ DEPENDENCIES:
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
   - "CapacitorCommunityAppleSignIn (from `../../node_modules/@capacitor-community/apple-sign-in`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorFirebaseAuthentication (from `../../node_modules/@capacitor-firebase/authentication`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
@@ -43,7 +93,16 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - FirebaseAppCheckInterop
+    - FirebaseAuth
+    - FirebaseAuthInterop
+    - FirebaseCore
+    - FirebaseCoreExtension
+    - FirebaseCoreInternal
+    - GoogleUtilities
+    - GTMSessionFetcher
     - PurchasesHybridCommon
+    - RecaptchaInterop
     - RevenueCat
 
 EXTERNAL SOURCES:
@@ -57,6 +116,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor-community/apple-sign-in"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorFirebaseAuthentication:
+    :path: "../../node_modules/@capacitor-firebase/authentication"
   CapacitorHaptics:
     :path: "../../node_modules/@capacitor/haptics"
   CapacitorKeyboard:
@@ -78,16 +139,26 @@ SPEC CHECKSUMS:
   CapacitorBrowser: b98aa3db018a2ce4c68242d27e596c344f3b81b3
   CapacitorCommunityAppleSignIn: 271cb2860576fd2961508bbfa7a82117d93eadca
   CapacitorCordova: 31bbe4466000c6b86d9b7f1181ee286cff0205aa
+  CapacitorFirebaseAuthentication: c5d02225dc97a1192f3b615f8c0df2ef910c40b7
   CapacitorHaptics: ce15be8f287fa2c61c7d2d9e958885b90cf0bebc
   CapacitorKeyboard: 5660c760113bfa48962817a785879373cf5339c3
   CapacitorLocalNotifications: ba2a08bd92887b08f352e6b2db430575cef0cea3
   CapacitorPushNotifications: 7604512af53bbfdf1dd8fb2256b9ef1e8a69cdc2
   CapacitorSplashScreen: 000f7591d546907dda5cbb514bd6b6d9e6048cf8
   CapacitorStatusBar: d0e0151c89c001a9c7125bac59ddedf76b664768
+  FirebaseAppCheckInterop: 06fe5a3799278ae4667e6c432edd86b1030fa3df
+  FirebaseAuth: 77e25aa24f3e1c626c5babd3338551fc1669ee0e
+  FirebaseAuthInterop: 7087d7a4ee4bc4de019b2d0c240974ed5d89e2fd
+  FirebaseCore: 3227e35f4197a924206fbcdc0349325baf4f5de4
+  FirebaseCoreExtension: 206c1b399f0d103055207c16f299b28e3dbd1949
+  FirebaseCoreInternal: d6c17dafc8dc33614733a8b52df78fcb4394c881
+  GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
+  GTMSessionFetcher: fc75fc972958dceedee61cb662ae1da7a83a91cf
   PurchasesHybridCommon: 3b79d2602b94ed9ee3e8c4b31be4cd2a640c9dc9
+  RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   RevenueCat: c676920ae9b3c9cd08c49d26e7cd4c04a0263069
   RevenuecatPurchasesCapacitor: a0fa3ff35b975b6bbaf4e1562669ba04c5f6ed55
 
-PODFILE CHECKSUM: d4673bb064929f53de803e7d9a5adf0f31242d64
+PODFILE CHECKSUM: 1f26c4abb6d7a7872f46c0e3b5b8f6f570131449
 
 COCOAPODS: 1.16.2

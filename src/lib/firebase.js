@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
+import { Capacitor } from '@capacitor/core'
 
 // Firebase 설정 (환경변수에서 로드)
 const firebaseConfig = {
@@ -18,10 +19,13 @@ const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 auth.languageCode = 'ko' // 한국어 설정
 
-// reCAPTCHA 설정
+const isNative = () => Capacitor.isNativePlatform()
+
+// reCAPTCHA 설정 (웹 전용)
 export const setupRecaptcha = (containerId) => {
+  if (isNative()) return null // 네이티브에서는 불필요
   if (!auth) return null
-  
+
   window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
     size: 'invisible',
     callback: () => {
@@ -31,26 +35,38 @@ export const setupRecaptcha = (containerId) => {
       console.log('reCAPTCHA expired')
     }
   })
-  
+
   return window.recaptchaVerifier
 }
 
 // 전화번호로 인증코드 발송
 export const sendVerificationCode = async (phoneNumber) => {
+  const formattedPhone = formatPhoneNumber(phoneNumber)
+
+  // 네이티브: Capacitor Firebase 플러그인 사용
+  if (isNative()) {
+    try {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+      const result = await FirebaseAuthentication.signInWithPhoneNumber({
+        phoneNumber: formattedPhone,
+      })
+      window.nativeVerificationId = result.verificationId
+      return { success: true }
+    } catch (error) {
+      console.error('네이티브 SMS 발송 오류:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  // 웹: 기존 reCAPTCHA 방식
   if (!auth) {
     return { success: false, error: 'Firebase not configured' }
   }
-  
+
   try {
-    // 한국 전화번호 형식으로 변환 (+82)
-    const formattedPhone = formatPhoneNumber(phoneNumber)
-    
     const appVerifier = window.recaptchaVerifier
     const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier)
-    
-    // 확인 결과를 window에 저장 (나중에 코드 확인에 사용)
     window.confirmationResult = confirmationResult
-    
     return { success: true, confirmationResult }
   } catch (error) {
     console.error('SMS 발송 오류:', error)
@@ -60,21 +76,39 @@ export const sendVerificationCode = async (phoneNumber) => {
 
 // 인증코드 확인 (타임아웃 포함)
 export const verifyCode = async (code) => {
+  // 네이티브: Capacitor Firebase 플러그인 사용
+  if (isNative()) {
+    if (!window.nativeVerificationId) {
+      return { success: false, error: 'No verification in progress' }
+    }
+    try {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+      const result = await FirebaseAuthentication.confirmVerificationCode({
+        verificationId: window.nativeVerificationId,
+        verificationCode: code,
+      })
+      return { success: true, user: result.user }
+    } catch (error) {
+      console.error('네이티브 인증 코드 오류:', error)
+      return { success: false, error: error.message || '인증에 실패했습니다.' }
+    }
+  }
+
+  // 웹: 기존 방식
   if (!window.confirmationResult) {
     return { success: false, error: 'No verification in progress' }
   }
-  
+
   try {
-    // 10초 타임아웃
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('인증 시간이 초과되었습니다. 다시 시도해주세요.')), 10000)
     })
-    
+
     const result = await Promise.race([
       window.confirmationResult.confirm(code),
       timeoutPromise
     ])
-    
+
     return { success: true, user: result.user }
   } catch (error) {
     console.error('인증 코드 오류:', error)
@@ -84,23 +118,18 @@ export const verifyCode = async (code) => {
 
 // 전화번호 형식 변환 (한국)
 const formatPhoneNumber = (phone) => {
-  // 숫자만 추출
   const numbers = phone.replace(/\D/g, '')
-  
-  // 010으로 시작하면 +82로 변환
+
   if (numbers.startsWith('010')) {
     return '+82' + numbers.slice(1)
   }
-  
-  // 이미 +82로 시작하면 그대로
+
   if (numbers.startsWith('82')) {
     return '+' + numbers
   }
-  
-  // 그 외에는 +82 추가
+
   return '+82' + numbers
 }
 
 export { auth }
 export const isFirebaseConfigured = () => true
-
