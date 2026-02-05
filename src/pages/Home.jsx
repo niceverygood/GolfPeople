@@ -632,7 +632,7 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
 
   const confirmApply = async () => {
     if (balance < 5) {
-      alert('마커가 부족합니다. 스토어에서 충전해 주세요.')
+      showToast.warning('마커가 부족합니다. 스토어에서 충전해 주세요.')
       return
     }
 

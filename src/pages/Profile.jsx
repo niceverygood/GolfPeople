@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
 import { db } from '../lib/supabase'
 import { getNotificationSettings, updateNotificationSettings } from '../lib/notificationService'
+import { showToast } from '../utils/errorHandler'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
 // 지역 옵션
@@ -522,7 +523,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
     const photos = editedProfile.photos || []
     
     if (photos.length + files.length > 6) {
-      alert('최대 6장까지 업로드 가능합니다')
+      showToast.warning('최대 6장까지 업로드 가능합니다')
       return
     }
     
@@ -629,7 +630,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
   // 저장 시 기존 형식 호환
   const handleSave = () => {
     if (!editedProfile.photos?.length) {
-      alert('대표 사진 1장은 필수입니다')
+      showToast.warning('대표 사진 1장은 필수입니다')
       return
     }
     
