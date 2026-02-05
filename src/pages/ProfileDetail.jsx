@@ -10,6 +10,7 @@ import * as friendService from '../lib/friendService'
 import { getUserRating, REVIEW_TAGS } from '../lib/reviewService'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerConfirmModal from '../components/MarkerConfirmModal'
+import VerificationBadges from '../components/VerificationBadges'
 import MarkerIcon from '../components/icons/MarkerIcon'
 import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
@@ -275,14 +276,9 @@ export default function ProfileDetail() {
       {/* 상세 정보 */}
       <div className="px-6 pb-8 -mt-20 relative flex-1">
         {/* 기본 정보 */}
-        <div className="flex items-end gap-3 mb-4">
-          <h2 className="text-3xl font-bold">{user.name}, {user.age}</h2>
-          {user.verified && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gp-green/20 text-gp-green text-xs mb-1">
-              <Shield className="w-3 h-3" />
-              인증됨
-            </div>
-          )}
+        <div className="mb-4">
+          <h2 className="text-3xl font-bold mb-2">{user.name}, {user.age}</h2>
+          <VerificationBadges user={user} scoreStats={user.scoreStats} rating={userRating} />
         </div>
         
         {/* 정보 그리드 */}

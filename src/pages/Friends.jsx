@@ -9,6 +9,7 @@ import { Users, Search, MessageCircle, UserX, ChevronLeft, MapPin, Trophy } from
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 import * as friendService from '../lib/friendService'
+import VerificationBadges from '../components/VerificationBadges'
 
 export default function Friends() {
   const navigate = useNavigate()
@@ -210,7 +211,10 @@ function FriendCard({ friend, onProfileClick, onChatClick, onRemoveClick }) {
 
         {/* 정보 */}
         <div className="flex-1 min-w-0" onClick={onProfileClick}>
-          <h3 className="font-semibold truncate">{friend.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate">{friend.name}</h3>
+            <VerificationBadges user={friend} compact />
+          </div>
           <div className="flex items-center gap-2 text-gp-text-secondary text-xs mt-1">
             {friend.region && (
               <span className="flex items-center gap-1">

@@ -11,6 +11,8 @@ import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
 import { db } from '../lib/supabase'
 import { getNotificationSettings, updateNotificationSettings } from '../lib/notificationService'
+import { getUserRating } from '../lib/reviewService'
+import VerificationBadges from '../components/VerificationBadges'
 import { showToast } from '../utils/errorHandler'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
@@ -91,7 +93,8 @@ export default function Profile() {
   const { balance } = useMarker()
   const [profile, setProfile] = useState(null)
   const [scoreStats, setScoreStats] = useState(null)
-  
+  const [myRating, setMyRating] = useState(null)
+
   // 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -119,6 +122,17 @@ export default function Profile() {
       }
     }
     loadScoreStats()
+  }, [user?.id])
+
+  // 내 평점 로드
+  useEffect(() => {
+    const loadMyRating = async () => {
+      if (user?.id) {
+        const rating = await getUserRating(user.id)
+        setMyRating(rating)
+      }
+    }
+    loadMyRating()
   }, [user?.id])
 
   const stats = [
@@ -207,6 +221,15 @@ export default function Profile() {
             <h2 className="text-xl font-bold mb-1">
               {displayName}
             </h2>
+
+            {/* 인증 배지 */}
+            <div className="mb-2 flex justify-center">
+              <VerificationBadges
+                user={{ ...profile, phone_verified: isPhoneVerified }}
+                scoreStats={scoreStats}
+                rating={myRating}
+              />
+            </div>
 
             {/* 지역 & 핸디캡 */}
             {profile && (
