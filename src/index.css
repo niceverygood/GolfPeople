@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 테마 변수 */
+:root {
+  --gp-black: #0A0A0A;
+  --gp-dark: #141414;
+  --gp-card: #1C1C1E;
+  --gp-border: #2C2C2E;
+  --gp-text: #F5F5F7;
+  --gp-text-secondary: #8E8E93;
+}
+
+:root.light {
+  --gp-black: #F5F5F7;
+  --gp-dark: #EFEFF4;
+  --gp-card: #FFFFFF;
+  --gp-border: #D1D1D6;
+  --gp-text: #1C1C1E;
+  --gp-text-secondary: #8E8E93;
+}
+
 /* 글로벌 스타일 */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -15,8 +34,8 @@ html, body, #root {
 
 body {
   font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  background: #0A0A0A;
-  color: #F5F5F7;
+  background: var(--gp-black);
+  color: var(--gp-text);
   overscroll-behavior: none;
 }
 
@@ -36,7 +55,7 @@ body {
   margin: 0 auto;
   height: 100%;
   position: relative;
-  background: #0A0A0A;
+  background: var(--gp-black);
   overflow: hidden;
 }
 
@@ -61,7 +80,7 @@ body {
 /* 프리미엄 버튼 */
 .btn-gold {
   background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
-  color: #0A0A0A;
+  color: #1C1C1E;
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -73,7 +92,7 @@ body {
 
 /* 글래스모피즘 */
 .glass {
-  background: rgba(28, 28, 30, 0.8);
+  background: color-mix(in srgb, var(--gp-card) 80%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -102,9 +121,9 @@ body {
     to bottom,
     transparent 0%,
     transparent 40%,
-    rgba(10, 10, 10, 0.3) 60%,
-    rgba(10, 10, 10, 0.8) 80%,
-    rgba(10, 10, 10, 0.95) 100%
+    color-mix(in srgb, var(--gp-black) 30%, transparent) 60%,
+    color-mix(in srgb, var(--gp-black) 80%, transparent) 80%,
+    color-mix(in srgb, var(--gp-black) 95%, transparent) 100%
   );
 }
 

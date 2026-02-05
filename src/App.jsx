@@ -52,6 +52,10 @@ function AppContent() {
   const [proposalModal, setProposalModal] = useState({ open: false, user: null })
 
   useEffect(() => {
+    // 저장된 테마 복원
+    const theme = localStorage.getItem('gp_theme') || 'dark'
+    if (theme === 'light') document.documentElement.classList.add('light')
+
     // 네이티브 기능 초기화
     initializeNative()
     // 인앱 결제 초기화 (게스트 모드로 우선 초기화)
