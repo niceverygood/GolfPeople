@@ -1,508 +1,451 @@
-import { createContext, useContext, useState } from 'react'
-import { mockUsers, mockJoins, currentUser as initialUser } from '../data/mockData'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { useAuth } from './AuthContext'
+import { db, isConnected, realtime } from '../lib/supabase'
+import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
+import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi } from '../lib/joinService'
+import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi } from '../lib/notificationService'
+import { mapProfileToUser, mapNotification } from '../utils/profileMapper'
 
 const AppContext = createContext()
 
 export function AppProvider({ children }) {
-  const [users] = useState(mockUsers)
-  const [joins] = useState(mockJoins)
-  const [currentUser, setCurrentUser] = useState(initialUser)
+  const { user, profile } = useAuth()
+  const userId = user?.id
+
+  // === 로딩 상태 ===
+  const [loading, setLoading] = useState(true)
+
+  // === 유저 프로필 목록 (추천용) ===
+  const [users, setUsers] = useState([])
+
+  // === 조인 ===
+  const [joins, setJoins] = useState([])
+  const [myJoins, setMyJoins] = useState([])
+
+  // === 좋아요 / 저장 ===
   const [likedUsers, setLikedUsers] = useState([])
   const [savedJoins, setSavedJoins] = useState([])
-  const [proposals, setProposals] = useState([]) // 보낸 제안들
-  
-  // 지난 카드 (뒤집어본 프로필들 - 기존 기능 유지하되 추천 기록 위주로 변경 가능)
+
+  // === 친구 요청 ===
+  const [friendRequests, setFriendRequests] = useState([])
+  const [receivedFriendRequests, setReceivedFriendRequests] = useState([])
+
+  // === 조인 신청 ===
+  const [joinApplications, setJoinApplications] = useState([])
+  const [receivedJoinRequests, setReceivedJoinRequests] = useState([])
+
+  // === 알림 ===
+  const [notifications, setNotifications] = useState([])
+
+  // === 로컬 전용 (localStorage) ===
+  const [proposals, setProposals] = useState([])
   const [pastCards, setPastCards] = useState(() => {
     const saved = localStorage.getItem('gp_past_cards')
     return saved ? JSON.parse(saved) : []
   })
-
-  // 일별 추천 기록 저장 (7일 보관)
   const [recommendationHistory, setRecommendationHistory] = useState(() => {
     const saved = localStorage.getItem('gp_recommendation_history')
     return saved ? JSON.parse(saved) : {}
   })
 
-  // 오늘의 추천 생성 및 저장
-  const saveDailyRecommendation = (dateKey, recommendations) => {
-    setRecommendationHistory(prev => {
-      const newHistory = { ...prev, [dateKey]: recommendations }
-      
-      // 7일 지난 데이터 삭제 (문자열 비교로 정렬 가능하도록 YYYY-MM-DD 형식 권장)
-      const dates = Object.keys(newHistory).sort().reverse()
-      if (dates.length > 7) {
-        const updatedHistory = { ...newHistory }
-        dates.slice(7).forEach(d => delete updatedHistory[d])
-        localStorage.setItem('gp_recommendation_history', JSON.stringify(updatedHistory))
-        return updatedHistory
+  // === currentUser (하위 호환) ===
+  const currentUser = profile ? mapProfileToUser(profile) : null
+
+  // ==============================
+  // 데이터 로드
+  // ==============================
+
+  const loadAllData = useCallback(async () => {
+    if (!userId || !isConnected()) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const [
+        profilesRes,
+        joinsRes,
+        myJoinsRes,
+        likesRes,
+        savedJoinsRes,
+        sentFriendsRes,
+        receivedFriendsRes,
+        sentJoinAppsRes,
+        receivedJoinAppsRes,
+        notificationsRes,
+      ] = await Promise.all([
+        db.profiles.getAll(),
+        getJoins(),
+        getMyJoins(userId),
+        db.likes.getAll(userId),
+        db.savedJoins.getAll(userId),
+        getSentFriendRequests(userId),
+        getReceivedFriendRequests(userId),
+        getSentJoinApplications(userId),
+        getReceivedJoinApplications(userId),
+        getNotifications(userId),
+      ])
+
+      // 유저 프로필 (자신 제외)
+      if (profilesRes.data) {
+        setUsers(profilesRes.data
+          .filter(p => p.id !== userId)
+          .map(p => mapProfileToUser(p))
+        )
       }
-      
-      localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
-      return newHistory
+
+      // 조인
+      if (joinsRes.success) setJoins(joinsRes.joins || [])
+      if (myJoinsRes.success) setMyJoins(myJoinsRes.joins || [])
+
+      // 좋아요 / 저장
+      if (likesRes.data) setLikedUsers(likesRes.data.map(l => l.liked_user_id))
+      if (savedJoinsRes.data) setSavedJoins(savedJoinsRes.data.map(s => s.join_id))
+
+      // 친구 요청
+      if (sentFriendsRes.requests) {
+        setFriendRequests(sentFriendsRes.requests.map(r => ({
+          id: r.id,
+          userId: r.to_user_id,
+          userName: r.to_user?.name || '',
+          userPhoto: r.to_user?.photos?.[0] || '',
+          userRegion: r.to_user?.regions?.[0] || '',
+          userHandicap: r.to_user?.handicap || '',
+          message: r.message || '',
+          status: r.status,
+          createdAt: r.created_at,
+          isDbRequest: true,
+        })))
+      }
+      if (receivedFriendsRes.requests) {
+        setReceivedFriendRequests(receivedFriendsRes.requests.map(r => ({
+          id: r.id,
+          userId: r.from_user_id,
+          userName: r.from_user?.name || '',
+          userPhoto: r.from_user?.photos?.[0] || '',
+          userRegion: r.from_user?.regions?.[0] || '',
+          userHandicap: r.from_user?.handicap || '',
+          message: r.message || '',
+          status: r.status,
+          createdAt: r.created_at,
+          isDbRequest: true,
+        })))
+      }
+
+      // 조인 신청
+      if (sentJoinAppsRes.applications) {
+        setJoinApplications(sentJoinAppsRes.applications.map(a => ({
+          id: a.id,
+          joinId: a.join_id,
+          joinTitle: a.join?.title || '',
+          joinDate: a.join?.date || '',
+          joinTime: a.join?.time || '',
+          joinRegion: a.join?.region || '',
+          hostName: a.join?.host_name || '',
+          hostPhoto: a.join?.host_photo || '',
+          message: a.message || '',
+          status: a.status,
+          createdAt: a.created_at,
+          isDbRequest: true,
+        })))
+      }
+      if (receivedJoinAppsRes.applications) {
+        setReceivedJoinRequests(receivedJoinAppsRes.applications.map(a => ({
+          id: a.id,
+          userId: a.user_id,
+          userName: a.user?.name || '',
+          userPhoto: a.user?.photos?.[0] || '',
+          userRegion: a.user?.regions?.[0] || '',
+          userHandicap: a.user?.handicap || '',
+          joinId: a.join_id,
+          joinTitle: a.join?.title || '',
+          message: a.message || '',
+          status: a.status,
+          createdAt: a.created_at,
+          isDbRequest: true,
+        })))
+      }
+
+      // 알림
+      if (notificationsRes.success) {
+        setNotifications((notificationsRes.notifications || []).map(mapNotification))
+      }
+    } catch (e) {
+      console.error('AppContext 데이터 로드 에러:', e)
+    }
+    setLoading(false)
+  }, [userId])
+
+  useEffect(() => {
+    loadAllData()
+  }, [loadAllData])
+
+  // === 실시간 알림 구독 ===
+  useEffect(() => {
+    if (!userId || !isConnected()) return
+
+    const notifChannel = realtime.subscribeToNotifications(userId, (payload) => {
+      const n = payload.new
+      if (n) {
+        setNotifications(prev => [mapNotification(n), ...prev])
+      }
     })
-  }
 
-  // 친구 요청 (내가 보낸)
-  const [friendRequests, setFriendRequests] = useState([])
-  
-  // 친구 요청 (내가 받은) - 데모 데이터
-  const [receivedFriendRequests, setReceivedFriendRequests] = useState([
-    {
-      id: 1001,
-      userId: 1,
-      userName: '민준',
-      userPhoto: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-      userRegion: '서울 강남',
-      userHandicap: '90대 초반',
-      message: '같이 라운딩 해요! 주말 오전 좋아요 ⛳',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 3600000).toISOString(), // 1시간 전
-    },
-    {
-      id: 1002,
-      userId: 3,
-      userName: '서윤',
-      userPhoto: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=400',
-      userRegion: '경기 분당',
-      userHandicap: '80대',
-      message: '',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 86400000).toISOString(), // 1일 전
-    },
-  ])
-  
-  // 조인 신청 (내가 신청한)
-  const [joinApplications, setJoinApplications] = useState([])
-  
-  // 내가 만든 조인 (localStorage에서 복원)
-  const [myJoins, setMyJoins] = useState(() => {
-    const saved = localStorage.getItem('gp_my_joins')
-    if (saved) {
-      return JSON.parse(saved)
+    const friendChannel = realtime.subscribeToFriendRequests(userId, () => {
+      // 친구 요청 변경 시 새로고침
+      refreshFriendRequests()
+    })
+
+    return () => {
+      realtime.unsubscribe(notifChannel)
+      realtime.unsubscribe(friendChannel)
     }
-    // 기본 데모 데이터
-    return [
-      {
-        id: 101,
-        title: '주말 오전 여유롭게',
-        date: '12월 28일 (토)',
-        time: '오전 8시',
-        location: '남서울CC',
-        region: '서울',
-        spotsTotal: 4,
-        spotsFilled: 2,
-        style: ['여유롭게', '도보 가능'],
-        handicapRange: '90대~100대',
-        description: '편하게 치실 분 구합니다',
-        hostId: currentUser.id,
-        hostName: currentUser.name,
-        hostPhoto: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400',
-        participants: [
-          { id: 0, name: '나', photo: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400' },
-          { id: 101, name: '지민', photo: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400' },
-        ],
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-      },
-    ]
-  })
-  
-  // 조인 신청 (내가 받은 - 내가 호스트인 조인에 신청한 사람들) - 데모 데이터
-  const [receivedJoinRequests, setReceivedJoinRequests] = useState([
-    {
-      id: 2001,
-      userId: 2,
-      userName: '서준',
-      userPhoto: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      userRegion: '서울 송파',
-      userHandicap: '90대 후반',
-      joinId: 99,
-      joinTitle: '내가 만든 조인',
-      message: '참여하고 싶습니다!',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 7200000).toISOString(), // 2시간 전
-    },
-  ])
-  
-  // 알림 데이터
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'friend_request',
-      title: '새 친구 요청',
-      message: '민준님이 친구 요청을 보냈어요',
-      userPhoto: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-      isRead: false,
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 2,
-      type: 'join_request',
-      title: '조인 신청',
-      message: '서준님이 조인에 신청했어요',
-      userPhoto: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      isRead: false,
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-      id: 3,
-      type: 'match',
-      title: '새 추천 도착!',
-      message: '오늘의 골프 친구 추천이 도착했어요 ⛳',
-      userPhoto: null,
-      isRead: false,
-      createdAt: new Date(Date.now() - 43200000).toISOString(),
-    },
-    {
-      id: 4,
-      type: 'system',
-      title: '환영합니다!',
-      message: '골프피플에 오신 것을 환영해요 🎉',
-      userPhoto: null,
-      isRead: true,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ])
-  
-  // 알림 읽음 처리
-  const markNotificationAsRead = (notificationId) => {
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, isRead: true } : n
-    ))
-  }
-  
-  // 모든 알림 읽음 처리
-  const markAllNotificationsAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })))
-  }
-  
-  // 알림 삭제
-  const deleteNotification = (notificationId) => {
-    setNotifications(notifications.filter(n => n.id !== notificationId))
-  }
-  
-  // 읽지 않은 알림 개수
-  const unreadNotificationCount = notifications.filter(n => !n.isRead).length
+  }, [userId])
 
-  // 유저 좋아요
-  const likeUser = (userId) => {
-    if (!likedUsers.includes(userId)) {
-      setLikedUsers([...likedUsers, userId])
+  // ==============================
+  // 새로고침 함수들
+  // ==============================
+
+  const refreshUsers = useCallback(async () => {
+    if (!userId) return
+    const { data } = await db.profiles.getAll()
+    if (data) setUsers(data.filter(p => p.id !== userId).map(p => mapProfileToUser(p)))
+  }, [userId])
+
+  const refreshJoins = useCallback(async () => {
+    const result = await getJoins()
+    if (result.success) setJoins(result.joins || [])
+  }, [])
+
+  const refreshMyJoins = useCallback(async () => {
+    if (!userId) return
+    const result = await getMyJoins(userId)
+    if (result.success) setMyJoins(result.joins || [])
+  }, [userId])
+
+  const refreshFriendRequests = useCallback(async () => {
+    if (!userId) return
+    const [sent, received] = await Promise.all([
+      getSentFriendRequests(userId),
+      getReceivedFriendRequests(userId),
+    ])
+    if (sent.requests) {
+      setFriendRequests(sent.requests.map(r => ({
+        id: r.id, userId: r.to_user_id,
+        userName: r.to_user?.name || '', userPhoto: r.to_user?.photos?.[0] || '',
+        userRegion: r.to_user?.regions?.[0] || '', userHandicap: r.to_user?.handicap || '',
+        message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+      })))
     }
+    if (received.requests) {
+      setReceivedFriendRequests(received.requests.map(r => ({
+        id: r.id, userId: r.from_user_id,
+        userName: r.from_user?.name || '', userPhoto: r.from_user?.photos?.[0] || '',
+        userRegion: r.from_user?.regions?.[0] || '', userHandicap: r.from_user?.handicap || '',
+        message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+      })))
+    }
+  }, [userId])
+
+  const refreshJoinApplications = useCallback(async () => {
+    if (!userId) return
+    const [sent, received] = await Promise.all([
+      getSentJoinApplications(userId),
+      getReceivedJoinApplications(userId),
+    ])
+    if (sent.applications) {
+      setJoinApplications(sent.applications.map(a => ({
+        id: a.id, joinId: a.join_id, joinTitle: a.join?.title || '',
+        joinDate: a.join?.date || '', joinTime: a.join?.time || '', joinRegion: a.join?.region || '',
+        hostName: a.join?.host_name || '', hostPhoto: a.join?.host_photo || '',
+        message: a.message || '', status: a.status, createdAt: a.created_at, isDbRequest: true,
+      })))
+    }
+    if (received.applications) {
+      setReceivedJoinRequests(received.applications.map(a => ({
+        id: a.id, userId: a.user_id,
+        userName: a.user?.name || '', userPhoto: a.user?.photos?.[0] || '',
+        userRegion: a.user?.regions?.[0] || '', userHandicap: a.user?.handicap || '',
+        joinId: a.join_id, joinTitle: a.join?.title || '',
+        message: a.message || '', status: a.status, createdAt: a.created_at, isDbRequest: true,
+      })))
+    }
+  }, [userId])
+
+  const refreshNotifications = useCallback(async () => {
+    if (!userId) return
+    const result = await getNotifications(userId)
+    if (result.success) setNotifications((result.notifications || []).map(mapNotification))
+  }, [userId])
+
+  // ==============================
+  // 액션 함수들 (Supabase 연동)
+  // ==============================
+
+  // 좋아요
+  const likeUser = async (targetUserId) => {
+    if (!userId) return
+    setLikedUsers(prev => [...prev, targetUserId])
+    await db.likes.add(userId, targetUserId)
   }
 
-  // 유저 좋아요 취소
-  const unlikeUser = (userId) => {
-    setLikedUsers(likedUsers.filter(id => id !== userId))
+  const unlikeUser = async (targetUserId) => {
+    if (!userId) return
+    setLikedUsers(prev => prev.filter(id => id !== targetUserId))
+    await db.likes.remove(userId, targetUserId)
   }
 
   // 조인 저장
-  const saveJoin = (joinId) => {
-    if (!savedJoins.includes(joinId)) {
-      setSavedJoins([...savedJoins, joinId])
+  const saveJoin = async (joinId) => {
+    if (!userId) return
+    setSavedJoins(prev => [...prev, joinId])
+    await db.savedJoins.add(userId, joinId)
+  }
+
+  const unsaveJoin = async (joinId) => {
+    if (!userId) return
+    setSavedJoins(prev => prev.filter(id => id !== joinId))
+    await db.savedJoins.remove(userId, joinId)
+  }
+
+  // 친구 요청
+  const sendFriendRequest = async (targetUser, message = '') => {
+    if (!userId) return false
+    if (friendRequests.some(req => req.userId === targetUser.id)) return false
+    const result = await sendFriendRequestApi(userId, targetUser.id, message)
+    if (result.success) {
+      await refreshFriendRequests()
+      return true
+    }
+    return false
+  }
+
+  const cancelFriendRequest = async (requestId) => {
+    const req = friendRequests.find(r => r.id === requestId)
+    if (req?.isDbRequest) {
+      await cancelFriendRequestApi(requestId)
+    }
+    setFriendRequests(prev => prev.filter(r => r.id !== requestId))
+  }
+
+  const acceptFriendRequest = async (requestId) => {
+    const result = await acceptFriendRequestApi(requestId)
+    if (result.success) {
+      await refreshFriendRequests()
     }
   }
 
-  // 조인 저장 취소
-  const unsaveJoin = (joinId) => {
-    setSavedJoins(savedJoins.filter(id => id !== joinId))
+  const rejectFriendRequest = async (requestId) => {
+    const result = await rejectFriendRequestApi(requestId)
+    if (result.success) {
+      await refreshFriendRequests()
+    }
   }
 
-  // 라운딩 제안 보내기
+  // 조인 신청
+  const applyToJoin = async (join, message = '') => {
+    if (!userId) return false
+    if (joinApplications.some(app => app.joinId === join.id)) return false
+    const result = await applyToJoinApi(userId, join.id, message)
+    if (result.success) {
+      await refreshJoinApplications()
+      return true
+    }
+    return false
+  }
+
+  const cancelJoinApplication = async (applicationId) => {
+    await cancelJoinApplicationApi(applicationId)
+    setJoinApplications(prev => prev.filter(a => a.id !== applicationId))
+  }
+
+  const acceptJoinRequest = async (requestId) => {
+    const result = await acceptJoinApplication(requestId)
+    if (result.success) {
+      await refreshJoinApplications()
+      await refreshJoins()
+    }
+  }
+
+  const rejectJoinRequest = async (requestId) => {
+    const result = await rejectJoinApplication(requestId)
+    if (result.success) {
+      await refreshJoinApplications()
+    }
+  }
+
+  // 조인 생성/삭제
+  const createJoin = async (joinData) => {
+    if (!userId) return null
+    const result = await createJoinApi(userId, joinData)
+    if (result.success) {
+      await refreshMyJoins()
+      await refreshJoins()
+      return result.join
+    }
+    return null
+  }
+
+  const deleteMyJoin = async (joinId) => {
+    if (!userId) return
+    await deleteJoinApi(joinId, userId)
+    await refreshMyJoins()
+  }
+
+  // 알림
+  const markNotificationAsRead = async (notificationId) => {
+    setNotifications(prev => prev.map(n =>
+      n.id === notificationId ? { ...n, isRead: true } : n
+    ))
+    await markNotificationAsReadApi(notificationId)
+  }
+
+  const markAllNotificationsAsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    if (userId) await markAllNotificationsAsReadApi(userId)
+  }
+
+  const deleteNotification = async (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId))
+    await db.notifications.delete(notificationId)
+  }
+
+  const unreadNotificationCount = notifications.filter(n => !n.isRead).length
+
+  // 프로필 업데이트 (하위 호환)
+  const updateProfile = () => {}
+
+  // 제안
   const sendProposal = (proposal) => {
-    setProposals([...proposals, { ...proposal, id: Date.now(), status: 'pending' }])
-  }
-  
-  // 친구 요청 보내기
-  const sendFriendRequest = (user, message = '') => {
-    // 이미 요청한 유저인지 확인
-    if (friendRequests.some(req => req.userId === user.id)) {
-      return false
-    }
-    setFriendRequests([...friendRequests, {
-      id: Date.now(),
-      userId: user.id,
-      userName: user.name,
-      userPhoto: user.photos[0],
-      userRegion: user.region,
-      userHandicap: user.handicap,
-      message,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    }])
-    return true
-  }
-  
-  // 친구 요청 취소
-  const cancelFriendRequest = (requestId) => {
-    setFriendRequests(friendRequests.filter(req => req.id !== requestId))
-  }
-  
-  // 받은 친구 요청 수락
-  const acceptFriendRequest = (requestId) => {
-    setReceivedFriendRequests(receivedFriendRequests.map(req => 
-      req.id === requestId ? { ...req, status: 'accepted' } : req
-    ))
-  }
-  
-  // 받은 친구 요청 거절
-  const rejectFriendRequest = (requestId) => {
-    setReceivedFriendRequests(receivedFriendRequests.map(req => 
-      req.id === requestId ? { ...req, status: 'rejected' } : req
-    ))
-  }
-  
-  // 조인 신청하기
-  const applyToJoin = (join, message = '') => {
-    // 이미 신청한 조인인지 확인
-    if (joinApplications.some(app => app.joinId === join.id)) {
-      return false
-    }
-    setJoinApplications([...joinApplications, {
-      id: Date.now(),
-      joinId: join.id,
-      joinTitle: join.title || join.courseName,
-      joinDate: join.date,
-      joinTime: join.time,
-      joinRegion: join.region,
-      hostName: join.hostName,
-      hostPhoto: join.hostPhoto,
-      message,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    }])
-    return true
-  }
-  
-  // 조인 신청 취소
-  const cancelJoinApplication = (applicationId) => {
-    setJoinApplications(joinApplications.filter(app => app.id !== applicationId))
-  }
-  
-  // 받은 조인 요청 수락
-  const acceptJoinRequest = (requestId) => {
-    setReceivedJoinRequests(receivedJoinRequests.map(req => 
-      req.id === requestId ? { ...req, status: 'accepted' } : req
-    ))
-  }
-  
-  // 받은 조인 요청 거절
-  const rejectJoinRequest = (requestId) => {
-    setReceivedJoinRequests(receivedJoinRequests.map(req => 
-      req.id === requestId ? { ...req, status: 'rejected' } : req
-    ))
+    setProposals(prev => [...prev, { ...proposal, id: Date.now(), status: 'pending' }])
   }
 
-  // 프로필 업데이트
-  const updateProfile = (updates) => {
-    setCurrentUser({ ...currentUser, ...updates })
-  }
-  
-  // 조인 생성
-  const createJoin = (joinData) => {
-    const newJoin = {
-      id: Date.now(),
-      ...joinData,
-      hostId: currentUser.id,
-      hostName: currentUser.name,
-      hostPhoto: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400',
-      participants: [
-        { id: 0, name: '나', photo: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?w=400' },
-      ],
-      createdAt: new Date().toISOString(),
-    }
-    const updated = [newJoin, ...myJoins]
-    setMyJoins(updated)
-    localStorage.setItem('gp_my_joins', JSON.stringify(updated))
-    return newJoin
-  }
-  
-  // 지난 카드 추가
+  // 지난 카드 (localStorage)
   const addPastCard = (user) => {
     setPastCards(prev => {
-      // 이미 목록에 있는지 확인 (중복 제거)
-      if (prev.some(c => c.id === user.id)) {
-        // 이미 있으면 순서만 맨 앞으로
-        const filtered = prev.filter(c => c.id !== user.id)
-        const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...filtered]
-        localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50))) // 최대 50개만 저장
-        return updated
-      }
-      const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...prev]
+      const filtered = prev.filter(c => c.id !== user.id)
+      const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...filtered]
       localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50)))
       return updated
     })
   }
 
-  // 내 조인 삭제
-  const deleteMyJoin = (joinId) => {
-    const updated = myJoins.filter(j => j.id !== joinId)
-    setMyJoins(updated)
-    localStorage.setItem('gp_my_joins', JSON.stringify(updated))
-  }
-
-  // 채팅방 데이터
-  const [chatRooms, setChatRooms] = useState(() => {
-    const saved = localStorage.getItem('gp_chat_rooms')
-    if (saved) {
-      return JSON.parse(saved)
-    }
-    // 기본 데모 데이터
-    return [
-      {
-        id: 'chat-1',
-        type: 'friend',
-        partnerId: 1,
-        partnerName: '민준',
-        partnerPhoto: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-        lastMessage: '네, 좋습니다! 토요일 몇 시에 만날까요?',
-        lastMessageTime: new Date(Date.now() - 3600000).toISOString(),
-        unreadCount: 2,
-        messages: [
-          { id: 1, senderId: 1, text: '안녕하세요! 친구 수락해주셔서 감사합니다 😊', timestamp: new Date(Date.now() - 86400000).toISOString() },
-          { id: 2, senderId: 'me', text: '네 반갑습니다! 언제 한번 라운딩 하실래요?', timestamp: new Date(Date.now() - 82800000).toISOString() },
-          { id: 3, senderId: 1, text: '이번 주말 어떠세요?', timestamp: new Date(Date.now() - 7200000).toISOString() },
-          { id: 4, senderId: 'me', text: '토요일 오전이면 좋을 것 같아요', timestamp: new Date(Date.now() - 5400000).toISOString() },
-          { id: 5, senderId: 1, text: '네, 좋습니다! 토요일 몇 시에 만날까요?', timestamp: new Date(Date.now() - 3600000).toISOString() },
-        ]
-      },
-      {
-        id: 'chat-2',
-        type: 'friend',
-        partnerId: 3,
-        partnerName: '서윤',
-        partnerPhoto: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=400',
-        lastMessage: '감사합니다! 잘 부탁드려요 ⛳',
-        lastMessageTime: new Date(Date.now() - 86400000).toISOString(),
-        unreadCount: 0,
-        messages: [
-          { id: 1, senderId: 'me', text: '친구 수락했습니다!', timestamp: new Date(Date.now() - 172800000).toISOString() },
-          { id: 2, senderId: 3, text: '감사합니다! 잘 부탁드려요 ⛳', timestamp: new Date(Date.now() - 86400000).toISOString() },
-        ]
-      },
-      {
-        id: 'chat-3',
-        type: 'join',
-        partnerId: 2,
-        partnerName: '서준',
-        partnerPhoto: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-        joinId: 101,
-        joinTitle: '주말 오전 여유롭게',
-        joinInfo: {
-          date: '12월 28일 (토)',
-          location: '남서울CC',
-        },
-        lastMessage: '네, 그럼 그 날 뵙겠습니다!',
-        lastMessageTime: new Date(Date.now() - 43200000).toISOString(),
-        unreadCount: 1,
-        messages: [
-          { id: 1, senderId: 'me', text: '조인 신청 수락했습니다!', timestamp: new Date(Date.now() - 172800000).toISOString() },
-          { id: 2, senderId: 2, text: '감사합니다! 당일 몇 시에 도착하면 될까요?', timestamp: new Date(Date.now() - 86400000).toISOString() },
-          { id: 3, senderId: 'me', text: '7시 30분까지 오시면 됩니다', timestamp: new Date(Date.now() - 82800000).toISOString() },
-          { id: 4, senderId: 2, text: '네, 그럼 그 날 뵙겠습니다!', timestamp: new Date(Date.now() - 43200000).toISOString() },
-        ]
-      },
-    ]
-  })
-
-  // 채팅 메시지 보내기
-  const sendMessage = (chatId, message) => {
-    setChatRooms(prev => {
-      const updated = prev.map(chat => {
-        if (chat.id === chatId) {
-          const newMessage = { ...message, id: Date.now() }
-          return {
-            ...chat,
-            messages: [...chat.messages, newMessage],
-            lastMessage: message.text,
-            lastMessageTime: message.timestamp,
-          }
-        }
-        return chat
-      })
-      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
-      return updated
+  // 추천 기록 (localStorage)
+  const saveDailyRecommendation = (dateKey, recommendations) => {
+    setRecommendationHistory(prev => {
+      const newHistory = { ...prev, [dateKey]: recommendations }
+      const dates = Object.keys(newHistory).sort().reverse()
+      if (dates.length > 7) {
+        dates.slice(7).forEach(d => delete newHistory[d])
+      }
+      localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
+      return newHistory
     })
   }
-
-  // 채팅방 읽음 처리
-  const markChatAsRead = (chatId) => {
-    setChatRooms(prev => {
-      const updated = prev.map(chat => 
-        chat.id === chatId ? { ...chat, unreadCount: 0 } : chat
-      )
-      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
-      return updated
-    })
-  }
-
-  // 새 채팅방 생성 (친구)
-  const createFriendChat = (user) => {
-    // 이미 존재하는 채팅방인지 확인
-    const existingChat = chatRooms.find(c => c.type === 'friend' && c.partnerId === user.userId)
-    if (existingChat) {
-      return existingChat.id
-    }
-
-    const newChat = {
-      id: `chat-${Date.now()}`,
-      type: 'friend',
-      partnerId: user.userId,
-      partnerName: user.userName,
-      partnerPhoto: user.userPhoto,
-      lastMessage: '',
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0,
-      messages: [],
-    }
-    
-    setChatRooms(prev => {
-      const updated = [newChat, ...prev]
-      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
-      return updated
-    })
-    
-    return newChat.id
-  }
-
-  // 새 채팅방 생성 (조인)
-  const createJoinChat = (join, user) => {
-    // 이미 존재하는 채팅방인지 확인
-    const existingChat = chatRooms.find(c => c.type === 'join' && c.joinId === join.joinId && c.partnerId === user.userId)
-    if (existingChat) {
-      return existingChat.id
-    }
-
-    const newChat = {
-      id: `chat-${Date.now()}`,
-      type: 'join',
-      partnerId: user.userId,
-      partnerName: user.userName,
-      partnerPhoto: user.userPhoto,
-      joinId: join.joinId,
-      joinTitle: join.joinTitle,
-      joinInfo: {
-        date: join.date || join.joinDate,
-        location: join.location || join.joinRegion,
-      },
-      lastMessage: '',
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0,
-      messages: [],
-    }
-    
-    setChatRooms(prev => {
-      const updated = [newChat, ...prev]
-      localStorage.setItem('gp_chat_rooms', JSON.stringify(updated))
-      return updated
-    })
-    
-    return newChat.id
-  }
-
-  // 총 읽지 않은 메시지 수
-  const totalUnreadMessages = chatRooms.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0)
 
   const value = {
+    // 데이터
     users,
     joins,
     currentUser,
@@ -518,6 +461,8 @@ export function AppProvider({ children }) {
     myJoins,
     notifications,
     unreadNotificationCount,
+    loading,
+    // 액션
     likeUser,
     unlikeUser,
     saveJoin,
@@ -539,12 +484,13 @@ export function AppProvider({ children }) {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     deleteNotification,
-    chatRooms,
-    sendMessage,
-    markChatAsRead,
-    createFriendChat,
-    createJoinChat,
-    totalUnreadMessages,
+    // 새로고침
+    refreshUsers,
+    refreshJoins,
+    refreshMyJoins,
+    refreshFriendRequests,
+    refreshJoinApplications,
+    refreshNotifications,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

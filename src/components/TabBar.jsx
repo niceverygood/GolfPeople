@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, Users, Bookmark, User, MessageCircle } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useChat } from '../context/ChatContext'
 
 const tabs = [
   { path: '/', icon: Home, label: '홈' },
@@ -14,7 +14,7 @@ const tabs = [
 export default function TabBar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { totalUnreadMessages } = useApp()
+  const { totalUnreadCount } = useChat()
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
@@ -24,7 +24,7 @@ export default function TabBar() {
             {tabs.map((tab) => {
               const isActive = location.pathname === tab.path
               const Icon = tab.icon
-              const showBadge = tab.path === '/chat' && totalUnreadMessages > 0
+              const showBadge = tab.path === '/chat' && totalUnreadCount > 0
 
               return (
                 <button
@@ -48,7 +48,7 @@ export default function TabBar() {
                     />
                     {showBadge && (
                       <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
-                        {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                       </span>
                     )}
                   </div>

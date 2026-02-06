@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History, MessageCircle, Phone } from 'lucide-react'
@@ -6,8 +6,6 @@ import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
-import * as friendService from '../lib/friendService'
-import * as joinService from '../lib/joinService'
 
 // 메인 탭 정의
 const TABS = [
@@ -101,160 +99,73 @@ export default function Saved({ onPropose }) {
     savedJoins,
     unlikeUser,
     unsaveJoin,
-    friendRequests: mockFriendRequests,
-    receivedFriendRequests: mockReceivedFriendRequests,
-    joinApplications: mockJoinApplications,
-    receivedJoinRequests: mockReceivedJoinRequests,
-    cancelFriendRequest: mockCancelFriendRequest,
-    cancelJoinApplication: mockCancelJoinApplication,
-    acceptFriendRequest: mockAcceptFriendRequest,
-    rejectFriendRequest: mockRejectFriendRequest,
-    acceptJoinRequest: mockAcceptJoinRequest,
-    rejectJoinRequest: mockRejectJoinRequest,
+    friendRequests,
+    receivedFriendRequests,
+    joinApplications,
+    receivedJoinRequests,
+    cancelFriendRequest,
+    cancelJoinApplication,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    acceptJoinRequest,
+    rejectJoinRequest,
     pastCards,
-    createFriendChat,
-    createJoinChat,
+    refreshFriendRequests,
+    refreshJoinApplications,
   } = useApp()
 
-  // Supabase 데이터 상태
-  const [dbFriendRequests, setDbFriendRequests] = useState({ sent: [], received: [] })
-  const [dbJoinApplications, setDbJoinApplications] = useState({ sent: [], received: [] })
-  const [isLoadingDb, setIsLoadingDb] = useState(false)
-
-  // Supabase 데이터 로드
-  const loadDbData = useCallback(async () => {
-    if (!user?.id) return
-
-    setIsLoadingDb(true)
-    try {
-      const [sentFriends, receivedFriends, sentJoins, receivedJoins] = await Promise.all([
-        friendService.getSentFriendRequests(user.id),
-        friendService.getReceivedFriendRequests(user.id),
-        joinService.getSentJoinApplications(user.id),
-        joinService.getReceivedJoinApplications(user.id),
-      ])
-
-      setDbFriendRequests({
-        sent: sentFriends.requests || [],
-        received: receivedFriends.requests || [],
-      })
-      setDbJoinApplications({
-        sent: sentJoins.applications || [],
-        received: receivedJoins.applications || [],
-      })
-    } catch (e) {
-      console.error('데이터 로드 에러:', e)
-    }
-    setIsLoadingDb(false)
-  }, [user?.id])
-
-  useEffect(() => {
-    loadDbData()
-  }, [loadDbData])
-
-  // 친구 요청 수락 (Supabase)
-  const handleAcceptFriendRequest = async (requestId, isDbRequest = false) => {
-    if (isDbRequest) {
-      const result = await friendService.acceptFriendRequest(requestId)
-      if (result.success) {
-        // DB 트리거에서 채팅방 자동 생성됨
-        await loadDbData()
-        await loadChatRooms()
-      }
-    } else {
-      mockAcceptFriendRequest(requestId)
-    }
+  // 친구 요청 수락
+  const handleAcceptFriendRequest = async (requestId) => {
+    await acceptFriendRequest(requestId)
+    await loadChatRooms()
   }
 
-  // 친구 요청 거절 (Supabase)
-  const handleRejectFriendRequest = async (requestId, isDbRequest = false) => {
-    if (isDbRequest) {
-      await friendService.rejectFriendRequest(requestId)
-      await loadDbData()
-    } else {
-      mockRejectFriendRequest(requestId)
-    }
+  // 친구 요청 거절
+  const handleRejectFriendRequest = async (requestId) => {
+    await rejectFriendRequest(requestId)
   }
 
-  // 친구 요청 취소 (Supabase)
-  const handleCancelFriendRequest = async (requestId, isDbRequest = false) => {
-    if (isDbRequest) {
-      await friendService.cancelFriendRequest(requestId)
-      await loadDbData()
-    } else {
-      mockCancelFriendRequest(requestId)
-    }
+  // 친구 요청 취소
+  const handleCancelFriendRequest = async (requestId) => {
+    await cancelFriendRequest(requestId)
   }
 
-  // 조인 신청 수락 (Supabase)
-  const handleAcceptJoinRequest = async (applicationId, isDbRequest = false) => {
-    if (isDbRequest) {
-      const result = await joinService.acceptJoinApplication(applicationId)
-      if (result.success) {
-        // DB 트리거에서 채팅방에 참가자 추가됨
-        await loadDbData()
-        await loadChatRooms()
-      }
-    } else {
-      mockAcceptJoinRequest(applicationId)
-    }
+  // 조인 신청 수락
+  const handleAcceptJoinRequest = async (applicationId) => {
+    await acceptJoinRequest(applicationId)
+    await loadChatRooms()
   }
 
-  // 조인 신청 거절 (Supabase)
-  const handleRejectJoinRequest = async (applicationId, isDbRequest = false) => {
-    if (isDbRequest) {
-      await joinService.rejectJoinApplication(applicationId)
-      await loadDbData()
-    } else {
-      mockRejectJoinRequest(applicationId)
-    }
+  // 조인 신청 거절
+  const handleRejectJoinRequest = async (applicationId) => {
+    await rejectJoinRequest(applicationId)
   }
 
-  // 조인 신청 취소 (Supabase)
-  const handleCancelJoinApplication = async (applicationId, isDbRequest = false) => {
-    if (isDbRequest) {
-      await joinService.cancelJoinApplication(applicationId)
-      await loadDbData()
-    } else {
-      mockCancelJoinApplication(applicationId)
-    }
+  // 조인 신청 취소
+  const handleCancelJoinApplication = async (applicationId) => {
+    await cancelJoinApplication(applicationId)
   }
 
-  // 친구 채팅 시작 핸들러 (Supabase 채팅방으로 이동)
-  const handleStartFriendChat = async (request, isDbRequest = false) => {
-    if (isDbRequest && request.userId) {
-      // Supabase에서 채팅방 찾기/생성
+  // 친구 채팅 시작 핸들러
+  const handleStartFriendChat = async (request) => {
+    if (request.userId) {
       const result = await startDirectChat(request.userId)
       if (result.success) {
         navigate(`/chat/${result.roomId}`)
       }
-    } else {
-      const chatId = createFriendChat(request)
-      navigate(`/chat/${chatId}`)
     }
   }
 
   // 조인 채팅 시작 핸들러
-  const handleStartJoinChat = (request, type) => {
-    const joinInfo = {
-      joinId: request.joinId,
-      joinTitle: request.joinTitle,
-      date: request.joinDate,
-      location: request.joinRegion,
+  const handleStartJoinChat = async (request, type) => {
+    const targetUserId = type === 'sent' ? request.hostId : request.userId
+    if (targetUserId) {
+      const result = await startDirectChat(targetUserId)
+      if (result.success) {
+        navigate(`/chat/${result.roomId}`)
+      }
     }
-    const userInfo = type === 'sent'
-      ? { userId: request.hostId, userName: request.hostName, userPhoto: request.hostPhoto }
-      : { userId: request.userId, userName: request.userName, userPhoto: request.userPhoto }
-
-    const chatId = createJoinChat(joinInfo, userInfo)
-    navigate(`/chat/${chatId}`)
   }
-
-  // 데이터 병합 (Mock + Supabase)
-  const friendRequests = [...mockFriendRequests, ...dbFriendRequests.sent.map(r => ({ ...r, isDbRequest: true }))]
-  const receivedFriendRequests = [...mockReceivedFriendRequests, ...dbFriendRequests.received.map(r => ({ ...r, isDbRequest: true }))]
-  const joinApplications = [...mockJoinApplications, ...dbJoinApplications.sent.map(a => ({ ...a, isDbRequest: true }))]
-  const receivedJoinRequests = [...mockReceivedJoinRequests, ...dbJoinApplications.received.map(a => ({ ...a, isDbRequest: true }))]
   
   // 번호 확인 모달 상태
   const [showPhoneModal, setShowPhoneModal] = useState(false)
@@ -476,8 +387,8 @@ export default function Saved({ onPropose }) {
                     <ReceivedFriendCard
                       key={request.id}
                       request={request}
-                      onAccept={() => handleAcceptFriendRequest(request.id, request.isDbRequest)}
-                      onReject={() => handleRejectFriendRequest(request.id, request.isDbRequest)}
+                      onAccept={() => handleAcceptFriendRequest(request.id)}
+                      onReject={() => handleRejectFriendRequest(request.id)}
                       onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
@@ -499,7 +410,7 @@ export default function Saved({ onPropose }) {
                     <SentFriendCard
                       key={request.id}
                       request={request}
-                      onCancel={() => handleCancelFriendRequest(request.id, request.isDbRequest)}
+                      onCancel={() => handleCancelFriendRequest(request.id)}
                       onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
@@ -531,8 +442,8 @@ export default function Saved({ onPropose }) {
                     <ReceivedJoinCard
                       key={request.id}
                       request={request}
-                      onAccept={() => handleAcceptJoinRequest(request.id, request.isDbRequest)}
-                      onReject={() => handleRejectJoinRequest(request.id, request.isDbRequest)}
+                      onAccept={() => handleAcceptJoinRequest(request.id)}
+                      onReject={() => handleRejectJoinRequest(request.id)}
                       onProfileClick={(userId) => navigate(`/user/${userId}`)}
                     />
                   ))
@@ -554,7 +465,7 @@ export default function Saved({ onPropose }) {
                     <SentJoinCard
                       key={application.id}
                       application={application}
-                      onCancel={() => handleCancelJoinApplication(application.id, application.isDbRequest)}
+                      onCancel={() => handleCancelJoinApplication(application.id)}
                       onClick={() => navigate(`/join/${application.joinId}`)}
                     />
                   ))
@@ -594,7 +505,7 @@ export default function Saved({ onPropose }) {
                               key={request.id}
                               request={request}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onStartChat={() => handleStartFriendChat(request, request.isDbRequest)}
+                              onStartChat={() => handleStartFriendChat(request)}
                             />
                           ))}
                         </Section>
@@ -612,7 +523,7 @@ export default function Saved({ onPropose }) {
                               key={request.id}
                               request={request}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onStartChat={() => handleStartFriendChat(request, request.isDbRequest)}
+                              onStartChat={() => handleStartFriendChat(request)}
                             />
                           ))}
                         </Section>

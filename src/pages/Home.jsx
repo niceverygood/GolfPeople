@@ -97,7 +97,7 @@ export default function Home({ onPropose }) {
 
       // 성별 필터
       if (filters.genders.length > 0) {
-        const userGender = user.gender || (user.name.endsWith('준') || user.name.endsWith('민') || user.name.endsWith('훈') ? '남성' : '여성')
+        const userGender = user.gender || ''
         if (!filters.genders.includes(userGender)) return false
       }
       

@@ -24,6 +24,7 @@ export default function ChatRoom() {
 
   const [messageInput, setMessageInput] = useState('')
   const [showMenu, setShowMenu] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -76,14 +77,51 @@ export default function ChatRoom() {
 
   const handleReport = () => {
     setShowMenu(false)
-    showToast.success('신고가 접수되었습니다.')
+    setShowReportModal(true)
   }
 
-  const handleBlock = () => {
+  const handleSubmitReport = async (reason) => {
+    setShowReportModal(false)
+    if (!chat?.partnerId || !user?.id) return
+
+    try {
+      const { default: supabase, isConnected } = await import('../lib/supabase')
+      if (isConnected() && supabase) {
+        await supabase.from('reports').insert({
+          reporter_id: user.id,
+          reported_user_id: chat.partnerId,
+          reason: reason,
+          status: 'pending'
+        })
+      }
+    } catch (e) {
+      console.error('신고 저장 에러:', e)
+    }
+    showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
+  }
+
+  const handleBlock = async () => {
     setShowMenu(false)
-    if (confirm(`${chat?.partnerName}님을 차단하시겠습니까?`)) {
+    if (!chat?.partnerId || !user?.id) return
+
+    try {
+      const { default: supabase, isConnected } = await import('../lib/supabase')
+      if (isConnected() && supabase) {
+        await supabase.from('blocks').insert({
+          user_id: user.id,
+          blocked_user_id: chat.partnerId
+        })
+      }
+      const saved = localStorage.getItem('gp_blocked_users')
+      const blockedList = saved ? JSON.parse(saved) : []
+      blockedList.push({ id: chat.partnerId, name: chat.partnerName, photo: chat.partnerPhoto })
+      localStorage.setItem('gp_blocked_users', JSON.stringify(blockedList))
+
       showToast.success('차단되었습니다.')
       navigate(-1)
+    } catch (e) {
+      console.error('차단 에러:', e)
+      showToast.error('차단에 실패했습니다.')
     }
   }
 
@@ -354,6 +392,86 @@ export default function ChatRoom() {
           </button>
         </div>
       </div>
+      {/* 신고 모달 */}
+      <AnimatePresence>
+        {showReportModal && (
+          <ReportModal
+            userName={chat?.partnerName}
+            onSubmit={handleSubmitReport}
+            onClose={() => setShowReportModal(false)}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+const REPORT_REASONS = [
+  '허위 프로필 (사진/정보 불일치)',
+  '불쾌한 메시지 또는 행동',
+  '광고/스팸',
+  '욕설/비방/성희롱',
+  '사기 의심',
+  '기타',
+]
+
+function ReportModal({ userName, onSubmit, onClose }) {
+  const [selectedReason, setSelectedReason] = useState('')
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[430px] bg-gp-black rounded-t-3xl p-6 safe-bottom"
+      >
+        <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
+        <h2 className="text-lg font-bold mb-1">{userName}님 신고하기</h2>
+        <p className="text-sm text-gp-text-secondary mb-5">신고 사유를 선택해주세요.</p>
+
+        <div className="space-y-2 mb-6">
+          {REPORT_REASONS.map((reason) => (
+            <button
+              key={reason}
+              onClick={() => setSelectedReason(reason)}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                selectedReason === reason
+                  ? 'bg-gp-green/20 text-gp-green border border-gp-green'
+                  : 'bg-gp-card text-white border border-transparent'
+              }`}
+            >
+              {reason}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+          >
+            취소
+          </button>
+          <button
+            onClick={() => selectedReason && onSubmit(selectedReason)}
+            disabled={!selectedReason}
+            className={`flex-1 py-3 rounded-xl font-medium ${
+              selectedReason ? 'bg-gp-red text-white' : 'bg-gp-border/50 text-gp-text-secondary'
+            }`}
+          >
+            신고하기
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }

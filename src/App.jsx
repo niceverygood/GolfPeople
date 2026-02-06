@@ -30,6 +30,7 @@ import Terms from './pages/Terms'
 import TabBar from './components/TabBar'
 import ProposalModal from './components/ProposalModal'
 import ToastContainer from './components/ToastContainer'
+import OfflineBanner from './components/OfflineBanner'
 
 // Context
 import { AppProvider } from './context/AppContext'
@@ -235,6 +236,7 @@ function AppContent() {
             onClose={closeProposalModal}
           />
           <ToastContainer />
+          <OfflineBanner />
         </div>
         </ChatProvider>
       </MarkerProvider>
