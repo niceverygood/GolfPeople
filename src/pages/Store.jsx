@@ -21,7 +21,7 @@ import { requestPayment, generatePaymentId } from '../lib/portone'
 import { isNative, isAndroid, isIOS } from '../lib/native'
 import { purchaseProduct as nativePurchase, PRODUCT_INFO, PRODUCTS } from '../lib/iap'
 import { haptic } from '../lib/native'
-import { verifyPortOnePayment, pollPurchaseConfirmation } from '../lib/paymentVerify'
+import { verifyPortOnePayment, pollPurchaseConfirmation, savePendingPurchase, clearPendingPurchase } from '../lib/paymentVerify'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
 // 상품 카드 컴포넌트
@@ -189,18 +189,28 @@ export default function Store() {
         
         const result = await nativePurchase(nativeProductId)
         setPurchasing(false)
-        
+
         if (result.success) {
           await haptic.success()
           const totalMarkers = result.markers || (selectedProduct.marker_amount + selectedProduct.bonus_amount)
+
+          // 결제 복구용 정보 저장 (앱 크래시 대비)
+          savePendingPurchase({
+            transactionId: result.transactionId,
+            productId: nativeProductId,
+            markers: totalMarkers,
+          })
+
           // 웹훅 처리 대기 (RevenueCat → webhook-revenuecat → credit_markers_verified)
           setPurchaseResult({ success: true, amount: totalMarkers })
           const confirmed = await pollPurchaseConfirmation(result.transactionId)
           if (confirmed) {
+            clearPendingPurchase()
             await refreshWalletFromServer()
           } else {
             // 웹훅 지연 시 로컬 반영 (다음 앱 실행 시 서버 동기화)
             addMarkers(totalMarkers, 'purchase', `${selectedProduct.name} 구매 (인앱결제)`)
+            clearPendingPurchase()
           }
         } else if (result.cancelled) {
           // 사용자가 시스템 결제창에서 취소한 경우

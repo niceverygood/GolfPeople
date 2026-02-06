@@ -540,26 +540,28 @@ function EditProfileModal({ profile, onClose, onSave }) {
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [dragOverIndex, setDragOverIndex] = useState(null)
   
-  // 사진 추가
-  const handlePhotoAdd = (e) => {
+  // 사진 추가 (리사이즈 적용)
+  const handlePhotoAdd = async (e) => {
+    const { resizeImage } = await import('../utils/imageResize')
     const files = Array.from(e.target.files)
     const photos = editedProfile.photos || []
-    
+
     if (photos.length + files.length > 6) {
       showToast.warning('최대 6장까지 업로드 가능합니다')
       return
     }
-    
-    files.forEach(file => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
+
+    for (const file of files) {
+      try {
+        const resized = await resizeImage(file)
         setEditedProfile(prev => ({
           ...prev,
-          photos: [...(prev.photos || []), reader.result]
+          photos: [...(prev.photos || []), resized]
         }))
+      } catch (err) {
+        console.error('이미지 리사이즈 에러:', err)
       }
-      reader.readAsDataURL(file)
-    })
+    }
     
     // input 초기화
     e.target.value = ''

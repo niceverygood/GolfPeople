@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase, isConnected } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+import { recoverPendingPurchase } from '../lib/paymentVerify'
 
 const MarkerContext = createContext({})
 
@@ -226,6 +227,17 @@ export const MarkerProvider = ({ children }) => {
       console.error('서버 잔액 조회 실패:', e)
     }
   }, [user])
+
+  // 앱 시작 시 미완료 결제 복구
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+    recoverPendingPurchase().then(({ recovered }) => {
+      if (recovered) {
+        console.log('미완료 결제 복구 완료 → 서버 잔액 동기화')
+        refreshWalletFromServer()
+      }
+    })
+  }, [isAuthenticated, user, refreshWalletFromServer])
 
   // 지갑 새로고침
   const refreshWallet = useCallback(() => {

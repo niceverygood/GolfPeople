@@ -46,14 +46,19 @@ export default function Onboarding({ onComplete }) {
     }
   }
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPhoto(reader.result)
+      try {
+        const { resizeImage } = await import('../utils/imageResize')
+        const resized = await resizeImage(file)
+        setPhoto(resized)
+      } catch (err) {
+        console.error('이미지 리사이즈 에러:', err)
+        const reader = new FileReader()
+        reader.onloadend = () => setPhoto(reader.result)
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
     }
   }
 

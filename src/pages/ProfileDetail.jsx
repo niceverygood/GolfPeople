@@ -33,7 +33,7 @@ export default function ProfileDetail() {
   const [showMarkerModal, setShowMarkerModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const user = users.find(u => u.id === parseInt(userId))
+  const user = users.find(u => u.id === userId)
   const [friendRequested, setFriendRequested] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
