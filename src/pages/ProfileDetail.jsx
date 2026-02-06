@@ -148,16 +148,56 @@ export default function ProfileDetail() {
     setShowRequestModal(false)
   }
 
+  const [showReportModal, setShowReportModal] = useState(false)
+
   const handleReport = () => {
     setShowMoreMenu(false)
+    setShowReportModal(true)
+  }
+
+  const handleSubmitReport = async (reason) => {
+    setShowReportModal(false)
+    if (!user || !currentUser) return
+
+    try {
+      const { supabase, isConnected } = await import('../lib/supabase')
+      if (isConnected() && supabase) {
+        await supabase.from('reports').insert({
+          reporter_id: currentUser.id,
+          reported_user_id: user.id,
+          reason: reason,
+          status: 'pending'
+        })
+      }
+    } catch (e) {
+      console.error('신고 저장 에러:', e)
+    }
     showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
   }
 
-  const handleBlock = () => {
+  const handleBlock = async () => {
     setShowMoreMenu(false)
-    if (confirm(`${user?.name}님을 차단하시겠습니까?`)) {
+    if (!user) return
+
+    try {
+      const { supabase, isConnected } = await import('../lib/supabase')
+      if (isConnected() && supabase && currentUser) {
+        await supabase.from('blocks').insert({
+          user_id: currentUser.id,
+          blocked_user_id: user.id
+        })
+      }
+      // 로컬 차단 목록에도 추가
+      const saved = localStorage.getItem('gp_blocked_users')
+      const blockedList = saved ? JSON.parse(saved) : []
+      blockedList.push({ id: user.id, name: user.name, photo: user.photos?.[0], region: user.region })
+      localStorage.setItem('gp_blocked_users', JSON.stringify(blockedList))
+
       showToast.success('차단되었습니다.')
       navigate(-1)
+    } catch (e) {
+      console.error('차단 에러:', e)
+      showToast.error('차단에 실패했습니다.')
     }
   }
 
@@ -562,6 +602,17 @@ export default function ProfileDetail() {
         onClose={phoneVerify.closeModal}
         message="친구 요청을 보내려면 전화번호 인증이 필요해요."
       />
+
+      {/* 신고 모달 */}
+      <AnimatePresence>
+        {showReportModal && (
+          <ReportModal
+            userName={user?.name}
+            onSubmit={handleSubmitReport}
+            onClose={() => setShowReportModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
