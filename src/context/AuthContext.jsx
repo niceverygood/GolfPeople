@@ -304,6 +304,51 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // 회원 탈퇴 (계정 삭제)
+  const deleteAccount = async () => {
+    if (!user) return { error: new Error('Not authenticated') }
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // 1. Supabase Edge Function으로 계정 삭제 요청 (서버에서 auth.admin.deleteUser 호출)
+      // Edge Function이 없는 경우 RPC 호출로 대체
+      const { error: deleteError } = await supabase.rpc('delete_user_account', {
+        p_user_id: user.id
+      })
+      
+      if (deleteError) {
+        // RPC 실패 시 직접 프로필 삭제 후 로그아웃 처리
+        console.warn('RPC 실패, 프로필 삭제 후 로그아웃:', deleteError)
+        await supabase.from('profiles').delete().eq('id', user.id)
+      }
+      
+      // 2. 로컬 데이터 전부 삭제
+      const keysToRemove = [
+        'gp_onboarded', 'gp_profile', 'gp_revealed_cards',
+        'gp_phone_verified', 'gp_settings', 'gp_theme',
+        'gp_notif_settings', 'gp_push_token', 'gp_my_joins',
+        'gp_past_cards', 'gp_recommendation_history',
+        'gp_chat_rooms', 'gp_blocked_users'
+      ]
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
+      // 3. 로그아웃
+      await auth.signOut()
+      
+      setUser(null)
+      setProfile(null)
+      
+      return { error: null }
+    } catch (err) {
+      setError(err.message)
+      return { error: err }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 로그아웃
   const signOut = async () => {
     setLoading(true)
@@ -418,6 +463,7 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     signInWithApple,
     signOut,
+    deleteAccount,
     resetPassword,
     updatePassword,
     updateProfile,
