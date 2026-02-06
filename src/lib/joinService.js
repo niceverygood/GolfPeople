@@ -319,7 +319,7 @@ export const applyToJoin = async (userId, joinId, message = '') => {
           joinTitle: joinData.title,
           joinId: joinId,
         },
-        options: { push: true, kakao: false, inApp: true }
+        options: { push: true, kakao: true, inApp: true }
       })
     }
 
@@ -369,7 +369,7 @@ export const acceptJoinApplication = async (applicationId) => {
         roundingDate: joinData?.date ? `${joinData.date} ${joinData.time || ''}` : '',
         location: joinData?.location || '',
       },
-      options: { push: true, kakao: false, inApp: true }
+      options: { push: true, kakao: true, inApp: true }
     })
 
     return { success: true, application: data }
@@ -417,7 +417,7 @@ export const rejectJoinApplication = async (applicationId) => {
           joinTitle: joinData?.title || '',
           joinId: appData.join_id,
         },
-        options: { push: true, kakao: false, inApp: true }
+        options: { push: true, kakao: true, inApp: true }
       })
     }
 
