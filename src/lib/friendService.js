@@ -155,7 +155,7 @@ export const sendFriendRequest = async (fromUserId, toUserId, message = '') => {
         senderName: senderProfile?.name || '골퍼',
         senderId: fromUserId,
       },
-      options: { push: true, kakao: false, inApp: true }
+      options: { push: true, kakao: true, inApp: true }
     })
 
     return { success: true, request: data }
@@ -201,7 +201,7 @@ export const acceptFriendRequest = async (requestId) => {
         senderName: acceptorProfile?.name || '골퍼',
         senderId: data.to_user_id,
       },
-      options: { push: true, kakao: false, inApp: true }
+      options: { push: true, kakao: true, inApp: true }
     })
 
     return { success: true, request: data }

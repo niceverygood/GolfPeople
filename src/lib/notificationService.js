@@ -52,7 +52,7 @@ const NOTIFICATION_TEMPLATES = {
   [NOTIFICATION_TYPES.NEW_MESSAGE]: {
     title: '새 메시지',
     body: '{senderName}님의 새 메시지가 있습니다.',
-    kakaoTemplate: 'NEW_MESSAGE',
+    kakaoTemplate: null, // 카카오 알림톡 미사용 (정책상 일반 메시지는 어뷰징 우려로 승인 어려움)
   },
   [NOTIFICATION_TYPES.JOIN_REMINDER]: {
     title: '라운딩 일정 안내',
@@ -174,6 +174,8 @@ export const createNotification = async ({
     const body = formatTemplate(template.body, data)
 
     // 인앱 알림 저장
+    // 주의: schema.sql은 'message' 컬럼, 002_notifications.sql은 'body' 컬럼 사용
+    // 양쪽 모두 호환되도록 둘 다 넣음
     if (options.inApp) {
       const { error: inAppError } = await supabase
         .from('notifications')
@@ -181,6 +183,7 @@ export const createNotification = async ({
           user_id: recipientId,
           type: type,
           title: title,
+          message: body,
           body: body,
           data: data,
           is_read: false,
@@ -202,7 +205,7 @@ export const createNotification = async ({
     }
 
     // 카카오 알림톡 요청 (Edge Function 호출)
-    if (options.kakao) {
+    if (options.kakao && template.kakaoTemplate) {
       const kakaoVariables = convertToKakaoVariables(type, data)
       await requestKakaoNotification({
         recipientId,

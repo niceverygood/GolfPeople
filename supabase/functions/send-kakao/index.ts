@@ -37,7 +37,14 @@ const TEMPLATES: Record<string, {
   FRIEND_REQUEST: {
     tplCode: 'UF_2416',
     subject: '새로운 친구 요청',
-    message: '[골프피플] 새로운 친구 요청\n\n#{회원명}님, 회원님의 프로필을 본 골퍼가 친구 요청을 보냈습니다.\n\n- 요청자: #{요청자명}\n- 요청일시: #{요청일시}\n\n앱에서 요청을 확인하고 수락 또는 거절해주세요.',
+    message: `[골프피플] 새로운 친구 요청
+
+#{회원명}님, 회원님이 프로필을 공개하신 후 #{요청자명}님이 회원님의 프로필을 확인하고 친구 요청을 보냈습니다.
+
+- 요청자: #{요청자명}
+- 요청일시: #{요청일시}
+
+앱에서 요청을 확인하고 수락 또는 거절해주세요.`,
     buttonName: '앱에서 확인',
     buttonUrl: 'https://golf-people.vercel.app',
   },
@@ -69,17 +76,18 @@ const TEMPLATES: Record<string, {
     buttonName: '다른 조인 찾기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
-  NEW_MESSAGE: {
-    tplCode: 'UF_2422',
-    subject: '새 메시지 도착',
-    message: '[골프피플] 새 메시지 도착\n\n#{회원명}님, 새로운 메시지가 도착했습니다.\n\n- 발신자: #{발신자명}\n- 수신일시: #{수신일시}\n\n앱에서 메시지를 확인해주세요.',
-    buttonName: '메시지 확인',
-    buttonUrl: 'https://golf-people.vercel.app',
-  },
   JOIN_REMINDER: {
     tplCode: 'UF_2423',
     subject: '라운딩 일정 안내',
-    message: '[골프피플] 라운딩 일정 안내\n\n#{회원명}님, 내일 라운딩 일정이 있습니다.\n\n- 조인명: #{조인명}\n- 일시: #{라운딩일시}\n- 장소: #{장소}\n\n즐거운 라운딩 되세요!',
+    message: `[골프피플] 라운딩 일정 안내
+
+#{회원명}님, 회원님이 신청하신 "#{조인명}" 조인 라운딩이 내일 예정되어 있습니다.
+
+- 조인명: #{조인명}
+- 일시: #{라운딩일시}
+- 장소: #{장소}
+
+즐거운 라운딩 되세요!`,
     buttonName: '상세 정보 보기',
     buttonUrl: 'https://golf-people.vercel.app',
   },
@@ -120,10 +128,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // 사용자 전화번호 조회
+    // 사용자 전화번호 및 이름 조회
     const { data: userData, error: userError } = await supabase
       .from('profiles')
-      .select('phone, kakao_notification_enabled')
+      .select('phone, name, kakao_notification_enabled')
       .eq('id', recipientId)
       .single()
 
@@ -153,6 +161,12 @@ serve(async (req) => {
       )
     }
 
+    // recipientName이 없으면 추가 (템플릿에서 사용)
+    const finalVariables = {
+      ...variables,
+      회원명: variables.회원명 || userData.name || '',
+    }
+
     // 알림톡 발송
     const result = await sendAligoAlimtalk({
       apiKey: aligoApiKey,
@@ -161,7 +175,7 @@ serve(async (req) => {
       sender: aligoSender,
       phoneNumber: userData.phone,
       template: template,
-      variables: variables,
+      variables: finalVariables,
     })
 
     return new Response(
