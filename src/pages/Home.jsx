@@ -80,9 +80,21 @@ export default function Home({ onPropose }) {
   // 활성화된 필터 개수
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0)
   
+  // 차단 사용자 목록
+  const blockedUserIds = useMemo(() => {
+    const saved = localStorage.getItem('gp_blocked_users')
+    if (!saved) return []
+    try {
+      return JSON.parse(saved).map(u => u.id)
+    } catch { return [] }
+  }, [])
+
   // 필터링된 유저 목록
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
+      // 차단 사용자 제외
+      if (blockedUserIds.includes(user.id)) return false
+
       // 성별 필터
       if (filters.genders.length > 0) {
         const userGender = user.gender || (user.name.endsWith('준') || user.name.endsWith('민') || user.name.endsWith('훈') ? '남성' : '여성')

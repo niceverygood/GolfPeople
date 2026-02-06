@@ -454,8 +454,10 @@ export const initializeNative = async () => {
           app.exit()
         } else {
           lastBackPress = now
-          // 토스트 메시지 표시 (나중에 구현)
-          console.log('한번 더 누르면 앱이 종료됩니다')
+          // 토스트 메시지 표시
+          import('./toastStore.js').then(({ toast }) => {
+            toast.info('한번 더 누르면 앱이 종료됩니다')
+          })
         }
       }
     })
