@@ -24,6 +24,7 @@ import ChatRoom from './pages/ChatRoom'
 import Friends from './pages/Friends'
 import Review from './pages/Review'
 import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 // Components
 import TabBar from './components/TabBar'
@@ -165,9 +166,12 @@ function AppContent() {
   }
 
   // 3. 로그인 안 되어 있으면 로그인 화면 (콜백 페이지 제외)
-  // 개인정보 처리방침은 로그인 없이 접근 가능
+  // 개인정보 처리방침, 이용약관은 로그인 없이 접근 가능
   if (location.pathname === '/privacy') {
     return <Privacy />
+  }
+  if (location.pathname === '/terms') {
+    return <Terms />
   }
 
   const isCallbackPage = location.pathname.startsWith('/auth/callback')
