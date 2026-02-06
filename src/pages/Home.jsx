@@ -137,10 +137,24 @@ export default function Home({ onPropose }) {
     const today = new Date().toISOString().split('T')[0]
     const currentHour = new Date().getHours()
     
+    // 유저가 아직 로드되지 않았으면 대기
+    if (users.length === 0) {
+      // 빈 추천 상태 설정 (로딩 표시용)
+      const emptyRecs = {}
+      RECOMMENDATION_TIMES.forEach((time) => {
+        emptyRecs[time.id] = { ...time, isUnlocked: currentHour >= time.hour, cards: [] }
+      })
+      setRecommendations(emptyRecs)
+      return
+    }
+    
     // 오늘의 추천이 이미 저장되어 있는지 확인
     let dailyRecs = recommendationHistory[today]
     
-    if (!dailyRecs) {
+    // 저장된 추천이 없거나 비어있으면 새로 생성
+    const isRecEmpty = dailyRecs && Object.values(dailyRecs).every(ids => !ids || ids.length === 0)
+    
+    if (!dailyRecs || isRecEmpty) {
       // 없으면 새로 생성 (필터링된 유저가 없으면 전체 유저 사용)
       const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
       dailyRecs = {}
@@ -155,8 +169,10 @@ export default function Home({ onPropose }) {
         dailyRecs[time.id] = assignedUserIds
       })
       
-      // 생성된 추천 저장
-      saveDailyRecommendation(today, dailyRecs)
+      // 유저가 있을 때만 저장 (빈 추천 저장 방지)
+      if (targetUsers.length > 0) {
+        saveDailyRecommendation(today, dailyRecs)
+      }
     }
     
     // UI 표시용 상태 생성
@@ -408,7 +424,7 @@ function PastRecommendations({ history, users, navigate }) {
                   className="aspect-[3/4] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-transform"
                 >
                   <img
-                    src={user.photos[0]}
+                    src={user.photos?.[0] || 'https://via.placeholder.com/300x400?text=Golf'}
                     alt={user.name}
                     className="w-full h-full object-cover"
                   />
@@ -561,7 +577,7 @@ function FlipCard({ card, isUnlocked, onClick }) {
           {card.user && (
             <>
               <img
-                src={card.user.photos[0]}
+                src={card.user.photos?.[0] || 'https://via.placeholder.com/300x400?text=Golf'}
                 alt={card.user.name}
                 className="w-full h-full object-cover"
               />

@@ -174,8 +174,7 @@ export const createNotification = async ({
     const body = formatTemplate(template.body, data)
 
     // 인앱 알림 저장
-    // 주의: schema.sql은 'message' 컬럼, 002_notifications.sql은 'body' 컬럼 사용
-    // 양쪽 모두 호환되도록 둘 다 넣음
+    // 실제 DB 컬럼: body (message 컬럼은 없음)
     if (options.inApp) {
       const { error: inAppError } = await supabase
         .from('notifications')
@@ -183,7 +182,6 @@ export const createNotification = async ({
           user_id: recipientId,
           type: type,
           title: title,
-          message: body,
           body: body,
           data: data,
           is_read: false,

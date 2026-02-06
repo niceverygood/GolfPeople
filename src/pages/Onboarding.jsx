@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, ChevronRight, MapPin, Trophy, Clock, Check, ChevronDown } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { storage } from '../lib/supabase'
 
 // 전국 지역 데이터
 const REGION_DATA = {
@@ -28,13 +30,16 @@ const STYLES = ['카트 선호', '도보 가능', '빠르게', '여유롭게', '
 const TIMES = ['평일 오전', '평일 오후', '주말 오전', '주말 오후', '주말 전체', '상관없음']
 
 export default function Onboarding({ onComplete }) {
+  const { user, updateProfile } = useAuth()
   const [step, setStep] = useState(0)
   const [photo, setPhoto] = useState(null)
+  const [photoFile, setPhotoFile] = useState(null) // 원본 파일 (업로드용)
   const [selectedProvince, setSelectedProvince] = useState('') // 선택된 시/도
   const [regions, setRegions] = useState([]) // 선택된 지역들 (다중)
   const [handicap, setHandicap] = useState('')
   const [styles, setStyles] = useState([])
   const [time, setTime] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   // 지역 선택 토글 (다중 선택)
   const toggleRegion = (province, district) => {
@@ -49,6 +54,7 @@ export default function Onboarding({ onComplete }) {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
+      setPhotoFile(file) // 원본 파일 저장 (나중에 업로드)
       try {
         const { resizeImage } = await import('../utils/imageResize')
         const resized = await resizeImage(file)
@@ -79,13 +85,46 @@ export default function Onboarding({ onComplete }) {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 2) {
       setStep(step + 1)
     } else {
-      // 로컬스토리지에 프로필 저장
-      const profile = { photo, regions, handicap, styles, time }
-      localStorage.setItem('gp_profile', JSON.stringify(profile))
+      setIsSaving(true)
+      try {
+        // Supabase DB에 프로필 저장
+        if (user?.id) {
+          const profileUpdate = {
+            regions,
+            handicap,
+            styles,
+            times: [time],
+          }
+
+          // 사진이 있으면 Storage에 업로드
+          if (photoFile) {
+            try {
+              const { url } = await storage.uploadProfileImage(user.id, photoFile)
+              if (url) {
+                profileUpdate.photos = [url]
+              }
+            } catch (uploadErr) {
+              console.error('사진 업로드 실패:', uploadErr)
+              // 업로드 실패해도 계속 진행
+            }
+          }
+
+          await updateProfile(profileUpdate)
+          console.log('프로필 DB 저장 완료')
+        }
+      } catch (err) {
+        console.error('프로필 저장 에러:', err)
+        // DB 저장 실패해도 로컬 진행
+      }
+
+      // 로컬스토리지에도 프로필 저장
+      const profileLocal = { photo, regions, handicap, styles, time }
+      localStorage.setItem('gp_profile', JSON.stringify(profileLocal))
+      setIsSaving(false)
       onComplete()
     }
   }
@@ -346,15 +385,15 @@ export default function Onboarding({ onComplete }) {
         <button
           type="button"
           onClick={() => handleNext()}
-          disabled={!canProceed()}
+          disabled={!canProceed() || isSaving}
           className={`w-full py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
-            canProceed()
+            canProceed() && !isSaving
               ? 'btn-gold'
               : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
           }`}
         >
-          <span>{step === 2 ? '시작하기' : '다음'}</span>
-          <ChevronRight className="w-5 h-5 pointer-events-none" />
+          <span>{isSaving ? '저장 중...' : step === 2 ? '시작하기' : '다음'}</span>
+          {!isSaving && <ChevronRight className="w-5 h-5 pointer-events-none" />}
         </button>
       </div>
 

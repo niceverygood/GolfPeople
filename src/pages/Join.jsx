@@ -376,7 +376,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
-              {join.participants.slice(0, 3).map((p) => (
+              {(join.participants || []).slice(0, 3).map((p) => (
                 <button
                   key={p.id}
                   onClick={(e) => {
@@ -401,7 +401,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
 
           {/* 스타일 태그 */}
           <div className="flex gap-1">
-            {join.style.slice(0, 2).map((tag) => (
+            {(join.style || join.styles || []).slice(0, 2).map((tag) => (
               <span key={tag} className="tag text-xs">
                 {tag}
               </span>
@@ -513,7 +513,7 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
-              {join.participants.slice(0, 3).map((p) => (
+              {(join.participants || []).slice(0, 3).map((p) => (
                 <img
                   key={p.id}
                   src={p.photo}
@@ -530,7 +530,7 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick }) {
 
           {/* 스타일 태그 */}
           <div className="flex gap-1">
-            {join.style.slice(0, 2).map((tag) => (
+            {(join.style || join.styles || []).slice(0, 2).map((tag) => (
               <span key={tag} className="tag text-xs">
                 {tag}
               </span>
