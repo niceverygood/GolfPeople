@@ -194,9 +194,12 @@ export const db = {
   joins: {
     getAll: async () => {
       if (!supabase) return { data: [], error: null }
+      const today = new Date().toISOString().split('T')[0]
       const { data, error } = await supabase
         .from('joins')
         .select(`*, host:profiles!joins_host_id_fkey(id, name, photos), participants:join_participants(user:profiles(id, name, photos))`)
+        .eq('status', 'open')
+        .gte('date', today)
         .order('date', { ascending: true })
       return { data, error }
     },
