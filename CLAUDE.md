@@ -7,33 +7,37 @@
 
 ---
 
-## 2026-02-06 (목) 현황 점검
+## 2026-02-06 (목) 작업일지
 
-### 배포 현황
+### 완료된 개발 작업 (6개)
+1. **AppContext mock → Supabase 전환** - 가짜 유저 15명/조인 3개 mock 데이터 전부 제거, Supabase 실 데이터로 전환. AppContext 전면 리팩토링, profileMapper.js 신규 생성. Realtime 구독(알림/친구요청) 추가
+2. **ChatRoom 신고/차단 DB 연동** - reports 테이블 저장 (6가지 사유 선택 모달), blocks 테이블 저장 + localStorage 차단 목록
+3. **프로필 이미지 리사이징** - imageResize.js 신규 생성. 최대 1024x1024, JPEG 80% 압축. Profile.jsx + Onboarding.jsx 적용
+4. **오프라인 모드 안내** - OfflineBanner.jsx 신규 생성. 인터넷 끊기면 빨간 배너 표시, 복구 시 자동 숨김
+5. **결제 검증 실패 복구** - 미완료 결제를 localStorage에 저장, 앱 재시작 시 자동 확인 후 서버 잔액 동기화. 24시간 만료
+6. **Android versionCode 올리기** - versionCode 2→3, versionName 1.0.1→1.0.2
+
+### 추가 작업
+- Android 넓은 화면 지원 - AndroidManifest.xml에 `resizeableActivity="true"` 추가
+- Supabase 시드 데이터 삽입 - 테스트 프로필 15명 + 기존 2명 업데이트 + 조인 모집글 5개
+- send-kakao Edge Function 배포 완료
+- Notion 태스크 관리 연동 (7개 생성, 6개 완료 처리)
+
+### 현재 배포 현황
 | 플랫폼 | 버전 | 상태 |
 |--------|------|------|
-| iOS | v1.0 (Build 1) | App Store 심사 제출 완료 (02-05) |
-| Android | v1.0.1 (versionCode 2) | Google Play 스토어 배포 완료 |
-| Web | v1.0.0 | Vercel 배포 완료 (golf-people.vercel.app) |
+| iOS | v1.0 (Build 1) | App Store 심사 대기 중 (02-05 제출) |
+| Android | v1.0.1 (versionCode 2) | Google Play 배포 완료 |
+| Web | v1.0.2 | Vercel 자동 배포 완료 (02-06 push) |
 
-### 푸시 알림 현황
-- iOS: ✅ 완료 (APS production, FCM)
-- Android: ✅ google-services.json 설정 완료, FCM 푸시 가능
-- Web: ⚠️ Service Worker 미구현 → 백그라운드 푸시 불가
-- 알리고 API 키: ✅ 4개 모두 Supabase 시크릿 설정 완료
-- send-kakao Edge Function: ✅ 배포 완료
-- 카카오 알림톡 템플릿: 친구요청(UF_2416) 2회 반려 → 재등록, 나머지 검수 대기
-
-### 남은 개발 작업
-| 우선순위 | 항목 | 현재 상태 |
-|---------|------|----------|
-| 🔴 | AppContext mock → Supabase 전환 | 홈 화면 100% 목업 데이터 (15명 가짜 유저, Unsplash 사진). 조인/친구요청/알림/채팅도 전부 하드코딩 |
-| 🟡 | ChatRoom 신고/차단 DB 연동 | 토스트만 표시, DB 미연동. ProfileDetail은 reports/blocks 테이블 연동 완료 |
-| 🟡 | 프로필 이미지 리사이징 | 미구현. 원본 그대로 업로드 (FileReader → base64 → Supabase Storage) |
-| 🟠 | 오프라인 모드 안내 | isConnected() 체크만 있고 UI 안내 없음. navigator.onLine 미사용 |
-| 🟠 | 결제 검증 실패 복구 | 부분 구현. 15초 폴링 후 로컬 반영 fallback 있음. 앱 크래시 시 복구 로직 없음 |
-| ✅ | Android google-services.json | 설정 완료, Google Play 배포 완료 |
-| 🟡 | Android versionCode 올리기 | 현재 2 → 업데이트 제출 시 3 이상 필요 |
+### 남은 작업
+| 우선순위 | 항목 | 상태 |
+|---------|------|------|
+| 🔴 | iOS v1.0 심사 승인 대기 → v1.0.2 업데이트 제출 | iOS 빌드 필요 |
+| 🔴 | Android v1.0.2 빌드 및 Google Play 업로드 | Android 빌드 필요 |
+| 🟡 | 카카오 알림톡 템플릿 검수 완료 확인 | 카카오 심사 대기 |
+| 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
+| 🟢 | 시드 데이터 정리 (실 서비스 전 삭제) | 나중에 |
 
 ---
 
