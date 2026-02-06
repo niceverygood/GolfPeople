@@ -392,7 +392,7 @@ export const appleSignIn = {
     
     try {
       const result = await SignInWithApple.authorize({
-        clientId: 'com.golfpeople.app', // 앱 번들 ID
+        clientId: 'com.bottle.golfpeople', // 앱 번들 ID (capacitor.config.json의 appId와 일치)
         redirectURI: 'https://golf-people.vercel.app/auth/callback',
         scopes: 'email name',
         state: 'golfpeople_state',

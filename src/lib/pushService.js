@@ -173,18 +173,39 @@ const handlePushAction = (action) => {
   // 알림 유형에 따른 네비게이션
   switch (data.type) {
     case 'friend_request':
-      // 프로필 페이지로 이동
-      window.location.href = `/user/${data.userId}`
+      // 친구 요청 보낸 사용자 프로필로 이동
+      window.location.href = `/user/${data.senderId}`
+      break
+      
+    case 'friend_accepted':
+      // 친구 수락한 사용자 프로필로 이동
+      window.location.href = `/user/${data.senderId}`
       break
       
     case 'join_application':
       // 조인 상세 페이지로 이동
       window.location.href = `/join/${data.joinId}`
       break
+
+    case 'join_accepted':
+    case 'join_rejected':
+      // 조인 상세 페이지로 이동
+      window.location.href = `/join/${data.joinId}`
+      break
       
-    case 'message':
-      // 메시지 페이지로 이동 (추후 구현)
-      window.location.href = '/messages'
+    case 'new_message':
+      // 채팅 목록으로 이동
+      window.location.href = '/chat'
+      break
+
+    case 'join_reminder':
+      // 조인 상세 페이지로 이동
+      window.location.href = `/join/${data.joinId}`
+      break
+
+    case 'review_received':
+      // 리뷰 페이지로 이동
+      window.location.href = '/review'
       break
       
     default:
