@@ -683,3 +683,73 @@ function FriendRequestModal({ user, onClose, onSend }) {
   )
 }
 
+// 신고 사유 선택 모달
+const REPORT_REASONS = [
+  '허위 프로필 (사진/정보 불일치)',
+  '불쾌한 메시지 또는 행동',
+  '광고/스팸',
+  '욕설/비방/성희롱',
+  '사기 의심',
+  '기타',
+]
+
+function ReportModal({ userName, onSubmit, onClose }) {
+  const [selectedReason, setSelectedReason] = useState('')
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[430px] bg-gp-black rounded-t-3xl p-6 safe-bottom"
+      >
+        <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
+        <h2 className="text-lg font-bold mb-1">{userName}님 신고하기</h2>
+        <p className="text-sm text-gp-text-secondary mb-5">신고 사유를 선택해주세요.</p>
+
+        <div className="space-y-2 mb-6">
+          {REPORT_REASONS.map((reason) => (
+            <button
+              key={reason}
+              onClick={() => setSelectedReason(reason)}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                selectedReason === reason
+                  ? 'bg-gp-green/20 text-gp-green border border-gp-green'
+                  : 'bg-gp-card text-white border border-transparent'
+              }`}
+            >
+              {reason}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+          >
+            취소
+          </button>
+          <button
+            onClick={() => selectedReason && onSubmit(selectedReason)}
+            disabled={!selectedReason}
+            className={`flex-1 py-3 rounded-xl font-medium ${
+              selectedReason ? 'bg-gp-red text-white' : 'bg-gp-border/50 text-gp-text-secondary'
+            }`}
+          >
+            신고하기
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
