@@ -38,6 +38,13 @@ export const getJoins = async (filters = {}) => {
           name,
           photos,
           handicap
+        ),
+        participants:join_participants (
+          user:user_id (
+            id,
+            name,
+            photos
+          )
         )
       `)
       .eq('status', 'open')
@@ -64,6 +71,7 @@ export const getJoins = async (filters = {}) => {
       spotsFilled: j.spots_filled,
       handicapRange: j.handicap_range,
       styles: j.styles || [],
+      style: j.styles || [], // JoinCard 호환 alias
       description: j.description,
       meetingType: j.meeting_type,
       status: j.status,
@@ -72,6 +80,11 @@ export const getJoins = async (filters = {}) => {
       hostName: j.host?.name || '알 수 없음',
       hostPhoto: j.host?.photos?.[0] || 'https://via.placeholder.com/100',
       hostHandicap: j.host?.handicap || '',
+      participants: (j.participants || []).map(p => ({
+        id: p.user?.id,
+        name: p.user?.name || '',
+        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+      })).filter(p => p.id),
     }))
 
     return { success: true, joins }
@@ -120,7 +133,31 @@ export const getMyJoins = async (userId) => {
 
     if (error) throw error
 
-    return { success: true, joins: data || [] }
+    // MyJoinCard 호환을 위해 매핑
+    const mappedJoins = (data || []).map(j => ({
+      id: j.id,
+      title: j.title,
+      date: j.date,
+      time: j.time,
+      location: j.location,
+      region: j.region,
+      courseName: j.course_name,
+      spotsTotal: j.spots_total,
+      spotsFilled: j.spots_filled,
+      handicapRange: j.handicap_range,
+      styles: j.styles || [],
+      style: j.styles || [],
+      description: j.description,
+      status: j.status,
+      createdAt: j.created_at,
+      participants: (j.participants || []).map(p => ({
+        id: p.user?.id,
+        name: p.user?.name || '',
+        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+      })).filter(p => p.id),
+    }))
+
+    return { success: true, joins: mappedJoins }
   } catch (e) {
     console.error('내 조인 목록 조회 에러:', e)
     return { success: false, joins: [], error: e.message }

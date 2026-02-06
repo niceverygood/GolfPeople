@@ -134,6 +134,20 @@ function AppContent() {
       }
     }
   }, [profile])
+
+  // DB 프로필 기반 온보딩 상태 자동 감지
+  // profile이 로드되었고, regions/handicap이 이미 있으면 온보딩 완료로 처리
+  useEffect(() => {
+    if (profile && !isOnboarded) {
+      const hasRegions = profile.regions && profile.regions.length > 0
+      const hasHandicap = !!profile.handicap
+      if (hasRegions && hasHandicap) {
+        console.log('프로필에 이미 정보가 있어 온보딩 건너뜀')
+        localStorage.setItem('gp_onboarded', 'true')
+        setIsOnboarded(true)
+      }
+    }
+  }, [profile, isOnboarded])
   
   // 로그인 후 푸시 및 인앱결제 사용자 식별자 설정
   useEffect(() => {

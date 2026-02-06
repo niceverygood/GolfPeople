@@ -25,7 +25,7 @@ export default function JoinDetail() {
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // userId
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const join = joins.find(j => j.id === parseInt(id))
+  const join = joins.find(j => String(j.id) === String(id))
   const isSaved = savedJoins.includes(join?.id)
   const isApplied = joinApplications.some(app => app.joinId === join?.id)
 
@@ -213,7 +213,7 @@ export default function JoinDetail() {
         <div className="mb-6">
           <h3 className="font-semibold mb-3">라운딩 스타일</h3>
           <div className="flex flex-wrap gap-2">
-            {join.style.map((tag) => (
+            {(join.style || join.styles || []).map((tag) => (
               <span key={tag} className="tag">
                 {tag}
               </span>
@@ -239,7 +239,7 @@ export default function JoinDetail() {
             프로필 클릭 시 마커 3개 소모
           </p>
           <div className="flex flex-wrap gap-3">
-            {join.participants.map((p) => (
+            {(join.participants || []).map((p) => (
               <button 
                 key={p.id} 
                 onClick={() => handleProfileClick(p.id)}
