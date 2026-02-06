@@ -1002,7 +1002,10 @@ function EditProfileModal({ profile, onClose, onSave }) {
 
 // 설정 모달
 function SettingsModal({ onClose }) {
-  const { user } = useAuth()
+  const { user, deleteAccount } = useAuth()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 로컬 설정 (개인정보)
   const [localSettings, setLocalSettings] = useState(() => {
@@ -1199,12 +1202,67 @@ function SettingsModal({ onClose }) {
         {/* 계정 관리 */}
         <h3 className="text-sm text-gp-text-secondary mb-2 px-2">계정 관리</h3>
         <div className="bg-gp-card rounded-2xl overflow-hidden">
-          <button className="w-full flex items-center justify-between p-4 text-gp-red">
+          <button 
+            className="w-full flex items-center justify-between p-4 text-gp-red"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
             <span>계정 탈퇴</span>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
+
+      {/* 계정 탈퇴 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-6">
+          <div className="bg-gp-card rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-white mb-2">정말 탈퇴하시겠습니까?</h3>
+            <p className="text-sm text-gp-text-secondary mb-4">
+              탈퇴 시 모든 데이터(프로필, 친구, 채팅, 마커 등)가 영구 삭제되며 복구할 수 없습니다.
+            </p>
+            <p className="text-sm text-gp-text-secondary mb-3">
+              확인을 위해 <span className="text-gp-red font-bold">"탈퇴합니다"</span>를 입력해주세요.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="탈퇴합니다"
+              className="w-full p-3 bg-gp-black rounded-xl text-white text-sm mb-4 border border-gp-border focus:border-gp-red outline-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteConfirmText('')
+                }}
+                className="flex-1 py-3 rounded-xl bg-gp-border text-white font-medium"
+              >
+                취소
+              </button>
+              <button
+                onClick={async () => {
+                  if (deleteConfirmText !== '탈퇴합니다') return
+                  setIsDeleting(true)
+                  const { error } = await deleteAccount()
+                  setIsDeleting(false)
+                  if (!error) {
+                    window.location.reload()
+                  }
+                }}
+                disabled={deleteConfirmText !== '탈퇴합니다' || isDeleting}
+                className={`flex-1 py-3 rounded-xl font-medium ${
+                  deleteConfirmText === '탈퇴합니다' && !isDeleting
+                    ? 'bg-gp-red text-white' 
+                    : 'bg-gp-border/50 text-gp-text-secondary'
+                }`}
+              >
+                {isDeleting ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
