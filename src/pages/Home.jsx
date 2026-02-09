@@ -435,13 +435,33 @@ function PastRecommendations({ history, users, navigate }) {
     )
   }
 
+  // 매칭 가능한 유저가 있는 날짜만 필터링
+  const validPastDates = pastDates.filter(date => {
+    const dailyRecs = history[date]
+    if (!dailyRecs) return false
+    const allUserIds = [...new Set(Object.values(dailyRecs).flat())]
+    return allUserIds.some(id => users.find(u => u.id === id))
+  })
+
+  if (validPastDates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-gp-card flex items-center justify-center mb-4">
+          <History className="w-8 h-8 text-gp-text-secondary" />
+        </div>
+        <h3 className="font-semibold mb-1">지나간 추천이 없어요</h3>
+        <p className="text-gp-text-secondary text-sm">내일부터 어제의 추천을 볼 수 있습니다</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 pb-10">
-      {pastDates.map(date => {
+      {validPastDates.map(date => {
         const dailyRecs = history[date]
         const allUserIds = [...new Set(Object.values(dailyRecs).flat())]
         const assignedUsers = allUserIds.map(id => users.find(u => u.id === id)).filter(Boolean)
-        
+
         // D-Day 계산 (YYYY-MM-DD 파싱)
         const dateObj = new Date(date)
         const todayObj = new Date(today)
@@ -449,14 +469,14 @@ function PastRecommendations({ history, users, navigate }) {
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
         const remainingDays = 7 - diffDays
         const dDayText = `D-${String(remainingDays).padStart(2, '0')}`
-        
+
         return (
           <div key={date} className="space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gp-gold" />
               <span className="font-bold text-lg">{date}</span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               {assignedUsers.map((user) => (
                 <div 
