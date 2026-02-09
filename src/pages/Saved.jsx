@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History, MessageCircle, Phone } from 'lucide-react'
+import { Heart, Calendar, MapPin, Trophy, Clock, X, UserPlus, Send, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, History, MessageCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
@@ -165,16 +165,6 @@ export default function Saved({ onPropose }) {
         navigate(`/chat/${result.roomId}`)
       }
     }
-  }
-  
-  // 번호 확인 모달 상태
-  const [showPhoneModal, setShowPhoneModal] = useState(false)
-  const [phoneInfo, setPhoneInfo] = useState({ name: '', phone: '' })
-  
-  // 번호 확인 핸들러
-  const handleShowPhone = (info) => {
-    setPhoneInfo(info)
-    setShowPhoneModal(true)
   }
   
   const [activeTab, setActiveTab] = useState('saved')
@@ -557,7 +547,7 @@ export default function Saved({ onPropose }) {
                               request={request}
                               type="received"
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onShowPhone={handleShowPhone}
+                              onStartChat={() => handleStartJoinChat(request, 'received')}
                             />
                           ))}
                         </Section>
@@ -577,7 +567,7 @@ export default function Saved({ onPropose }) {
                               type="sent"
                               onClick={() => navigate(`/join/${application.joinId}`)}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onShowPhone={handleShowPhone}
+                              onStartChat={() => handleStartJoinChat(application, 'sent')}
                             />
                           ))}
                         </Section>
@@ -591,58 +581,6 @@ export default function Saved({ onPropose }) {
         </AnimatePresence>
       </div>
       
-      {/* 번호 확인 모달 */}
-      <AnimatePresence>
-        {showPhoneModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-50"
-              onClick={() => setShowPhoneModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-gp-card rounded-2xl p-6 z-50"
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center mx-auto mb-4">
-                  <Phone className="w-8 h-8 text-gp-gold" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">{phoneInfo.name}님의 연락처</h3>
-                <p className="text-gp-text-secondary text-sm mb-4">
-                  매칭된 조인 멤버의 연락처입니다
-                </p>
-                
-                <div className="bg-gp-black/30 rounded-xl p-4 mb-6">
-                  <p className="text-2xl font-bold text-gp-gold tracking-wider">
-                    {phoneInfo.phone}
-                  </p>
-                </div>
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowPhoneModal(false)}
-                    className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
-                  >
-                    닫기
-                  </button>
-                  <a
-                    href={`tel:${phoneInfo.phone.replace(/-/g, '')}`}
-                    className="flex-1 py-3 rounded-xl btn-gold font-semibold flex items-center justify-center gap-2"
-                  >
-                    <Phone className="w-4 h-4" />
-                    전화걸기
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
@@ -1094,15 +1032,12 @@ function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick }) {
 }
 
 // 매칭완료 조인 카드
-function MatchedJoinCard({ request, type, onClick, onProfileClick, onShowPhone }) {
+function MatchedJoinCard({ request, type, onClick, onProfileClick, onStartChat }) {
   const timeAgo = getTimeAgo(request.createdAt)
-  
-  // 더미 전화번호 (실제로는 서버에서 받아와야 함)
-  const partnerPhone = type === 'sent' 
-    ? request.hostPhone || '010-1234-5678' 
-    : request.userPhone || '010-9876-5432'
+  const partnerPhoto = type === 'sent' ? request.hostPhoto : request.userPhoto
   const partnerName = type === 'sent' ? request.hostName : request.userName
-  
+  const defaultPhoto = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%239CA3AF" font-size="40">?</text></svg>')
+
   return (
     <motion.div
       layout
@@ -1117,22 +1052,23 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick, onShowPhone }
             onClick={(e) => {
               e.stopPropagation()
               const userId = type === 'sent' ? request.hostId : request.userId
-              onProfileClick && onProfileClick(userId)
+              if (userId) onProfileClick && onProfileClick(userId)
             }}
             className="flex-shrink-0"
           >
             <img
-              src={type === 'sent' ? request.hostPhoto : request.userPhoto}
-              alt={type === 'sent' ? request.hostName : request.userName}
+              src={partnerPhoto || defaultPhoto}
+              alt={partnerName || '알 수 없음'}
+              onError={(e) => { e.target.src = defaultPhoto }}
               className="w-12 h-12 rounded-xl object-cover border-2 border-gp-green hover:ring-2 hover:ring-gp-gold transition-all"
             />
           </button>
           <div>
             <h3 className="font-semibold">
-              {type === 'sent' ? request.joinTitle : request.userName}
+              {type === 'sent' ? request.joinTitle : (partnerName || '알 수 없음')}
             </h3>
             <p className="text-gp-text-secondary text-sm">
-              {type === 'sent' ? request.hostName : request.joinTitle}
+              {type === 'sent' ? (partnerName || '탈퇴한 유저') : request.joinTitle}
             </p>
           </div>
         </div>
@@ -1160,15 +1096,15 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick, onShowPhone }
           </div>
         </div>
       )}
-      
+
       <p className="text-gp-text-secondary text-xs">{timeAgo}</p>
-      
-      <button 
-        onClick={() => onShowPhone && onShowPhone({ name: partnerName, phone: partnerPhone })}
+
+      <button
+        onClick={() => onStartChat && onStartChat()}
         className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold flex items-center justify-center gap-2"
       >
-        <Phone className="w-4 h-4" />
-        번호 확인
+        <MessageCircle className="w-4 h-4" />
+        대화 시작하기
       </button>
     </motion.div>
   )
