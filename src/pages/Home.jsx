@@ -150,11 +150,12 @@ export default function Home({ onPropose }) {
     
     // 오늘의 추천이 이미 저장되어 있는지 확인
     let dailyRecs = recommendationHistory[today]
-    
-    // 저장된 추천이 없거나 비어있으면 새로 생성
+
+    // 저장된 추천이 없거나 비어있거나 형식이 다르면 새로 생성
     const isRecEmpty = dailyRecs && Object.values(dailyRecs).every(ids => !ids || ids.length === 0)
-    
-    if (!dailyRecs || isRecEmpty) {
+    const isOldFormat = dailyRecs && Object.values(dailyRecs).some(ids => ids && ids.length !== 3)
+
+    if (!dailyRecs || isRecEmpty || isOldFormat) {
       // 없으면 새로 생성 (필터링된 유저가 없으면 전체 유저 사용)
       const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
       dailyRecs = {}

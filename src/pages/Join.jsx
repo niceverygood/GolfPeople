@@ -12,7 +12,11 @@ import { getSimpleTimeAgo } from '../utils/formatTime'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 
-const REGIONS = ['전체', '서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주', '강원', '충남', '충북', '경남', '경북', '전남', '전북']
+// 주요 지역 (항상 표시)
+const MAIN_REGIONS = ['전체', '서울', '경기', '인천', '부산']
+
+// 기타 지역 (더보기로 표시)
+const OTHER_REGIONS = ['대구', '대전', '광주', '제주', '강원', '충남', '충북', '경남', '경북', '전남', '전북']
 
 // 메인 탭
 const TABS = [
@@ -30,6 +34,7 @@ export default function Join() {
 
   const [selectedRegion, setSelectedRegion] = useState('전체')
   const [activeTab, setActiveTab] = useState('all')
+  const [showAllRegions, setShowAllRegions] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId }
   const [isProcessing, setIsProcessing] = useState(false)
@@ -157,8 +162,9 @@ export default function Join() {
 
       {/* 지역 필터 */}
       <div className="px-6 py-2">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {REGIONS.map((region) => (
+        <div className="flex flex-wrap gap-2">
+          {/* 주요 지역 */}
+          {MAIN_REGIONS.map((region) => (
             <button
               key={region}
               onClick={() => setSelectedRegion(region)}
@@ -171,6 +177,29 @@ export default function Join() {
               {region}
             </button>
           ))}
+
+          {/* 기타 지역 (더보기 시) */}
+          {showAllRegions && OTHER_REGIONS.map((region) => (
+            <button
+              key={region}
+              onClick={() => setSelectedRegion(region)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                selectedRegion === region
+                  ? 'bg-gp-gold text-gp-black'
+                  : 'bg-gp-card text-gp-text-secondary'
+              }`}
+            >
+              {region}
+            </button>
+          ))}
+
+          {/* 더보기/접기 버튼 */}
+          <button
+            onClick={() => setShowAllRegions(!showAllRegions)}
+            className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gp-border text-gp-text hover:bg-gp-card transition-all"
+          >
+            {showAllRegions ? '접기 ▲' : '더보기 ▼'}
+          </button>
         </div>
       </div>
 
