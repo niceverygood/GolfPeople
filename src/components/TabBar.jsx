@@ -8,7 +8,7 @@ const tabs = [
   { path: '/join', icon: Users, label: '조인' },
   { path: '/chat', icon: MessageCircle, label: '채팅' },
   { path: '/saved', icon: Bookmark, label: '저장함' },
-  { path: '/profile', icon: User, label: '프로필' },
+  { path: '/profile', icon: User, label: '마이페이지' },
 ]
 
 export default function TabBar() {
