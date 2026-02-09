@@ -63,7 +63,7 @@ export const createReview = async (reviewerId, reviewedId, joinId, reviewData) =
       .single()
 
     if (reviewData.isPublic !== false) {
-      createNotification({
+      await createNotification({
         type: NOTIFICATION_TYPES.REVIEW_RECEIVED,
         recipientId: reviewedId,
         data: {

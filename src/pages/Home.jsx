@@ -28,6 +28,18 @@ const FILTER_OPTIONS = {
   regions: ['서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주'],
 }
 
+// 날짜 기반 시드 셔플 (같은 날짜면 같은 결과, 시간대별 다른 조합)
+const seededShuffle = (array, seed) => {
+  const shuffled = [...array]
+  let s = seed
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff
+    const j = s % (i + 1)
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export default function Home({ onPropose }) {
   const navigate = useNavigate()
   const {
@@ -77,6 +89,18 @@ export default function Home({ onPropose }) {
     regions: [],
   })
   
+  // 현재 시간 상태 (시간대 잠금 해제 실시간 반영)
+  const [currentHour, setCurrentHour] = useState(() => new Date().getHours())
+
+  // 1분마다 시간 체크 → 시간대 잠금 자동 해제
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newHour = new Date().getHours()
+      setCurrentHour(prev => prev !== newHour ? newHour : prev)
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   // 활성화된 필터 개수
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0)
   
@@ -135,11 +159,9 @@ export default function Home({ onPropose }) {
   // 시간대별 추천 카드 생성 (필터링된 유저 기반)
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
-    const currentHour = new Date().getHours()
-    
+
     // 유저가 아직 로드되지 않았으면 대기
     if (users.length === 0) {
-      // 빈 추천 상태 설정 (로딩 표시용)
       const emptyRecs = {}
       RECOMMENDATION_TIMES.forEach((time) => {
         emptyRecs[time.id] = { ...time, isUnlocked: currentHour >= time.hour, cards: [] }
@@ -147,7 +169,7 @@ export default function Home({ onPropose }) {
       setRecommendations(emptyRecs)
       return
     }
-    
+
     // 오늘의 추천이 이미 저장되어 있는지 확인
     let dailyRecs = recommendationHistory[today]
 
@@ -156,34 +178,51 @@ export default function Home({ onPropose }) {
     const isOldFormat = dailyRecs && Object.values(dailyRecs).some(ids => ids && ids.length !== 3)
 
     if (!dailyRecs || isRecEmpty || isOldFormat) {
-      // 없으면 새로 생성 (필터링된 유저가 없으면 전체 유저 사용)
       const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
       dailyRecs = {}
-      
+
+      // 날짜 기반 시드로 셔플 → 시간대별 다른 조합 보장
+      const dateSeed = today.split('-').reduce((sum, n) => sum * 100 + parseInt(n), 0)
+      const usedIds = new Set()
+
       RECOMMENDATION_TIMES.forEach((time, timeIndex) => {
-        const startIndex = (timeIndex * 3) % targetUsers.length
-        const assignedUserIds = [
-          targetUsers[startIndex % targetUsers.length]?.id,
-          targetUsers[(startIndex + 1) % targetUsers.length]?.id,
-          targetUsers[(startIndex + 2) % targetUsers.length]?.id,
-        ].filter(Boolean)
+        const shuffled = seededShuffle(targetUsers, dateSeed + timeIndex * 7919)
+        const assignedUserIds = []
+
+        // 1차: 다른 시간대와 겹치지 않는 유저 우선 배정
+        for (const u of shuffled) {
+          if (assignedUserIds.length >= 3) break
+          if (!usedIds.has(u.id)) {
+            assignedUserIds.push(u.id)
+            usedIds.add(u.id)
+          }
+        }
+
+        // 2차: 유저 풀 부족 시 다른 시간대와 중복 허용 (같은 슬롯 내 중복은 방지)
+        if (assignedUserIds.length < 3) {
+          for (const u of shuffled) {
+            if (assignedUserIds.length >= 3) break
+            if (!assignedUserIds.includes(u.id)) {
+              assignedUserIds.push(u.id)
+            }
+          }
+        }
 
         dailyRecs[time.id] = assignedUserIds
       })
-      
-      // 유저가 있을 때만 저장 (빈 추천 저장 방지)
+
       if (targetUsers.length > 0) {
         saveDailyRecommendation(today, dailyRecs)
       }
     }
-    
+
     // UI 표시용 상태 생성
     const newRecommendations = {}
     RECOMMENDATION_TIMES.forEach((time) => {
       const isUnlocked = currentHour >= time.hour
       const userIds = dailyRecs[time.id] || []
       const assignedUsers = userIds.map(id => users.find(u => u.id === id)).filter(Boolean)
-      
+
       newRecommendations[time.id] = {
         ...time,
         isUnlocked,
@@ -197,9 +236,9 @@ export default function Home({ onPropose }) {
         }),
       }
     })
-    
+
     setRecommendations(newRecommendations)
-  }, [users, filteredUsers, revealedCards, recommendationHistory, saveDailyRecommendation])
+  }, [users, filteredUsers, revealedCards, recommendationHistory, saveDailyRecommendation, currentHour])
 
   // 카드 클릭 - 숨겨진 카드면 뒤집기, 공개된 카드면 상세로 이동
   const handleCardClick = (timeId, cardIndex) => {
@@ -400,7 +439,7 @@ function PastRecommendations({ history, users, navigate }) {
     <div className="space-y-8 pb-10">
       {pastDates.map(date => {
         const dailyRecs = history[date]
-        const allUserIds = Object.values(dailyRecs).flat()
+        const allUserIds = [...new Set(Object.values(dailyRecs).flat())]
         const assignedUsers = allUserIds.map(id => users.find(u => u.id === id)).filter(Boolean)
         
         // D-Day 계산 (YYYY-MM-DD 파싱)

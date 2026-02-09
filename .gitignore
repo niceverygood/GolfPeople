@@ -47,3 +47,4 @@ coverage/
 *.apk
 *.aab
 screenshots/output/
+.claude/
