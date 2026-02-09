@@ -1189,13 +1189,19 @@ function EmptyState({ icon, title, description }) {
 
 // 시간 계산
 function getTimeAgo(dateString) {
+  if (!dateString) return '알 수 없음'
+
   const now = new Date()
   const date = new Date(dateString)
+
+  // Invalid Date 처리
+  if (isNaN(date.getTime())) return '알 수 없음'
+
   const diffMs = now - date
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
-  
+
   if (diffMins < 1) return '방금 전'
   if (diffMins < 60) return `${diffMins}분 전`
   if (diffHours < 24) return `${diffHours}시간 전`
