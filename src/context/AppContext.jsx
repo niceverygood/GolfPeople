@@ -422,17 +422,17 @@ export function AppProvider({ children }) {
   }
 
   // 지난 카드 (localStorage)
-  const addPastCard = (user) => {
+  const addPastCard = useCallback((user) => {
     setPastCards(prev => {
       const filtered = prev.filter(c => c.id !== user.id)
       const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...filtered]
       localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50)))
       return updated
     })
-  }
+  }, [])
 
   // 추천 기록 (localStorage)
-  const saveDailyRecommendation = (dateKey, recommendations) => {
+  const saveDailyRecommendation = useCallback((dateKey, recommendations) => {
     setRecommendationHistory(prev => {
       const newHistory = { ...prev, [dateKey]: recommendations }
       const dates = Object.keys(newHistory).sort().reverse()
@@ -442,7 +442,7 @@ export function AppProvider({ children }) {
       localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
       return newHistory
     })
-  }
+  }, [])
 
   const value = {
     // 데이터

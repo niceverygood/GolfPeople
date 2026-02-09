@@ -265,7 +265,7 @@ export const subscribeToRoom = (roomId, userId, onNewMessage) => {
 
         // 내가 보낸 메시지가 아니면 읽음 처리
         if (newMessage.sender_id !== userId) {
-          markAsRead(roomId, userId)
+          await markAsRead(roomId, userId)
         }
       }
     )

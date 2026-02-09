@@ -148,7 +148,7 @@ export const sendFriendRequest = async (fromUserId, toUserId, message = '') => {
       .eq('id', fromUserId)
       .single()
 
-    createNotification({
+    await createNotification({
       type: NOTIFICATION_TYPES.FRIEND_REQUEST,
       recipientId: toUserId,
       data: {
@@ -194,7 +194,7 @@ export const acceptFriendRequest = async (requestId) => {
       .eq('id', data.to_user_id)
       .single()
 
-    createNotification({
+    await createNotification({
       type: NOTIFICATION_TYPES.FRIEND_ACCEPTED,
       recipientId: data.from_user_id,
       data: {

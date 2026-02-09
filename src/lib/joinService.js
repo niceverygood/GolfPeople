@@ -347,7 +347,7 @@ export const applyToJoin = async (userId, joinId, message = '') => {
       .single()
 
     if (joinData?.host_id) {
-      createNotification({
+      await createNotification({
         type: NOTIFICATION_TYPES.JOIN_APPLICATION,
         recipientId: joinData.host_id,
         data: {
@@ -397,7 +397,7 @@ export const acceptJoinApplication = async (applicationId) => {
       .eq('id', data.join_id)
       .single()
 
-    createNotification({
+    await createNotification({
       type: NOTIFICATION_TYPES.JOIN_ACCEPTED,
       recipientId: data.user_id,
       data: {
@@ -447,7 +447,7 @@ export const rejectJoinApplication = async (applicationId) => {
         .eq('id', appData.join_id)
         .single()
 
-      createNotification({
+      await createNotification({
         type: NOTIFICATION_TYPES.JOIN_REJECTED,
         recipientId: appData.user_id,
         data: {

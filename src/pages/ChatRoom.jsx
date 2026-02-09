@@ -87,17 +87,19 @@ export default function ChatRoom() {
     try {
       const { default: supabase, isConnected } = await import('../lib/supabase')
       if (isConnected() && supabase) {
-        await supabase.from('reports').insert({
+        const { error } = await supabase.from('reports').insert({
           reporter_id: user.id,
           reported_user_id: chat.partnerId,
           reason: reason,
           status: 'pending'
         })
+        if (error) throw error
       }
+      showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
     } catch (e) {
       console.error('신고 저장 에러:', e)
+      showToast.error('신고 접수에 실패했습니다. 다시 시도해주세요.')
     }
-    showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
   }
 
   const handleBlock = async () => {
