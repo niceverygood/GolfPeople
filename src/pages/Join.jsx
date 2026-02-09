@@ -11,12 +11,20 @@ import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { getSimpleTimeAgo } from '../utils/formatTime'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
+import golfCourses from '../data/golfCourses.json'
 
-// 주요 지역 (항상 표시)
-const MAIN_REGIONS = ['전체', '서울', '경기', '인천', '부산']
+// 골프장 데이터에서 지역 자동 추출
+const ALL_REGIONS = (() => {
+  const uniqueRegions = [...new Set(golfCourses.map(c => c.region))].sort()
+  return uniqueRegions
+})()
 
-// 기타 지역 (더보기로 표시)
-const OTHER_REGIONS = ['대구', '대전', '광주', '제주', '강원', '충남', '충북', '경남', '경북', '전남', '전북']
+// 주요 지역 우선순위 (골프장 데이터에 실제 존재하는 것만)
+const PRIORITY_REGIONS = ['서울', '경기', '인천', '부산', '제주']
+const MAIN_REGIONS = ['전체', ...ALL_REGIONS.filter(r => PRIORITY_REGIONS.includes(r))]
+
+// 기타 지역 (주요 지역 제외)
+const OTHER_REGIONS = ALL_REGIONS.filter(r => !PRIORITY_REGIONS.includes(r))
 
 // 메인 탭
 const TABS = [
