@@ -1,1015 +1,6 @@
 [
   {
-    "id": 1,
-    "name": "인서울27골프클럽",
-    "region": "서울",
-    "city": "강서구",
-    "address": "서울특별시 강서구 오곡동",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 2,
-    "name": "레이크사이드CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구 양지면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 3,
-    "name": "남서울CC",
-    "region": "경기",
-    "city": "성남",
-    "address": "경기도 성남시 수정구 시흥동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 4,
-    "name": "안양CC",
-    "region": "경기",
-    "city": "안양",
-    "address": "경기도 안양시 만안구 안양동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 5,
-    "name": "한양CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구 양지면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 6,
-    "name": "블루헤런CC",
-    "region": "경기",
-    "city": "여주",
-    "address": "경기도 여주시 강천면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 7,
-    "name": "이천마이다스CC",
-    "region": "경기",
-    "city": "이천",
-    "address": "경기도 이천시 마장면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 8,
-    "name": "가평베네스트CC",
-    "region": "경기",
-    "city": "가평",
-    "address": "경기도 가평군 설악면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 9,
-    "name": "포천아도니스CC",
-    "region": "경기",
-    "city": "포천",
-    "address": "경기도 포천시 이동면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "하"
-  },
-  {
-    "id": 10,
-    "name": "남촌CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구 남사면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 11,
-    "name": "오크밸리CC",
-    "region": "경기",
-    "city": "원주",
-    "address": "강원도 원주시 지정면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 12,
-    "name": "골드레이크CC",
-    "region": "경기",
-    "city": "이천",
-    "address": "경기도 이천시 장호원읍",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 13,
-    "name": "88CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구 원삼면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 14,
-    "name": "신원CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구 양지면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 15,
-    "name": "스프링힐스CC",
-    "region": "경기",
-    "city": "이천",
-    "address": "경기도 이천시 설성면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 16,
-    "name": "사이프러스CC",
-    "region": "경기",
-    "city": "파주",
-    "address": "경기도 파주시 광탄면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 17,
-    "name": "베어즈베스트 청라CC",
-    "region": "인천",
-    "city": "청라",
-    "address": "인천광역시 서구 청라동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 18,
-    "name": "스카이72 하늘코스",
-    "region": "인천",
-    "city": "영종도",
-    "address": "인천광역시 중구 운서동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 19,
-    "name": "스카이72 바다코스",
-    "region": "인천",
-    "city": "영종도",
-    "address": "인천광역시 중구 운서동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 20,
-    "name": "스카이72 오션코스",
-    "region": "인천",
-    "city": "영종도",
-    "address": "인천광역시 중구 운서동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 21,
-    "name": "인천국제CC",
-    "region": "인천",
-    "city": "강화",
-    "address": "인천광역시 강화군 양도면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 22,
-    "name": "파인밸리CC",
-    "region": "강원",
-    "city": "원주",
-    "address": "강원도 원주시 문막읍",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 23,
-    "name": "용평리조트CC",
-    "region": "강원",
-    "city": "평창",
-    "address": "강원도 평창군 대관령면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 24,
-    "name": "알펜시아CC",
-    "region": "강원",
-    "city": "평창",
-    "address": "강원도 평창군 대관령면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 25,
-    "name": "휘닉스파크CC",
-    "region": "강원",
-    "city": "평창",
-    "address": "강원도 평창군 봉평면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 26,
-    "name": "오크벨리CC",
-    "region": "강원",
-    "city": "원주",
-    "address": "강원도 원주시 지정면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 27,
-    "name": "천안상록CC",
-    "region": "충남",
-    "city": "천안",
-    "address": "충청남도 천안시 동남구",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 28,
-    "name": "세종CC",
-    "region": "세종",
-    "city": "세종",
-    "address": "세종특별자치시 전의면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 29,
-    "name": "클럽모우CC",
-    "region": "충북",
-    "city": "음성",
-    "address": "충청북도 음성군 금왕읍",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 30,
-    "name": "대유몽베르CC",
-    "region": "충북",
-    "city": "충주",
-    "address": "충청북도 충주시 앙성면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 31,
-    "name": "아난티클럽 청주",
-    "region": "충북",
-    "city": "청주",
-    "address": "충청북도 청주시 흥덕구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 32,
-    "name": "무등산CC",
-    "region": "광주",
-    "city": "광주",
-    "address": "광주광역시 동구 용연동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 33,
-    "name": "광양CC",
-    "region": "전남",
-    "city": "광양",
-    "address": "전라남도 광양시 옥곡면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 34,
-    "name": "무주덕유산CC",
-    "region": "전북",
-    "city": "무주",
-    "address": "전라북도 무주군 설천면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 35,
-    "name": "군산CC",
-    "region": "전북",
-    "city": "군산",
-    "address": "전라북도 군산시 옥산면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 36,
-    "name": "해슬리나인브릿지",
-    "region": "전남",
-    "city": "여수",
-    "address": "전라남도 여수시 문수동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 37,
-    "name": "힐데스하임CC",
-    "region": "경남",
-    "city": "창원",
-    "address": "경상남도 창원시 의창구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 38,
-    "name": "가야CC",
-    "region": "경남",
-    "city": "김해",
-    "address": "경상남도 김해시 진례면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 39,
-    "name": "진주CC",
-    "region": "경남",
-    "city": "진주",
-    "address": "경상남도 진주시 집현면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 40,
-    "name": "남해CC",
-    "region": "경남",
-    "city": "남해",
-    "address": "경상남도 남해군 창선면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 41,
-    "name": "경주CC",
-    "region": "경북",
-    "city": "경주",
-    "address": "경상북도 경주시 현곡면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 42,
-    "name": "대구CC",
-    "region": "대구",
-    "city": "대구",
-    "address": "대구광역시 달성군 화원읍",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 43,
-    "name": "아시아드CC",
-    "region": "부산",
-    "city": "부산",
-    "address": "부산광역시 기장군 정관면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 44,
-    "name": "동래베네스트CC",
-    "region": "부산",
-    "city": "부산",
-    "address": "부산광역시 금정구 남산동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 45,
-    "name": "울산CC",
-    "region": "울산",
-    "city": "울산",
-    "address": "울산광역시 울주군 두서면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 46,
-    "name": "삼정더파크CC",
-    "region": "부산",
-    "city": "부산",
-    "address": "부산광역시 기장군 기장읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 47,
-    "name": "제주CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 상예동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 48,
-    "name": "나인브릿지",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 안덕면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 49,
-    "name": "핀크스CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 안덕면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 50,
-    "name": "엘리시안제주CC",
-    "region": "제주",
-    "city": "제주",
-    "address": "제주도 제주시 조천읍",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 51,
-    "name": "롯데스카이힐CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 중문동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 52,
-    "name": "서서울CC",
-    "region": "경기",
-    "city": "파주",
-    "address": "경기도 파주시 탄현면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 53,
-    "name": "태광CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 양지면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 54,
-    "name": "에이원CC",
-    "region": "경기",
-    "city": "여주",
-    "address": "경기도 여주시 점동면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 55,
-    "name": "써닝포인트CC",
-    "region": "경기",
-    "city": "포천",
-    "address": "경기도 포천시 내촌면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 56,
-    "name": "자유CC",
-    "region": "경기",
-    "city": "광주",
-    "address": "경기도 광주시 도척면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 57,
-    "name": "양주CC",
-    "region": "경기",
-    "city": "양주",
-    "address": "경기도 양주시 은현면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 58,
-    "name": "파주CC",
-    "region": "경기",
-    "city": "파주",
-    "address": "경기도 파주시 광탄면",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 59,
-    "name": "일동레이크CC",
-    "region": "경기",
-    "city": "포천",
-    "address": "경기도 포천시 일동면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 60,
-    "name": "곤지암CC",
-    "region": "경기",
-    "city": "광주",
-    "address": "경기도 광주시 곤지암읍",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 61,
-    "name": "수원CC",
-    "region": "경기",
-    "city": "수원",
-    "address": "경기도 수원시 권선구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 62,
-    "name": "잭니클라우스GC코리아",
-    "region": "인천",
-    "city": "영종도",
-    "address": "인천광역시 중구 운서동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 63,
-    "name": "송추CC",
-    "region": "경기",
-    "city": "양주",
-    "address": "경기도 양주시 장흥면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 64,
-    "name": "현대성우CC",
-    "region": "경기",
-    "city": "여주",
-    "address": "경기도 여주시 대신면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 65,
-    "name": "써미트힐스CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 66,
-    "name": "발안스파CC",
-    "region": "경기",
-    "city": "화성",
-    "address": "경기도 화성시 향남읍",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 67,
-    "name": "신안CC",
-    "region": "경기",
-    "city": "안성",
-    "address": "경기도 안성시 원곡면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 68,
-    "name": "안성베네스트GC",
-    "region": "경기",
-    "city": "안성",
-    "address": "경기도 안성시 양성면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 69,
-    "name": "뉴서울CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 기흥구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 70,
-    "name": "남부CC",
-    "region": "경기",
-    "city": "평택",
-    "address": "경기도 평택시 청북읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 71,
-    "name": "렉시스CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 72,
-    "name": "라헨느CC",
-    "region": "경기",
-    "city": "안성",
-    "address": "경기도 안성시 죽산면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 73,
-    "name": "포도CC",
-    "region": "경기",
-    "city": "화성",
-    "address": "경기도 화성시 서신면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 74,
-    "name": "크리스탈밸리CC",
-    "region": "경기",
-    "city": "여주",
-    "address": "경기도 여주시 점동면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 75,
-    "name": "마우나오션CC",
-    "region": "강원",
-    "city": "고성",
-    "address": "강원도 고성군 죽왕면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 76,
-    "name": "설해원CC",
-    "region": "강원",
-    "city": "속초",
-    "address": "강원도 속초시 대포동",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 77,
-    "name": "비발디파크CC",
-    "region": "강원",
-    "city": "홍천",
-    "address": "강원도 홍천군 서면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 78,
-    "name": "대명소노펠리체CC",
-    "region": "경기",
-    "city": "가평",
-    "address": "경기도 가평군 상면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 79,
-    "name": "안성힐스CC",
-    "region": "경기",
-    "city": "안성",
-    "address": "경기도 안성시 금광면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 80,
-    "name": "라비에벨CC",
-    "region": "경기",
-    "city": "용인",
-    "address": "경기도 용인시 처인구",
-    "holes": 27,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 81,
-    "name": "파인크리크CC",
-    "region": "충남",
-    "city": "아산",
-    "address": "충청남도 아산시 탕정면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 82,
-    "name": "태안베이스CC",
-    "region": "충남",
-    "city": "태안",
-    "address": "충청남도 태안군 남면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 83,
-    "name": "대전컨트리클럽",
-    "region": "대전",
-    "city": "대전",
-    "address": "대전광역시 동구 세천동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 84,
-    "name": "세종파밀리에CC",
-    "region": "세종",
-    "city": "세종",
-    "address": "세종특별자치시 전동면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 85,
-    "name": "리솜포레스트CC",
-    "region": "충남",
-    "city": "예산",
-    "address": "충청남도 예산군 덕산면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 86,
-    "name": "단양CC",
-    "region": "충북",
-    "city": "단양",
-    "address": "충청북도 단양군 대강면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 87,
-    "name": "순천베이CC",
-    "region": "전남",
-    "city": "순천",
-    "address": "전라남도 순천시 해룡면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 88,
-    "name": "영광CC",
-    "region": "전남",
-    "city": "영광",
-    "address": "전라남도 영광군 홍농읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 89,
-    "name": "전주CC",
-    "region": "전북",
-    "city": "전주",
-    "address": "전라북도 전주시 덕진구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 90,
-    "name": "금산CC",
-    "region": "충남",
-    "city": "금산",
-    "address": "충청남도 금산군 금산읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 91,
-    "name": "하이원CC",
-    "region": "강원",
-    "city": "정선",
-    "address": "강원도 정선군 고한읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
-    "id": 92,
-    "name": "포항스틸야드CC",
-    "region": "경북",
-    "city": "포항",
-    "address": "경상북도 포항시 북구",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 93,
-    "name": "안동CC",
-    "region": "경북",
-    "city": "안동",
-    "address": "경상북도 안동시 풍천면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 94,
-    "name": "구미CC",
-    "region": "경북",
-    "city": "구미",
-    "address": "경상북도 구미시 옥성면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 95,
-    "name": "마산CC",
-    "region": "경남",
-    "city": "창원",
-    "address": "경상남도 창원시 마산회원구",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 96,
-    "name": "사천CC",
-    "region": "경남",
-    "city": "사천",
-    "address": "경상남도 사천시 축동면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 97,
-    "name": "해비치CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 표선면",
-    "holes": 27,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
-    "id": 98,
-    "name": "오라CC",
-    "region": "제주",
-    "city": "제주",
-    "address": "제주도 제주시 오라동",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "중"
-  },
-  {
-    "id": 99,
-    "name": "더클래식CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 안덕면",
-    "holes": 18,
-    "type": "회원제",
-    "difficulty": "상"
-  },
-  {
-    "id": 100,
-    "name": "테디밸리CC",
-    "region": "제주",
-    "city": "제주",
-    "address": "제주도 제주시 구좌읍",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "중"
-  },
-  {
     "id": 101,
-    "name": "블랙스톤CC",
-    "region": "제주",
-    "city": "서귀포",
-    "address": "제주도 서귀포시 안덕면",
-    "holes": 18,
-    "type": "퍼블릭",
-    "difficulty": "상"
-  },
-  {
     "name": "썬힐G.C",
     "region": "경기",
     "city": "가평군",
@@ -1018,10 +9,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8713739409",
-    "longitude": "127.3530991843",
-    "id": 102
+    "longitude": "127.3530991843"
   },
   {
+    "id": 102,
     "name": "마이다스밸리 청평 골프 클럽",
     "region": "경기",
     "city": "가평군",
@@ -1030,10 +21,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6657668527",
-    "longitude": "127.4586935099",
-    "id": 103
+    "longitude": "127.4586935099"
   },
   {
+    "id": 103,
     "name": "아난티클럽서울(주)",
     "region": "경기",
     "city": "가평군",
@@ -1042,10 +33,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6273042984",
-    "longitude": "127.4901065357",
-    "id": 104
+    "longitude": "127.4901065357"
   },
   {
+    "id": 104,
     "name": "가평리조트 골프장",
     "region": "경기",
     "city": "가평군",
@@ -1054,10 +45,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8782193128",
-    "longitude": "127.3643088474",
-    "id": 105
+    "longitude": "127.3643088474"
   },
   {
+    "id": 105,
     "name": "베뉴지CC",
     "region": "경기",
     "city": "가평군",
@@ -1066,10 +57,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8439555200",
-    "longitude": "127.4781549123",
-    "id": 106
+    "longitude": "127.4781549123"
   },
   {
+    "id": 106,
     "name": "프리스틴밸리G.C",
     "region": "경기",
     "city": "가평군",
@@ -1078,22 +69,22 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6570210977",
-    "longitude": "127.4514991893",
-    "id": 107
+    "longitude": "127.4514991893"
   },
   {
+    "id": 107,
     "name": "일산스프링힐스 컨트리클럽",
     "region": "경기",
     "city": "고양시",
-    "address": "경기도 고양시 일산동구 산황동 산 54번지 ",
+    "address": "경기도 고양시 일산동구 산황동 산 54번지 일원 ",
     "holes": 18,
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 108
+    "longitude": null
   },
   {
+    "id": 108,
     "name": "1.2.3",
     "region": "경기",
     "city": "고양시",
@@ -1102,10 +93,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6414398785",
-    "longitude": "126.9062352399",
-    "id": 109
+    "longitude": "126.9062352399"
   },
   {
+    "id": 109,
     "name": "올림픽 골프장",
     "region": "경기",
     "city": "고양시",
@@ -1114,10 +105,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7218699377",
-    "longitude": "126.8929986367",
-    "id": 110
+    "longitude": "126.8929986367"
   },
   {
+    "id": 110,
     "name": "한양파인컨트리클럽",
     "region": "경기",
     "city": "고양시",
@@ -1126,10 +117,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6520403329",
-    "longitude": "126.8631860956",
-    "id": 111
+    "longitude": "126.8631860956"
   },
   {
+    "id": 111,
     "name": "고양컨트리클럽",
     "region": "경기",
     "city": "고양시",
@@ -1138,10 +129,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6368630222",
-    "longitude": "126.8583966891",
-    "id": 112
+    "longitude": "126.8583966891"
   },
   {
+    "id": 112,
     "name": "뉴코리아 컨트리클럽",
     "region": "경기",
     "city": "고양시",
@@ -1150,10 +141,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6649114054",
-    "longitude": "126.8767047762",
-    "id": 113
+    "longitude": "126.8767047762"
   },
   {
+    "id": 113,
     "name": "그린힐 컨트리클럽",
     "region": "경기",
     "city": "광주시",
@@ -1162,10 +153,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3595294873",
-    "longitude": "127.4247138204",
-    "id": 114
+    "longitude": "127.4247138204"
   },
   {
+    "id": 114,
     "name": "더 시에나 서울 컨트리클럽",
     "region": "경기",
     "city": "광주시",
@@ -1174,10 +165,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3382398416",
-    "longitude": "127.3574515981",
-    "id": 115
+    "longitude": "127.3574515981"
   },
   {
+    "id": 115,
     "name": "강남300 컨트리클럽",
     "region": "경기",
     "city": "광주시",
@@ -1186,10 +177,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3869526836",
-    "longitude": "127.1823773538",
-    "id": 116
+    "longitude": "127.1823773538"
   },
   {
+    "id": 116,
     "name": "이스트밸리컨트리클럽",
     "region": "경기",
     "city": "광주시",
@@ -1198,10 +189,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.4034321409",
-    "longitude": "127.3861631015",
-    "id": 117
+    "longitude": "127.3861631015"
   },
   {
+    "id": 117,
     "name": "로제비앙GC",
     "region": "경기",
     "city": "광주시",
@@ -1210,10 +201,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3800633333",
-    "longitude": "127.3724631794",
-    "id": 118
+    "longitude": "127.3724631794"
   },
   {
+    "id": 118,
     "name": "삼성물산(주)안양컨트리클럽",
     "region": "경기",
     "city": "군포시",
@@ -1222,10 +213,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3420476440",
-    "longitude": "126.9456417624",
-    "id": 119
+    "longitude": "126.9456417624"
   },
   {
+    "id": 119,
     "name": "김포 SEASIDE 컨트리클럽",
     "region": "경기",
     "city": "김포시",
@@ -1234,11 +225,11 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7101299320",
-    "longitude": "126.5341928032",
-    "id": 120
+    "longitude": "126.5341928032"
   },
   {
-    "name": "광릉레져개발(주)  광릉CC",
+    "id": 120,
+    "name": "광릉레져개발(주) 광릉CC",
     "region": "경기",
     "city": "남양주시",
     "address": "경기도 남양주시 진접읍 팔야로 280",
@@ -1246,10 +237,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7589115878",
-    "longitude": "127.2445848918",
-    "id": 121
+    "longitude": "127.2445848918"
   },
   {
+    "id": 121,
     "name": "비전힐스CC",
     "region": "경기",
     "city": "남양주시",
@@ -1258,10 +249,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6456746940",
-    "longitude": "127.2743661428",
-    "id": 122
+    "longitude": "127.2743661428"
   },
   {
+    "id": 122,
     "name": "근영농산(주)양주컨트리클럽",
     "region": "경기",
     "city": "남양주시",
@@ -1270,10 +261,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6362022678",
-    "longitude": "127.3480210419",
-    "id": 123
+    "longitude": "127.3480210419"
   },
   {
+    "id": 123,
     "name": "록인 컨트리클럽",
     "region": "경기",
     "city": "남양주시",
@@ -1282,10 +273,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6134801585",
-    "longitude": "127.2898277942",
-    "id": 124
+    "longitude": "127.2898277942"
   },
   {
+    "id": 124,
     "name": "라미드관광주식회사",
     "region": "경기",
     "city": "남양주시",
@@ -1294,10 +285,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.6790156926",
-    "longitude": "127.2161446914",
-    "id": 125
+    "longitude": "127.2161446914"
   },
   {
+    "id": 125,
     "name": "제이레저(주) 티클라우드컨트리클럽",
     "region": "경기",
     "city": "동두천시",
@@ -1306,10 +297,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9678007073",
-    "longitude": "127.0892453722",
-    "id": 126
+    "longitude": "127.0892453722"
   },
   {
+    "id": 126,
     "name": "경원건설(주)",
     "region": "경기",
     "city": "성남시",
@@ -1318,10 +309,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3826092729",
-    "longitude": "127.0839756661",
-    "id": 127
+    "longitude": "127.0839756661"
   },
   {
+    "id": 127,
     "name": "(재)한국군사문제연구원남성대쌍둥이골프연습장",
     "region": "경기",
     "city": "성남시",
@@ -1330,10 +321,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 128
+    "longitude": null
   },
   {
+    "id": 128,
     "name": "솔트베이(Salt Bay) 골프클럽",
     "region": "경기",
     "city": "시흥시",
@@ -1342,10 +333,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3910929635",
-    "longitude": "126.7773182936",
-    "id": 129
+    "longitude": "126.7773182936"
   },
   {
+    "id": 129,
     "name": "아세코밸리 골프클럽",
     "region": "경기",
     "city": "시흥시",
@@ -1354,10 +345,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3678102711",
-    "longitude": "126.7713755012",
-    "id": 130
+    "longitude": "126.7713755012"
   },
   {
+    "id": 130,
     "name": "아일랜드컨트리클럽",
     "region": "경기",
     "city": "안산시",
@@ -1366,10 +357,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2332780656",
-    "longitude": "126.5645834280",
-    "id": 131
+    "longitude": "126.5645834280"
   },
   {
+    "id": 131,
     "name": "제일C.C",
     "region": "경기",
     "city": "안산시",
@@ -1378,10 +369,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3302001597",
-    "longitude": "126.8643211129",
-    "id": 132
+    "longitude": "126.8643211129"
   },
   {
+    "id": 132,
     "name": "더헤븐 컨트리클럽",
     "region": "경기",
     "city": "안산시",
@@ -1390,10 +381,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2290576811",
-    "longitude": "126.5654892796",
-    "id": 133
+    "longitude": "126.5654892796"
   },
   {
+    "id": 133,
     "name": "골프클럽  Q",
     "region": "경기",
     "city": "안성시",
@@ -1402,10 +393,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0469013207",
-    "longitude": "127.3894979493",
-    "id": 134
+    "longitude": "127.3894979493"
   },
   {
+    "id": 134,
     "name": "이글몬트cc",
     "region": "경기",
     "city": "안성시",
@@ -1414,10 +405,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0940556436",
-    "longitude": "127.3290805161",
-    "id": 135
+    "longitude": "127.3290805161"
   },
   {
+    "id": 135,
     "name": "에덴블루 컨트리클럽",
     "region": "경기",
     "city": "안성시",
@@ -1426,10 +417,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0599544193",
-    "longitude": "127.3805370140",
-    "id": 136
+    "longitude": "127.3805370140"
   },
   {
+    "id": 136,
     "name": "크리스밸리CC",
     "region": "경기",
     "city": "안성시",
@@ -1438,10 +429,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0673249694",
-    "longitude": "127.4926882429",
-    "id": 137
+    "longitude": "127.4926882429"
   },
   {
+    "id": 137,
     "name": "윈체스트 골프클럽 대중",
     "region": "경기",
     "city": "안성시",
@@ -1450,10 +441,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "36.9595919551",
-    "longitude": "127.2818658523",
-    "id": 138
+    "longitude": "127.2818658523"
   },
   {
+    "id": 138,
     "name": "한림안성",
     "region": "경기",
     "city": "안성시",
@@ -1462,10 +453,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0852193993",
-    "longitude": "127.2006417554",
-    "id": 139
+    "longitude": "127.2006417554"
   },
   {
+    "id": 139,
     "name": "골프존카운티 안성W",
     "region": "경기",
     "city": "안성시",
@@ -1474,10 +465,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0754876649",
-    "longitude": "127.1950099835",
-    "id": 140
+    "longitude": "127.1950099835"
   },
   {
+    "id": 140,
     "name": "안성베네스트골프클럽 일반대중홀",
     "region": "경기",
     "city": "안성시",
@@ -1486,10 +477,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0203141752",
-    "longitude": "127.3855343253",
-    "id": 141
+    "longitude": "127.3855343253"
   },
   {
+    "id": 141,
     "name": "안성컨트리클럽",
     "region": "경기",
     "city": "안성시",
@@ -1498,10 +489,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0443372215",
-    "longitude": "127.4057289298",
-    "id": 142
+    "longitude": "127.4057289298"
   },
   {
+    "id": 142,
     "name": "신안 퍼블릭 CC",
     "region": "경기",
     "city": "안성시",
@@ -1510,10 +501,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0927706903",
-    "longitude": "127.2544108678",
-    "id": 143
+    "longitude": "127.2544108678"
   },
   {
+    "id": 143,
     "name": "포웰CC 안성",
     "region": "경기",
     "city": "안성시",
@@ -1522,10 +513,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1175022755",
-    "longitude": "127.2615237807",
-    "id": 144
+    "longitude": "127.2615237807"
   },
   {
+    "id": 144,
     "name": "골프존카운티 안성H",
     "region": "경기",
     "city": "안성시",
@@ -1534,10 +525,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0953360930",
-    "longitude": "127.3424012271",
-    "id": 145
+    "longitude": "127.3424012271"
   },
   {
+    "id": 145,
     "name": "마에스트로 CC",
     "region": "경기",
     "city": "안성시",
@@ -1546,10 +537,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1021799957",
-    "longitude": "127.2580268009",
-    "id": 146
+    "longitude": "127.2580268009"
   },
   {
+    "id": 146,
     "name": "로얄개발(주) 레이크우드 골프장",
     "region": "경기",
     "city": "양주시",
@@ -1558,10 +549,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7847656490",
-    "longitude": "127.0871260560",
-    "id": 147
+    "longitude": "127.0871260560"
   },
   {
+    "id": 147,
     "name": "(주)티에스개발 송추컨트리클럽",
     "region": "경기",
     "city": "양주시",
@@ -1570,10 +561,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7932075303",
-    "longitude": "126.9104631482",
-    "id": 148
+    "longitude": "126.9104631482"
   },
   {
+    "id": 148,
     "name": "더 스타 휴 컨트리클럽",
     "region": "경기",
     "city": "양평군",
@@ -1582,10 +573,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.4841568740",
-    "longitude": "127.7030115092",
-    "id": 149
+    "longitude": "127.7030115092"
   },
   {
+    "id": 149,
     "name": "양평TPC GC",
     "region": "경기",
     "city": "양평군",
@@ -1594,10 +585,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.4136710003",
-    "longitude": "127.6398096627",
-    "id": 150
+    "longitude": "127.6398096627"
   },
   {
+    "id": 150,
     "name": "한일골프장",
     "region": "경기",
     "city": "여주군",
@@ -1606,10 +597,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 151
+    "longitude": null
   },
   {
+    "id": 151,
     "name": "금강컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1618,10 +609,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2430022254",
-    "longitude": "127.5931537310",
-    "id": 152
+    "longitude": "127.5931537310"
   },
   {
+    "id": 152,
     "name": "솔모로골프장",
     "region": "경기",
     "city": "여주시",
@@ -1630,10 +621,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1920131796",
-    "longitude": "127.5883362256",
-    "id": 153
+    "longitude": "127.5883362256"
   },
   {
+    "id": 153,
     "name": "렉스필드 컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1642,10 +633,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3988880198",
-    "longitude": "127.4313969364",
-    "id": 154
+    "longitude": "127.4313969364"
   },
   {
+    "id": 154,
     "name": "신라컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1654,10 +645,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3580997897",
-    "longitude": "127.6918987923",
-    "id": 155
+    "longitude": "127.6918987923"
   },
   {
+    "id": 155,
     "name": "페럼클럽",
     "region": "경기",
     "city": "여주시",
@@ -1666,10 +657,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2055129427",
-    "longitude": "127.6907116469",
-    "id": 156
+    "longitude": "127.6907116469"
   },
   {
+    "id": 156,
     "name": "아리지 골프장",
     "region": "경기",
     "city": "여주시",
@@ -1678,10 +669,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2116077205",
-    "longitude": "127.6022215098",
-    "id": 157
+    "longitude": "127.6022215098"
   },
   {
+    "id": 157,
     "name": "더시에나벨루토 컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1690,10 +681,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3290465918",
-    "longitude": "127.6560877328",
-    "id": 158
+    "longitude": "127.6560877328"
   },
   {
+    "id": 158,
     "name": "ROUTE 52CC",
     "region": "경기",
     "city": "여주시",
@@ -1702,10 +693,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3502355760",
-    "longitude": "127.7201400371",
-    "id": 159
+    "longitude": "127.7201400371"
   },
   {
+    "id": 159,
     "name": "YJC골프클럽",
     "region": "경기",
     "city": "여주시",
@@ -1714,10 +705,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2785457215",
-    "longitude": "127.6026278071",
-    "id": 160
+    "longitude": "127.6026278071"
   },
   {
+    "id": 160,
     "name": "이포골프장",
     "region": "경기",
     "city": "여주시",
@@ -1726,10 +717,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3924810354",
-    "longitude": "127.4974468387",
-    "id": 161
+    "longitude": "127.4974468387"
   },
   {
+    "id": 161,
     "name": "빅토리아일반대중골프장",
     "region": "경기",
     "city": "여주시",
@@ -1738,10 +729,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1808141860",
-    "longitude": "127.6309976692",
-    "id": 162
+    "longitude": "127.6309976692"
   },
   {
+    "id": 162,
     "name": "캐슬파인리조트주식회사",
     "region": "경기",
     "city": "여주시",
@@ -1750,10 +741,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2982427952",
-    "longitude": "127.7434122913",
-    "id": 163
+    "longitude": "127.7434122913"
   },
   {
+    "id": 163,
     "name": "남여주대중골프장",
     "region": "경기",
     "city": "여주시",
@@ -1762,10 +753,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2284148980",
-    "longitude": "127.6335148851",
-    "id": 164
+    "longitude": "127.6335148851"
   },
   {
+    "id": 164,
     "name": "스카이밸리골프장",
     "region": "경기",
     "city": "여주시",
@@ -1774,10 +765,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3334034734",
-    "longitude": "127.7265930476",
-    "id": 165
+    "longitude": "127.7265930476"
   },
   {
+    "id": 165,
     "name": "여주썬밸리 컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1786,10 +777,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2716075235",
-    "longitude": "127.7339647837",
-    "id": 166
+    "longitude": "127.7339647837"
   },
   {
+    "id": 166,
     "name": "360도 컨트리클럽",
     "region": "경기",
     "city": "여주시",
@@ -1798,10 +789,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3025867161",
-    "longitude": "127.7393866828",
-    "id": 167
+    "longitude": "127.7393866828"
   },
   {
+    "id": 167,
     "name": "소피아그린",
     "region": "경기",
     "city": "여주시",
@@ -1810,10 +801,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1717643204",
-    "longitude": "127.7014405714",
-    "id": 168
+    "longitude": "127.7014405714"
   },
   {
+    "id": 168,
     "name": "자유로컨트리클럽",
     "region": "경기",
     "city": "연천군",
@@ -1822,10 +813,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "38.0000565528",
-    "longitude": "126.9557595394",
-    "id": 169
+    "longitude": "126.9557595394"
   },
   {
+    "id": 169,
     "name": "(주)한원컨트리클럽",
     "region": "경기",
     "city": "용인시",
@@ -1834,10 +825,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1570992442",
-    "longitude": "127.1305445941",
-    "id": 170
+    "longitude": "127.1305445941"
   },
   {
+    "id": 170,
     "name": "세현CC",
     "region": "경기",
     "city": "용인시",
@@ -1846,10 +837,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1877641955",
-    "longitude": "127.1830782893",
-    "id": 171
+    "longitude": "127.1830782893"
   },
   {
+    "id": 171,
     "name": "지산골프장",
     "region": "경기",
     "city": "용인시",
@@ -1858,10 +849,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2162162380",
-    "longitude": "127.3366570128",
-    "id": 172
+    "longitude": "127.3366570128"
   },
   {
+    "id": 172,
     "name": "은화삼",
     "region": "경기",
     "city": "용인시",
@@ -1870,10 +861,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2141709022",
-    "longitude": "127.2131167898",
-    "id": 173
+    "longitude": "127.2131167898"
   },
   {
+    "id": 173,
     "name": "케이지써닝라이프(주)",
     "region": "경기",
     "city": "용인시",
@@ -1882,10 +873,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1430993320",
-    "longitude": "127.4202108703",
-    "id": 174
+    "longitude": "127.4202108703"
   },
   {
+    "id": 174,
     "name": "지산 퍼블릭",
     "region": "경기",
     "city": "용인시",
@@ -1894,10 +885,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2098794831",
-    "longitude": "127.3358408486",
-    "id": 175
+    "longitude": "127.3358408486"
   },
   {
+    "id": 175,
     "name": "지산리조트(주)",
     "region": "경기",
     "city": "용인시",
@@ -1906,10 +897,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2098794831",
-    "longitude": "127.3358408486",
-    "id": 176
+    "longitude": "127.3358408486"
   },
   {
+    "id": 176,
     "name": "(주)일신레져(신원cc)",
     "region": "경기",
     "city": "용인시",
@@ -1918,10 +909,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1818122569",
-    "longitude": "127.2413812390",
-    "id": 177
+    "longitude": "127.2413812390"
   },
   {
+    "id": 177,
     "name": "파인리조트",
     "region": "경기",
     "city": "용인시",
@@ -1930,10 +921,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2129073682",
-    "longitude": "127.2948210725",
-    "id": 178
+    "longitude": "127.2948210725"
   },
   {
+    "id": 178,
     "name": "해솔리아컨트리클럽",
     "region": "경기",
     "city": "용인시",
@@ -1942,10 +933,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2141018783",
-    "longitude": "127.1791812324",
-    "id": 179
+    "longitude": "127.1791812324"
   },
   {
+    "id": 179,
     "name": "용인씨씨",
     "region": "경기",
     "city": "용인시",
@@ -1954,10 +945,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1109616372",
-    "longitude": "127.3453064977",
-    "id": 180
+    "longitude": "127.3453064977"
   },
   {
+    "id": 180,
     "name": "글렌로스골프클럽",
     "region": "경기",
     "city": "용인시",
@@ -1966,10 +957,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2965457388",
-    "longitude": "127.2077156604",
-    "id": 181
+    "longitude": "127.2077156604"
   },
   {
+    "id": 181,
     "name": "한림용인",
     "region": "경기",
     "city": "용인시",
@@ -1978,10 +969,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1255841153",
-    "longitude": "127.1829099444",
-    "id": 182
+    "longitude": "127.1829099444"
   },
   {
+    "id": 182,
     "name": "레이크사이드회원",
     "region": "경기",
     "city": "용인시",
@@ -1990,10 +981,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3241158401",
-    "longitude": "127.1752603061",
-    "id": 183
+    "longitude": "127.1752603061"
   },
   {
+    "id": 183,
     "name": "태광컨트리클럽(대중제)",
     "region": "경기",
     "city": "용인시",
@@ -2002,10 +993,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2785710892",
-    "longitude": "127.0890835842",
-    "id": 184
+    "longitude": "127.0890835842"
   },
   {
+    "id": 184,
     "name": "블루원용인CC",
     "region": "경기",
     "city": "용인시",
@@ -2014,10 +1005,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1341824910",
-    "longitude": "127.3259391728",
-    "id": 185
+    "longitude": "127.3259391728"
   },
   {
+    "id": 185,
     "name": "아시아나CC",
     "region": "경기",
     "city": "용인시",
@@ -2026,10 +1017,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2545247440",
-    "longitude": "127.2893856802",
-    "id": 186
+    "longitude": "127.2893856802"
   },
   {
+    "id": 186,
     "name": "화산",
     "region": "경기",
     "city": "용인시",
@@ -2038,10 +1029,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1540904875",
-    "longitude": "127.2318018762",
-    "id": 187
+    "longitude": "127.2318018762"
   },
   {
+    "id": 187,
     "name": "코리아대중CC",
     "region": "경기",
     "city": "용인시",
@@ -2050,10 +1041,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2235328306",
-    "longitude": "127.1190840589",
-    "id": 188
+    "longitude": "127.1190840589"
   },
   {
+    "id": 188,
     "name": "코리아컨트리클럽(회원제)",
     "region": "경기",
     "city": "용인시",
@@ -2062,10 +1053,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2193606113",
-    "longitude": "127.1547902224",
-    "id": 189
+    "longitude": "127.1547902224"
   },
   {
+    "id": 189,
     "name": "블루원용인CC(비회원제)",
     "region": "경기",
     "city": "용인시",
@@ -2074,10 +1065,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1341824910",
-    "longitude": "127.3259391728",
-    "id": 190
+    "longitude": "127.3259391728"
   },
   {
+    "id": 190,
     "name": "레이크사이드대중",
     "region": "경기",
     "city": "용인시",
@@ -2086,10 +1077,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3241158401",
-    "longitude": "127.1752603061",
-    "id": 191
+    "longitude": "127.1752603061"
   },
   {
+    "id": 191,
     "name": "골드컨트리클럽",
     "region": "경기",
     "city": "용인시",
@@ -2098,10 +1089,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2210164091",
-    "longitude": "127.1387431503",
-    "id": 192
+    "longitude": "127.1387431503"
   },
   {
+    "id": 192,
     "name": "한성",
     "region": "경기",
     "city": "용인시",
@@ -2110,10 +1101,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.3107190211",
-    "longitude": "127.1144691874",
-    "id": 193
+    "longitude": "127.1144691874"
   },
   {
+    "id": 193,
     "name": "플라자C.C",
     "region": "경기",
     "city": "용인시",
@@ -2122,10 +1113,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1336314038",
-    "longitude": "127.1469837662",
-    "id": 194
+    "longitude": "127.1469837662"
   },
   {
+    "id": 194,
     "name": "뉴스프링빌골프장",
     "region": "경기",
     "city": "이천시",
@@ -2134,10 +1125,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1542659198",
-    "longitude": "127.4314045964",
-    "id": 195
+    "longitude": "127.4314045964"
   },
   {
+    "id": 195,
     "name": "뉴스프링빌골프장(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2146,10 +1137,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1542659198",
-    "longitude": "127.4314045964",
-    "id": 196
+    "longitude": "127.4314045964"
   },
   {
+    "id": 196,
     "name": "더반골프클럽",
     "region": "경기",
     "city": "이천시",
@@ -2158,10 +1149,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 197
+    "longitude": null
   },
   {
+    "id": 197,
     "name": "비에이비스타 골프장(회원제)",
     "region": "경기",
     "city": "이천시",
@@ -2170,10 +1161,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1805960356",
-    "longitude": "127.4168818722",
-    "id": 198
+    "longitude": "127.4168818722"
   },
   {
+    "id": 198,
     "name": "더반 골프클럽(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2182,10 +1173,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2092448031",
-    "longitude": "127.4922012354",
-    "id": 199
+    "longitude": "127.4922012354"
   },
   {
+    "id": 199,
     "name": "대중제 골프장(9홀)",
     "region": "경기",
     "city": "이천시",
@@ -2194,10 +1185,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 200
+    "longitude": null
   },
   {
+    "id": 200,
     "name": "블랙스톤골프장(회원제)",
     "region": "경기",
     "city": "이천시",
@@ -2206,10 +1197,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1615917511",
-    "longitude": "127.6178657976",
-    "id": 201
+    "longitude": "127.6178657976"
   },
   {
+    "id": 201,
     "name": "에이치원 클럽(H1 CLUB)",
     "region": "경기",
     "city": "이천시",
@@ -2218,10 +1209,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1882658158",
-    "longitude": "127.4033420252",
-    "id": 202
+    "longitude": "127.4033420252"
   },
   {
+    "id": 202,
     "name": "블랙스톤골프장(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2230,10 +1221,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1615917511",
-    "longitude": "127.6178657976",
-    "id": 203
+    "longitude": "127.6178657976"
   },
   {
+    "id": 203,
     "name": "웰링턴컨트리클럽",
     "region": "경기",
     "city": "이천시",
@@ -2242,10 +1233,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1711235970",
-    "longitude": "127.4189648737",
-    "id": 204
+    "longitude": "127.4189648737"
   },
   {
+    "id": 204,
     "name": "더크로스비골프클럽(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2254,10 +1245,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2338742376",
-    "longitude": "127.4110851595",
-    "id": 205
+    "longitude": "127.4110851595"
   },
   {
+    "id": 205,
     "name": "이천마이다스골프앤리조트(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2266,10 +1257,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1771071456",
-    "longitude": "127.5244454250",
-    "id": 206
+    "longitude": "127.5244454250"
   },
   {
+    "id": 206,
     "name": "이천실크밸리골프클럽(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2278,10 +1269,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.0813204554",
-    "longitude": "127.5722425055",
-    "id": 207
+    "longitude": "127.5722425055"
   },
   {
+    "id": 207,
     "name": "비에이비스타C.C.(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2290,10 +1281,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1805960356",
-    "longitude": "127.4168818722",
-    "id": 208
+    "longitude": "127.4168818722"
   },
   {
+    "id": 208,
     "name": "사우스스프링스C.C(대중형)",
     "region": "경기",
     "city": "이천시",
@@ -2302,10 +1293,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1751975377",
-    "longitude": "127.4509752934",
-    "id": 209
+    "longitude": "127.4509752934"
   },
   {
+    "id": 209,
     "name": "마이다스 레이크 이천 골프& 리조트",
     "region": "경기",
     "city": "이천시",
@@ -2314,10 +1305,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1771071456",
-    "longitude": "127.5244454250",
-    "id": 210
+    "longitude": "127.5244454250"
   },
   {
+    "id": 210,
     "name": "백암비스타골프장",
     "region": "경기",
     "city": "이천시",
@@ -2326,10 +1317,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": null,
-    "longitude": null,
-    "id": 211
+    "longitude": null
   },
   {
+    "id": 211,
     "name": "파주 J-Public 골프장",
     "region": "경기",
     "city": "파주시",
@@ -2338,10 +1329,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7496868953",
-    "longitude": "126.8446196107",
-    "id": 212
+    "longitude": "126.8446196107"
   },
   {
+    "id": 212,
     "name": "노스팜 컨트리클럽",
     "region": "경기",
     "city": "파주시",
@@ -2350,10 +1341,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7888929825",
-    "longitude": "126.9110085041",
-    "id": 213
+    "longitude": "126.9110085041"
   },
   {
+    "id": 213,
     "name": "타이거CC 골프장",
     "region": "경기",
     "city": "파주시",
@@ -2362,10 +1353,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9239816889",
-    "longitude": "126.8971324002",
-    "id": 214
+    "longitude": "126.8971324002"
   },
   {
+    "id": 214,
     "name": "(주)베스트밸리골프클럽",
     "region": "경기",
     "city": "파주시",
@@ -2374,10 +1365,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7551579790",
-    "longitude": "126.8847689683",
-    "id": 215
+    "longitude": "126.8847689683"
   },
   {
+    "id": 215,
     "name": "호반서서울 주식회사",
     "region": "경기",
     "city": "파주시",
@@ -2386,10 +1377,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.7313337782",
-    "longitude": "126.8965074932",
-    "id": 216
+    "longitude": "126.8965074932"
   },
   {
+    "id": 216,
     "name": "스마트KU 골프 파빌리온",
     "region": "경기",
     "city": "파주시",
@@ -2398,10 +1389,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8237390540",
-    "longitude": "126.8712013091",
-    "id": 217
+    "longitude": "126.8712013091"
   },
   {
+    "id": 217,
     "name": "서원밸리골프클럽",
     "region": "경기",
     "city": "파주시",
@@ -2410,10 +1401,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8246569113",
-    "longitude": "126.8932598867",
-    "id": 218
+    "longitude": "126.8932598867"
   },
   {
+    "id": 218,
     "name": "서원밸리 대중골프장",
     "region": "경기",
     "city": "파주시",
@@ -2422,10 +1413,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8246569113",
-    "longitude": "126.8932598867",
-    "id": 219
+    "longitude": "126.8932598867"
   },
   {
+    "id": 219,
     "name": "(주) 파주컨트리클럽",
     "region": "경기",
     "city": "파주시",
@@ -2434,10 +1425,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8478812806",
-    "longitude": "126.8998666622",
-    "id": 220
+    "longitude": "126.8998666622"
   },
   {
+    "id": 220,
     "name": "푸른솔 골프클럽 포천",
     "region": "경기",
     "city": "포천시",
@@ -2446,10 +1437,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8414957408",
-    "longitude": "127.2347761403",
-    "id": 221
+    "longitude": "127.2347761403"
   },
   {
+    "id": 221,
     "name": "힐마루 골프앤리조트 포천",
     "region": "경기",
     "city": "포천시",
@@ -2458,10 +1449,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9891581390",
-    "longitude": "127.2240302397",
-    "id": 222
+    "longitude": "127.2240302397"
   },
   {
+    "id": 222,
     "name": "COVE Swing",
     "region": "경기",
     "city": "포천시",
@@ -2470,10 +1461,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8668111593",
-    "longitude": "127.1360568076",
-    "id": 223
+    "longitude": "127.1360568076"
   },
   {
+    "id": 223,
     "name": "포천아도니스 대중골프장",
     "region": "경기",
     "city": "포천시",
@@ -2482,10 +1473,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9708996171",
-    "longitude": "127.1719993269",
-    "id": 224
+    "longitude": "127.1719993269"
   },
   {
+    "id": 224,
     "name": "일동레이크 골프클럽",
     "region": "경기",
     "city": "포천시",
@@ -2494,10 +1485,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9264683398",
-    "longitude": "127.3250098978",
-    "id": 225
+    "longitude": "127.3250098978"
   },
   {
+    "id": 225,
     "name": "필로스골프클럽",
     "region": "경기",
     "city": "포천시",
@@ -2506,10 +1497,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9332319168",
-    "longitude": "127.3338699119",
-    "id": 226
+    "longitude": "127.3338699119"
   },
   {
+    "id": 226,
     "name": "포레스트힐C.C",
     "region": "경기",
     "city": "포천시",
@@ -2518,10 +1509,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8728120785",
-    "longitude": "127.2761652597",
-    "id": 227
+    "longitude": "127.2761652597"
   },
   {
+    "id": 227,
     "name": "포천힐스컨트리클럽",
     "region": "경기",
     "city": "포천시",
@@ -2530,10 +1521,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8864077354",
-    "longitude": "127.2307144264",
-    "id": 228
+    "longitude": "127.2307144264"
   },
   {
+    "id": 228,
     "name": "라싸골프클럽",
     "region": "경기",
     "city": "포천시",
@@ -2542,10 +1533,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9957266334",
-    "longitude": "127.3859599166",
-    "id": 229
+    "longitude": "127.3859599166"
   },
   {
+    "id": 229,
     "name": "샴발라 컨트리클럽",
     "region": "경기",
     "city": "포천시",
@@ -2554,10 +1545,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.8714997288",
-    "longitude": "127.2553052190",
-    "id": 230
+    "longitude": "127.2553052190"
   },
   {
+    "id": 230,
     "name": "일동레이크대중제골프장",
     "region": "경기",
     "city": "포천시",
@@ -2566,10 +1557,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9264683398",
-    "longitude": "127.3250098978",
-    "id": 231
+    "longitude": "127.3250098978"
   },
   {
+    "id": 231,
     "name": "베어크리크골프클럽",
     "region": "경기",
     "city": "포천시",
@@ -2578,10 +1569,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.9017308724",
-    "longitude": "127.2787621265",
-    "id": 232
+    "longitude": "127.2787621265"
   },
   {
+    "id": 232,
     "name": "몽베르컨트리클럽",
     "region": "경기",
     "city": "포천시",
@@ -2590,10 +1581,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "38.0733390604",
-    "longitude": "127.3056775249",
-    "id": 233
+    "longitude": "127.3056775249"
   },
   {
+    "id": 233,
     "name": "(주)캐슬렉스서울 캐슬렉스골프클럽",
     "region": "경기",
     "city": "하남시",
@@ -2602,10 +1593,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.4960480920",
-    "longitude": "127.1700826569",
-    "id": 234
+    "longitude": "127.1700826569"
   },
   {
+    "id": 234,
     "name": "신창기업(주)발리오스컨트리클럽(회원제)",
     "region": "경기",
     "city": "화성시",
@@ -2614,10 +1605,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1165487427",
-    "longitude": "126.8604049669",
-    "id": 235
+    "longitude": "126.8604049669"
   },
   {
+    "id": 235,
     "name": "삼남개발(주) 기흥컨트리클럽",
     "region": "경기",
     "city": "화성시",
@@ -2626,10 +1617,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1913750204",
-    "longitude": "127.1466700596",
-    "id": 236
+    "longitude": "127.1466700596"
   },
   {
+    "id": 236,
     "name": "링크나인골프클럽",
     "region": "경기",
     "city": "화성시",
@@ -2638,10 +1629,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1717997218",
-    "longitude": "126.7532005181",
-    "id": 237
+    "longitude": "126.7532005181"
   },
   {
+    "id": 237,
     "name": "화성골프클럽",
     "region": "경기",
     "city": "화성시",
@@ -2650,10 +1641,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.2247484015",
-    "longitude": "126.8350207515",
-    "id": 238
+    "longitude": "126.8350207515"
   },
   {
+    "id": 238,
     "name": "화성 상록 G.C",
     "region": "경기",
     "city": "화성시",
@@ -2662,10 +1653,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1970494680",
-    "longitude": "127.1333473037",
-    "id": 239
+    "longitude": "127.1333473037"
   },
   {
+    "id": 239,
     "name": "(주)관악 리베라컨트리클럽",
     "region": "경기",
     "city": "화성시",
@@ -2674,10 +1665,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1904757628",
-    "longitude": "127.1127490699",
-    "id": 240
+    "longitude": "127.1127490699"
   },
   {
+    "id": 240,
     "name": "신창기업(주)발리오스컨트리클럽(비회원제골프장업)",
     "region": "경기",
     "city": "화성시",
@@ -2686,10 +1677,10 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1165487427",
-    "longitude": "126.8604049669",
-    "id": 241
+    "longitude": "126.8604049669"
   },
   {
+    "id": 241,
     "name": "(주)라비돌 라비돌컨트리클럽",
     "region": "경기",
     "city": "화성시",
@@ -2698,7 +1689,6 @@
     "type": "퍼블릭",
     "difficulty": "중",
     "latitude": "37.1870830986",
-    "longitude": "126.9841475182",
-    "id": 242
+    "longitude": "126.9841475182"
   }
 ]
