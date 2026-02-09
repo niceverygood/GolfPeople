@@ -444,6 +444,29 @@ export function AppProvider({ children }) {
     })
   }, [])
 
+  // 매칭 불가능한 오래된 추천 히스토리 정리 (mock→Supabase 전환 대응)
+  useEffect(() => {
+    if (users.length === 0) return
+    const userIdSet = new Set(users.map(u => u.id))
+    setRecommendationHistory(prev => {
+      let changed = false
+      const cleaned = { ...prev }
+      Object.entries(cleaned).forEach(([date, recs]) => {
+        if (!recs) return
+        const allIds = Object.values(recs).flat()
+        const hasMatch = allIds.some(id => userIdSet.has(id))
+        if (!hasMatch) {
+          delete cleaned[date]
+          changed = true
+        }
+      })
+      if (changed) {
+        localStorage.setItem('gp_recommendation_history', JSON.stringify(cleaned))
+      }
+      return changed ? cleaned : prev
+    })
+  }, [users])
+
   const value = {
     // 데이터
     users,
