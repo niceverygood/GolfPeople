@@ -160,12 +160,13 @@ export default function Home({ onPropose }) {
       dailyRecs = {}
       
       RECOMMENDATION_TIMES.forEach((time, timeIndex) => {
-        const startIndex = (timeIndex * 2) % targetUsers.length
+        const startIndex = (timeIndex * 3) % targetUsers.length
         const assignedUserIds = [
           targetUsers[startIndex % targetUsers.length]?.id,
           targetUsers[(startIndex + 1) % targetUsers.length]?.id,
+          targetUsers[(startIndex + 2) % targetUsers.length]?.id,
         ].filter(Boolean)
-        
+
         dailyRecs[time.id] = assignedUserIds
       })
       
@@ -313,7 +314,7 @@ export default function Home({ onPropose }) {
                   )}
                 </div>
                 
-                {/* 카드 2장 */}
+                {/* 카드 3장 */}
                 <div className="flex gap-3">
                   {timeSlot.cards.map((card, idx) => (
                     <FlipCard
