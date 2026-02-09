@@ -1,6 +1,16 @@
 [
   {
     "id": 1,
+    "name": "인서울27골프클럽",
+    "region": "서울",
+    "city": "강서구",
+    "address": "서울특별시 강서구 오곡동",
+    "holes": 27,
+    "type": "퍼블릭",
+    "difficulty": "중"
+  },
+  {
+    "id": 2,
     "name": "레이크사이드CC",
     "region": "경기",
     "city": "용인",
