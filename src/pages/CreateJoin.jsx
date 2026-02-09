@@ -9,8 +9,11 @@ import { showToast } from '../utils/errorHandler'
 import { getJoinDetail, updateJoin } from '../lib/joinService'
 import { useAuth } from '../context/AuthContext'
 
-// 지역 필터 옵션
-const REGIONS = ['전체', '서울', '경기', '인천', '강원', '충남', '충북', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주']
+// 골프장 데이터에서 지역 자동 추출
+const REGIONS = (() => {
+  const uniqueRegions = [...new Set(golfCourses.map(c => c.region))].sort()
+  return ['전체', ...uniqueRegions]
+})()
 
 // 성별 옵션
 const GENDERS = ['남성', '여성']
