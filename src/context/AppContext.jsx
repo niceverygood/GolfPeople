@@ -137,32 +137,33 @@ export function AppProvider({ children }) {
       if (sentJoinAppsRes.applications) {
         setJoinApplications(sentJoinAppsRes.applications.map(a => ({
           id: a.id,
-          joinId: a.join_id,
-          joinTitle: a.join?.title || '',
-          joinDate: a.join?.date || '',
-          joinTime: a.join?.time || '',
-          joinRegion: a.join?.region || '',
-          hostName: a.join?.host_name || '',
-          hostPhoto: a.join?.host_photo || 'https://via.placeholder.com/100',
+          joinId: a.joinId,
+          joinTitle: a.joinTitle || '',
+          joinDate: a.joinDate || '',
+          joinTime: a.joinTime || '',
+          joinRegion: a.joinRegion || '',
+          hostId: a.hostId,
+          hostName: a.hostName || '',
+          hostPhoto: a.hostPhoto || 'https://via.placeholder.com/100',
           message: a.message || '',
           status: a.status,
-          createdAt: a.created_at,
+          createdAt: a.createdAt,
           isDbRequest: true,
         })))
       }
       if (receivedJoinAppsRes.applications) {
         setReceivedJoinRequests(receivedJoinAppsRes.applications.map(a => ({
           id: a.id,
-          userId: a.user_id,
-          userName: a.user?.name || '',
-          userPhoto: a.user?.photos?.[0] || 'https://via.placeholder.com/100',
-          userRegion: a.user?.regions?.[0] || '',
-          userHandicap: a.user?.handicap || '',
-          joinId: a.join_id,
-          joinTitle: a.join?.title || '',
+          userId: a.userId,
+          userName: a.userName || '',
+          userPhoto: a.userPhoto || 'https://via.placeholder.com/100',
+          userRegion: a.userRegion || '',
+          userHandicap: a.userHandicap || '',
+          joinId: a.joinId,
+          joinTitle: a.joinTitle || '',
           message: a.message || '',
           status: a.status,
-          createdAt: a.created_at,
+          createdAt: a.createdAt,
           isDbRequest: true,
         })))
       }
@@ -256,19 +257,19 @@ export function AppProvider({ children }) {
     ])
     if (sent.applications) {
       setJoinApplications(sent.applications.map(a => ({
-        id: a.id, joinId: a.join_id, joinTitle: a.join?.title || '',
-        joinDate: a.join?.date || '', joinTime: a.join?.time || '', joinRegion: a.join?.region || '',
-        hostName: a.join?.host_name || '', hostPhoto: a.join?.host_photo || '',
-        message: a.message || '', status: a.status, createdAt: a.created_at, isDbRequest: true,
+        id: a.id, joinId: a.joinId, joinTitle: a.joinTitle || '',
+        joinDate: a.joinDate || '', joinTime: a.joinTime || '', joinRegion: a.joinRegion || '',
+        hostId: a.hostId, hostName: a.hostName || '', hostPhoto: a.hostPhoto || 'https://via.placeholder.com/100',
+        message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
       })))
     }
     if (received.applications) {
       setReceivedJoinRequests(received.applications.map(a => ({
-        id: a.id, userId: a.user_id,
-        userName: a.user?.name || '', userPhoto: a.user?.photos?.[0] || '',
-        userRegion: a.user?.regions?.[0] || '', userHandicap: a.user?.handicap || '',
-        joinId: a.join_id, joinTitle: a.join?.title || '',
-        message: a.message || '', status: a.status, createdAt: a.created_at, isDbRequest: true,
+        id: a.id, userId: a.userId,
+        userName: a.userName || '', userPhoto: a.userPhoto || 'https://via.placeholder.com/100',
+        userRegion: a.userRegion || '', userHandicap: a.userHandicap || '',
+        joinId: a.joinId, joinTitle: a.joinTitle || '',
+        message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
       })))
     }
   }, [userId])
@@ -444,13 +445,16 @@ export function AppProvider({ children }) {
     })
   }, [])
 
-  // 매칭 불가능한 오래된 추천 히스토리 정리 (mock→Supabase 전환 대응)
+  // 매칭 불가능한 오래된 추천 히스토리 정리 + 빈 히스토리 시드 생성
   useEffect(() => {
     if (users.length === 0) return
     const userIdSet = new Set(users.map(u => u.id))
+
     setRecommendationHistory(prev => {
       let changed = false
       const cleaned = { ...prev }
+
+      // 1) 매칭 불가 날짜 삭제
       Object.entries(cleaned).forEach(([date, recs]) => {
         if (!recs) return
         const allIds = Object.values(recs).flat()
@@ -460,6 +464,52 @@ export function AppProvider({ children }) {
           changed = true
         }
       })
+
+      // 2) 유효한 과거 데이터가 없으면 최근 7일분 시드 생성
+      const today = new Date().toISOString().split('T')[0]
+      const pastDates = Object.keys(cleaned).filter(d => d !== today)
+      if (pastDates.length === 0 && users.length >= 2) {
+        const userIds = users.map(u => u.id)
+        const timeSlots = ['noon', 'afternoon', 'evening', 'night']
+
+        for (let i = 1; i <= 7; i++) {
+          const d = new Date()
+          d.setDate(d.getDate() - i)
+          const dateKey = d.toISOString().split('T')[0]
+          const dateSeed = dateKey.split('-').reduce((sum, n) => sum * 100 + parseInt(n), 0)
+
+          const dayRecs = {}
+          const usedIds = new Set()
+          timeSlots.forEach((slot, slotIdx) => {
+            // 간단한 시드 기반 셔플
+            let s = dateSeed + slotIdx * 7919
+            const shuffled = [...userIds]
+            for (let j = shuffled.length - 1; j > 0; j--) {
+              s = (s * 1103515245 + 12345) & 0x7fffffff
+              const k = s % (j + 1)
+              ;[shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]]
+            }
+            const picked = []
+            for (const id of shuffled) {
+              if (picked.length >= 2) break
+              if (!usedIds.has(id)) {
+                picked.push(id)
+                usedIds.add(id)
+              }
+            }
+            if (picked.length < 2) {
+              for (const id of shuffled) {
+                if (picked.length >= 2) break
+                if (!picked.includes(id)) picked.push(id)
+              }
+            }
+            dayRecs[slot] = picked
+          })
+          cleaned[dateKey] = dayRecs
+        }
+        changed = true
+      }
+
       if (changed) {
         localStorage.setItem('gp_recommendation_history', JSON.stringify(cleaned))
       }
