@@ -558,13 +558,12 @@ function FlipCard({ card, isUnlocked, onClick }) {
             </div>
             
             {/* 텍스트 */}
-            <p className="text-gp-gold/80 text-xs font-medium tracking-widest uppercase">New Match</p>
-            <p className="text-white/40 text-[10px] mt-1">탭하여 확인</p>
+            <p className="text-gp-gold/80 text-[11px] font-medium tracking-widest uppercase">New Match</p>
           </div>
-          
+
           {/* 하단 로고 */}
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-            <span className="text-gp-gold/30 text-xs font-display tracking-wider">GOLF PEOPLE</span>
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+            <span className="text-gp-gold/20 text-[10px] font-display tracking-wider">GOLF PEOPLE</span>
           </div>
           
           {/* 테두리 */}
@@ -594,39 +593,39 @@ function FlipCard({ card, isUnlocked, onClick }) {
               )}
               
               {/* 탭 힌트 */}
-              <div className="absolute top-2 right-2 bg-black/50 px-2 py-1 rounded-full">
-                <span className="text-[10px] text-white/80">탭하여 상세</span>
+              <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <span className="text-[9px] text-white/80">상세</span>
               </div>
               
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-white">
+              <div className="absolute bottom-0 left-0 right-0 p-2">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-bold text-white text-sm">
                     {card.user.name}, {card.user.age}
                   </p>
                   <VerificationBadges user={card.user} scoreStats={card.user.scoreStats} compact />
                 </div>
-                <p className="text-xs text-white/70 flex items-center gap-1 mb-1">
-                  <MapPin className="w-3 h-3" />
+                <p className="text-[11px] text-white/70 flex items-center gap-1 mb-1">
+                  <MapPin className="w-2.5 h-2.5" />
                   {card.user.region}
                 </p>
-                
+
                 {/* 스코어 정보 */}
                 {card.user.scoreStats && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] bg-gp-gold/20 text-gp-gold px-1.5 py-0.5 rounded font-medium">
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[9px] bg-gp-gold/20 text-gp-gold px-1.5 py-0.5 rounded font-medium">
                       베스트 {card.user.scoreStats.bestScore}
                     </span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5 ${
-                      card.user.scoreStats.recentTrend === 'improving' 
-                        ? 'bg-gp-green/20 text-gp-green' 
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5 ${
+                      card.user.scoreStats.recentTrend === 'improving'
+                        ? 'bg-gp-green/20 text-gp-green'
                         : card.user.scoreStats.recentTrend === 'declining'
                         ? 'bg-red-500/20 text-red-400'
                         : 'bg-white/10 text-white/60'
                     }`}>
-                      {card.user.scoreStats.recentTrend === 'improving' && <TrendingUp className="w-2.5 h-2.5" />}
-                      {card.user.scoreStats.recentTrend === 'declining' && <TrendingDown className="w-2.5 h-2.5" />}
-                      {card.user.scoreStats.recentTrend === 'stable' && <Minus className="w-2.5 h-2.5" />}
-                      {card.user.scoreStats.recentTrend === 'improving' ? '성장중' : 
+                      {card.user.scoreStats.recentTrend === 'improving' && <TrendingUp className="w-2 h-2" />}
+                      {card.user.scoreStats.recentTrend === 'declining' && <TrendingDown className="w-2 h-2" />}
+                      {card.user.scoreStats.recentTrend === 'stable' && <Minus className="w-2 h-2" />}
+                      {card.user.scoreStats.recentTrend === 'improving' ? '성장중' :
                        card.user.scoreStats.recentTrend === 'declining' ? '슬럼프' : '유지중'}
                     </span>
                   </div>
