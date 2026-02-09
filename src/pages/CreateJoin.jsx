@@ -245,25 +245,32 @@ export default function CreateJoin() {
         description,
       }
 
+      setLoading(true)
+
       if (isEditMode && editJoinId) {
         // 수정 모드
-        setLoading(true)
         const result = await updateJoin(editJoinId, user?.id, joinData)
-        setLoading(false)
 
         if (result.success) {
           showToast.success('조인이 수정되었습니다!')
+          navigate('/join')
         } else {
           showToast.error('조인 수정에 실패했습니다.')
         }
       } else {
         // 생성 모드
-        const created = createJoin(joinData)
-        console.log('Created join:', created)
-        showToast.success('조인이 생성되었습니다!')
+        const created = await createJoin(joinData)
+
+        if (created) {
+          console.log('Created join:', created)
+          showToast.success('조인이 생성되었습니다!')
+          navigate('/join')
+        } else {
+          showToast.error('조인 생성에 실패했습니다.')
+        }
       }
 
-      navigate('/join')
+      setLoading(false)
     }
   }
 
