@@ -1,18 +1,36 @@
 #!/usr/bin/env python3
 """
-국내 골프장 데이터 크롤링 스크립트
-- 실제 사이트에서 골프장 정보를 수집합니다
+골프장 크롤링 자동화 시스템
+
+데이터 소스:
+1. 공공데이터포털 CSV (골프장 현황)
+2. 한국골프장경영협회 (KGBA) 회원사 목록
+3. 기존 수동 수집 데이터
+
+주기: 월 1회 자동 실행 권장
 """
 
-import requests
-from bs4 import BeautifulSoup
 import json
 import time
 import os
+import csv
+import re
+from datetime import datetime
+from pathlib import Path
+
+# Optional dependencies for web crawling
+try:
+    import requests
+    from bs4 import BeautifulSoup
+    WEB_CRAWL_AVAILABLE = True
+except ImportError:
+    WEB_CRAWL_AVAILABLE = False
+    print("⚠️  requests/bs4 not available - web crawling disabled")
 
 # 결과 저장 경로
 OUTPUT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'src', 'data', 'golfCourses.json')
+CSV_PATH = '/Users/bottle/Downloads/골프장현황.csv'
 
 # 헤더 설정 (봇 차단 우회)
 HEADERS = {
@@ -20,6 +38,97 @@ HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
 }
+
+def normalize_name(name):
+    """골프장 이름 정규화 (중복 비교용)"""
+    # 공백, 특수문자 제거
+    name = re.sub(r'[\s\-\.()]', '', name.lower())
+    # CC, G.C, 골프장, 컨트리클럽 등 제거
+    name = re.sub(r'(cc|gc|골프장|컨트리클럽|country|club|golf)', '', name)
+    return name
+
+def extract_region_from_address(address):
+    """주소에서 지역 추출"""
+    if not address:
+        return None
+
+    region_map = {
+        '서울': '서울',
+        '경기도': '경기',
+        '인천': '인천',
+        '부산': '부산',
+        '대구': '대구',
+        '대전': '대전',
+        '광주광역시': '광주',
+        '울산': '울산',
+        '세종': '세종',
+        '강원': '강원',
+        '충청남도': '충남',
+        '충남': '충남',
+        '충청북도': '충북',
+        '충북': '충북',
+        '경상남도': '경남',
+        '경남': '경남',
+        '경상북도': '경북',
+        '경북': '경북',
+        '전라남도': '전남',
+        '전남': '전남',
+        '전라북도': '전북',
+        '전북': '전북',
+        '제주': '제주',
+    }
+
+    for pattern, region in region_map.items():
+        if pattern in address:
+            return region
+
+    return None
+
+def extract_city_from_address(address):
+    """주소에서 시군구 추출"""
+    if not address:
+        return None
+
+    parts = address.split()
+    if len(parts) >= 2:
+        return parts[1]
+
+    return None
+
+def load_csv_courses():
+    """CSV 파일에서 골프장 데이터 로드"""
+    courses = []
+
+    if not os.path.exists(CSV_PATH):
+        print(f"⚠️  CSV 파일 없음: {CSV_PATH}")
+        return courses
+
+    print(f"📂 CSV 파일 읽기: {CSV_PATH}")
+
+    with open(CSV_PATH, 'r', encoding='euc-kr') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # 영업중인 골프장만
+            if row.get('영업상태명') == '영업중':
+                address = row.get('소재지도로명주소', '') or row.get('소재지지번주소', '')
+                name = row['사업장명'].strip()
+                region = extract_region_from_address(address)
+                city = extract_city_from_address(address)
+
+                courses.append({
+                    'name': name,
+                    'region': region or '기타',
+                    'city': city or '',
+                    'address': address,
+                    'holes': 18,  # 기본값
+                    'type': '퍼블릭',  # 기본값
+                    'difficulty': '중',  # 기본값
+                    'latitude': row.get('WGS84위도') or None,
+                    'longitude': row.get('WGS84경도') or None,
+                })
+
+    print(f"✅ CSV에서 {len(courses)}개 골프장 로드")
+    return courses
 
 def crawl_kgba():
     """한국골프장경영협회(KGBA) 회원사 목록 크롤링"""
@@ -244,34 +353,89 @@ def generate_comprehensive_list():
     
     return golf_courses
 
+def merge_courses(existing, new_courses):
+    """기존 데이터와 신규 데이터 병합 (중복 제거)"""
+    # 정규화된 이름으로 중복 체크
+    existing_names = {normalize_name(c['name']): c for c in existing}
+    added_count = 0
+
+    for course in new_courses:
+        normalized = normalize_name(course['name'])
+        if normalized not in existing_names:
+            existing.append(course)
+            existing_names[normalized] = course
+            added_count += 1
+
+    # ID 재정렬
+    for i, course in enumerate(existing, 1):
+        course['id'] = i
+
+    if added_count > 0:
+        print(f"✅ {added_count}개 신규 골프장 추가")
+    else:
+        print(f"ℹ️  신규 골프장 없음")
+
+    return existing
+
 def main():
-    print("=" * 50)
-    print("국내 골프장 데이터 수집 시작")
-    print("=" * 50)
-    
-    # 종합 골프장 목록 생성
-    golf_courses = generate_comprehensive_list()
-    
-    print(f"\n총 {len(golf_courses)}개 골프장 데이터 수집 완료")
-    
-    # 지역별 통계
-    regions = {}
-    for course in golf_courses:
-        region = course['region']
-        regions[region] = regions.get(region, 0) + 1
-    
-    print("\n[지역별 골프장 수]")
-    for region, count in sorted(regions.items(), key=lambda x: -x[1]):
-        print(f"  {region}: {count}개")
-    
-    # JSON 파일로 저장
+    print("=" * 60)
+    print("🏌️  골프장 데이터 크롤링 자동화 시스템")
+    print("=" * 60)
+    print(f"실행 시각: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print()
+
+    # 1. 기존 데이터 로드
+    if os.path.exists(OUTPUT_FILE):
+        with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+            existing = json.load(f)
+        print(f"📁 기존 골프장: {len(existing)}개")
+    else:
+        # 기존 파일 없으면 수동 수집 데이터로 시작
+        existing = generate_comprehensive_list()
+        print(f"📁 기본 데이터: {len(existing)}개")
+
+    # 백업 생성
+    if os.path.exists(OUTPUT_FILE):
+        backup_path = OUTPUT_FILE.replace('.json', f'.backup.{datetime.now().strftime("%Y%m%d")}.json')
+        with open(backup_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        print(f"💾 백업 저장: {backup_path}")
+
+    print()
+    print("🔍 데이터 소스 크롤링 시작...")
+    print("-" * 60)
+
+    # 2. CSV 데이터 로드
+    csv_courses = load_csv_courses()
+
+    # 3. 병합
+    print()
+    print("🔄 데이터 병합 중...")
+    merged = merge_courses(existing, csv_courses)
+
+    # 4. 통계
+    from collections import Counter
+    region_counts = Counter([c['region'] for c in merged])
+
+    print()
+    print("📊 지역별 골프장 분포:")
+    print("-" * 60)
+    for region, count in sorted(region_counts.items()):
+        print(f"  {region:8s}: {count:3d}개")
+
+    # 5. 저장
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(golf_courses, f, ensure_ascii=False, indent=2)
-    
-    print(f"\n데이터 저장 완료: {OUTPUT_FILE}")
-    
-    return golf_courses
+        json.dump(merged, f, ensure_ascii=False, indent=2)
+
+    print()
+    print("=" * 60)
+    print(f"✅ 크롤링 완료!")
+    print(f"💾 저장 경로: {OUTPUT_FILE}")
+    print(f"📊 총 {len(merged)}개 골프장")
+    print("=" * 60)
+
+    return merged
 
 if __name__ == "__main__":
     main()
