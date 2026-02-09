@@ -12,7 +12,7 @@ import { getSimpleTimeAgo } from '../utils/formatTime'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 
-const REGIONS = ['전체', '서울', '경기', '인천']
+const REGIONS = ['전체', '서울', '경기', '인천', '부산', '대구', '대전', '광주', '제주', '강원', '충남', '충북', '경남', '경북', '전남', '전북']
 
 // 메인 탭
 const TABS = [
