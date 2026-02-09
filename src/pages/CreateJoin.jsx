@@ -10,7 +10,7 @@ import { getJoinDetail, updateJoin } from '../lib/joinService'
 import { useAuth } from '../context/AuthContext'
 
 // 지역 필터 옵션
-const REGIONS = ['전체', '경기', '인천', '강원', '충남', '충북', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주']
+const REGIONS = ['전체', '서울', '경기', '인천', '강원', '충남', '충북', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주']
 
 // 성별 옵션
 const GENDERS = ['남성', '여성']
