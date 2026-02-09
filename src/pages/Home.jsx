@@ -175,7 +175,7 @@ export default function Home({ onPropose }) {
 
     // 저장된 추천이 없거나 비어있거나 형식이 다르면 새로 생성
     const isRecEmpty = dailyRecs && Object.values(dailyRecs).every(ids => !ids || ids.length === 0)
-    const isOldFormat = dailyRecs && Object.values(dailyRecs).some(ids => ids && ids.length !== 3)
+    const isOldFormat = dailyRecs && Object.values(dailyRecs).some(ids => ids && ids.length !== 2)
 
     if (!dailyRecs || isRecEmpty || isOldFormat) {
       const targetUsers = filteredUsers.length > 0 ? filteredUsers : users
@@ -191,7 +191,7 @@ export default function Home({ onPropose }) {
 
         // 1차: 다른 시간대와 겹치지 않는 유저 우선 배정
         for (const u of shuffled) {
-          if (assignedUserIds.length >= 3) break
+          if (assignedUserIds.length >= 2) break
           if (!usedIds.has(u.id)) {
             assignedUserIds.push(u.id)
             usedIds.add(u.id)
@@ -199,9 +199,9 @@ export default function Home({ onPropose }) {
         }
 
         // 2차: 유저 풀 부족 시 다른 시간대와 중복 허용 (같은 슬롯 내 중복은 방지)
-        if (assignedUserIds.length < 3) {
+        if (assignedUserIds.length < 2) {
           for (const u of shuffled) {
-            if (assignedUserIds.length >= 3) break
+            if (assignedUserIds.length >= 2) break
             if (!assignedUserIds.includes(u.id)) {
               assignedUserIds.push(u.id)
             }
@@ -417,11 +417,11 @@ export default function Home({ onPropose }) {
 function PastRecommendations({ history, users, navigate }) {
   const today = new Date().toISOString().split('T')[0]
   
-  // 오늘을 제외한 과거 7일간의 날짜 정렬
+  // 오늘을 제외한 과거 14일간의 날짜 정렬
   const pastDates = Object.keys(history)
     .filter(date => date !== today)
     .sort((a, b) => b.localeCompare(a)) // 문자열 비교로 정렬
-    .slice(0, 7)
+    .slice(0, 14)
 
   if (pastDates.length === 0) {
     return (
@@ -467,7 +467,7 @@ function PastRecommendations({ history, users, navigate }) {
         const todayObj = new Date(today)
         const diffTime = todayObj.getTime() - dateObj.getTime()
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-        const remainingDays = 7 - diffDays
+        const remainingDays = 14 - diffDays
         const dDayText = `D-${String(remainingDays).padStart(2, '0')}`
 
         return (

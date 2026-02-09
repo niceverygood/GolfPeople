@@ -436,8 +436,8 @@ export function AppProvider({ children }) {
     setRecommendationHistory(prev => {
       const newHistory = { ...prev, [dateKey]: recommendations }
       const dates = Object.keys(newHistory).sort().reverse()
-      if (dates.length > 7) {
-        dates.slice(7).forEach(d => delete newHistory[d])
+      if (dates.length > 14) {
+        dates.slice(14).forEach(d => delete newHistory[d])
       }
       localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
       return newHistory
