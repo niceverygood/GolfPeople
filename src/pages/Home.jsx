@@ -58,7 +58,9 @@ export default function Home({ onPropose }) {
   // 전화번호 인증 훅
   const phoneVerify = usePhoneVerification()
 
-  const [activeTab, setActiveTab] = useState('today') // 'today' | 'past'
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('home_active_tab') || 'today'
+  })
   const [recommendations, setRecommendations] = useState({})
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -315,20 +317,20 @@ export default function Home({ onPropose }) {
         {/* 상단 탭 버튼 */}
         <div className="flex bg-gp-card p-1 rounded-xl gap-1">
           <button
-            onClick={() => setActiveTab('today')}
+            onClick={() => { setActiveTab('today'); sessionStorage.setItem('home_active_tab', 'today') }}
             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-              activeTab === 'today' 
-                ? 'bg-gp-gold text-gp-black' 
+              activeTab === 'today'
+                ? 'bg-gp-gold text-gp-black'
                 : 'text-gp-text-secondary hover:text-gp-text'
             }`}
           >
             오늘의 추천 카드
           </button>
           <button
-            onClick={() => setActiveTab('past')}
+            onClick={() => { setActiveTab('past'); sessionStorage.setItem('home_active_tab', 'past') }}
             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-              activeTab === 'past' 
-                ? 'bg-gp-gold text-gp-black' 
+              activeTab === 'past'
+                ? 'bg-gp-gold text-gp-black'
                 : 'text-gp-text-secondary hover:text-gp-text'
             }`}
           >

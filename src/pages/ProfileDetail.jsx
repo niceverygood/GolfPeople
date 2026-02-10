@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle, Star } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -21,6 +21,7 @@ const FRIEND_REQUEST_COST = 3
 export default function ProfileDetail() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user: currentUser } = useAuth()
   const { startDirectChat } = useChat()
   const { users, sendFriendRequest, friendRequests, likedUsers, likeUser, unlikeUser } = useApp()
@@ -194,7 +195,11 @@ export default function ProfileDetail() {
       localStorage.setItem('gp_blocked_users', JSON.stringify(blockedList))
 
       showToast.success('차단되었습니다.')
-      navigate(-1)
+      if (location.key === 'default') {
+        navigate('/', { replace: true })
+      } else {
+        navigate(-1)
+      }
     } catch (e) {
       console.error('차단 에러:', e)
       showToast.error('차단에 실패했습니다.')
@@ -214,7 +219,11 @@ export default function ProfileDetail() {
   }
 
   const handleBack = () => {
-    navigate(-1)
+    if (location.key === 'default') {
+      navigate('/', { replace: true })
+    } else {
+      navigate(-1)
+    }
   }
   
   if (!user) {

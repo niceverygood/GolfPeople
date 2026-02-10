@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Search, MessageCircle, UserX, ChevronLeft, MapPin, Trophy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -13,6 +13,7 @@ import VerificationBadges from '../components/VerificationBadges'
 
 export default function Friends() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { startDirectChat } = useChat()
 
@@ -67,7 +68,7 @@ export default function Friends() {
       <div className="px-6 pt-4 pb-2 safe-top">
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)}
             className="w-10 h-10 rounded-full bg-gp-card flex items-center justify-center"
           >
             <ChevronLeft className="w-5 h-5" />

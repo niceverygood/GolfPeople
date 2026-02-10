@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, ArrowRight, Check, Loader2, RefreshCw, ShieldCheck, ChevronLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -8,6 +8,7 @@ import { db } from '../lib/supabase'
 
 export default function PhoneVerification() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const isChangeMode = searchParams.get('mode') === 'change'
   
@@ -187,11 +188,10 @@ export default function PhoneVerification() {
 
   // 스킵하기 (나중에 인증)
   const handleSkip = () => {
-    // 이전 페이지가 있으면 뒤로, 없으면 홈으로
-    if (window.history.length > 2) {
-      navigate(-1)
+    if (location.key === 'default') {
+      navigate('/profile', { replace: true })
     } else {
-      window.location.href = '/'
+      navigate(-1)
     }
   }
 
@@ -213,7 +213,7 @@ export default function PhoneVerification() {
         {/* 뒤로가기 버튼 (번호 변경 모드일 때만) */}
         {isChangeMode && (
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)}
             className="mb-4 flex items-center gap-1 text-gp-text-secondary hover:text-white transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />

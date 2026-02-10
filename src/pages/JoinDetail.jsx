@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Bookmark, BookmarkCheck, Share2, Copy, MessageCircle, Link, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -25,6 +25,7 @@ const formatJoinDate = (dateStr) => {
 export default function JoinDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { joins, savedJoins, saveJoin, unsaveJoin, applyToJoin, joinApplications } = useApp()
   const { balance, spendMarkers } = useMarker()
 
@@ -137,7 +138,7 @@ export default function JoinDetail() {
         {/* 상단 네비게이션 */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 safe-top">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/join', { replace: true }) : navigate(-1)}
             className="w-10 h-10 rounded-full glass flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5" />

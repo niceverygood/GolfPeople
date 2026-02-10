@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Star, X, Check, ChevronRight, Clock, MessageCircle, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -21,6 +21,7 @@ const TABS = [
 
 export default function Review() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('pending')
   const [loading, setLoading] = useState(true)
@@ -65,7 +66,7 @@ export default function Review() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2 safe-top">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)}
           className="w-10 h-10 rounded-full bg-gp-card flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5" />
