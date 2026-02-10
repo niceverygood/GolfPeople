@@ -190,13 +190,13 @@ export default function Saved({ onPropose }) {
   const sentPendingJoins = joinApplications.filter(a => a.status === 'pending')
   const receivedPendingJoins = receivedJoinRequests.filter(r => r.status === 'pending')
   
-  // 매칭완료 - 친구 (수락된 것들)
-  const matchedSentFriends = friendRequests.filter(r => r.status === 'accepted')
-  const matchedReceivedFriends = receivedFriendRequests.filter(r => r.status === 'accepted')
-  
-  // 매칭완료 - 조인 (수락된 것들)
-  const matchedSentJoins = joinApplications.filter(a => a.status === 'accepted')
-  const matchedReceivedJoins = receivedJoinRequests.filter(r => r.status === 'accepted')
+  // 매칭완료 - 친구 (수락된 것들, 탈퇴 유저 제외)
+  const matchedSentFriends = friendRequests.filter(r => r.status === 'accepted' && r.userName)
+  const matchedReceivedFriends = receivedFriendRequests.filter(r => r.status === 'accepted' && r.userName)
+
+  // 매칭완료 - 조인 (수락된 것들, 탈퇴 유저 제외)
+  const matchedSentJoins = joinApplications.filter(a => a.status === 'accepted' && a.hostId)
+  const matchedReceivedJoins = receivedJoinRequests.filter(r => r.status === 'accepted' && r.userId)
   
   // 탭별 총 개수
   const savedTotalCount = likedUsersList.length + savedJoinsList.length
