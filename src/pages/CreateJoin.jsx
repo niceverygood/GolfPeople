@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Search, X, Check, ChevronRight, UserPlus, Heart } from 'lucide-react'
 import golfCourses from '../data/golfCourses.json'
@@ -38,6 +38,7 @@ const MEETING_TYPES = [
 
 export default function CreateJoin() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const editJoinId = searchParams.get('edit')
   const isEditMode = !!editJoinId
@@ -303,7 +304,7 @@ export default function CreateJoin() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2 safe-top">
         <button
-          onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
+          onClick={() => step > 0 ? setStep(step - 1) : (location.key === 'default' ? navigate('/join', { replace: true }) : navigate(-1))}
           className="w-10 h-10 rounded-full bg-gp-card flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5" />

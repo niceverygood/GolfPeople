@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2 } from 'lucide-react'
 import DOMPurify from 'dompurify'
@@ -19,6 +19,7 @@ const sanitizeMessage = (text) => {
 export default function ChatRoom() {
   const { chatId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { chatRooms, messages, loading, enterRoom, leaveRoom, sendMessage } = useChat()
 
@@ -120,7 +121,11 @@ export default function ChatRoom() {
       localStorage.setItem('gp_blocked_users', JSON.stringify(blockedList))
 
       showToast.success('차단되었습니다.')
-      navigate(-1)
+      if (location.key === 'default') {
+        navigate('/chat', { replace: true })
+      } else {
+        navigate(-1)
+      }
     } catch (e) {
       console.error('차단 에러:', e)
       showToast.error('차단에 실패했습니다.')
@@ -140,7 +145,7 @@ export default function ChatRoom() {
       <div className="flex flex-col h-full bg-gp-black">
         <div className="flex items-center px-4 py-3 bg-gp-card border-b border-gp-border safe-top">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/chat', { replace: true }) : navigate(-1)}
             className="p-2 -ml-2 hover:bg-gp-border rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -159,7 +164,7 @@ export default function ChatRoom() {
       <div className="flex flex-col h-full bg-gp-black">
         <div className="flex items-center px-4 py-3 bg-gp-card border-b border-gp-border safe-top">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/chat', { replace: true }) : navigate(-1)}
             className="p-2 -ml-2 hover:bg-gp-border rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -207,7 +212,7 @@ export default function ChatRoom() {
       <div className="flex items-center justify-between px-4 py-3 bg-gp-card border-b border-gp-border safe-top">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => location.key === 'default' ? navigate('/chat', { replace: true }) : navigate(-1)}
             className="p-2 -ml-2 hover:bg-gp-border rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

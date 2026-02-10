@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { db } from '../lib/supabase'
 
 export default function ScoreStats() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   
   const [stats, setStats] = useState(null)
@@ -135,7 +136,7 @@ export default function ScoreStats() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-sm border-b border-gp-gray/30">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+          <button onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)} className="p-2 -ml-2">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
