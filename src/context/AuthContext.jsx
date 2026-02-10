@@ -267,26 +267,29 @@ export const AuthProvider = ({ children }) => {
   const signInWithApple = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      // 네이티브 Apple Sign In 실행
-      const result = await appleSignIn.signIn()
-      
+      // nonce를 한 번만 생성하여 Apple과 Supabase 양쪽에 동일하게 사용
+      const rawNonce = crypto.randomUUID()
+
+      // 네이티브 Apple Sign In 실행 (동일한 nonce 전달)
+      const result = await appleSignIn.signIn(rawNonce)
+
       if (!result.success) {
         throw new Error(result.error || 'Apple 로그인에 실패했습니다')
       }
-      
-      // Apple Identity Token을 사용해 Supabase에 로그인
+
+      // Apple Identity Token을 사용해 Supabase에 로그인 (동일한 rawNonce 사용)
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: result.user.identityToken,
-        nonce: 'golfpeople_nonce_' + Date.now(), // 보안을 위한 nonce
+        nonce: rawNonce,
       })
-      
+
       if (error) {
         throw error
       }
-      
+
       // 사용자 정보가 있으면 프로필 업데이트 (Apple은 최초 로그인 시에만 이름/이메일 제공)
       if (data.user && result.user.name) {
         await db.profiles.update(data.user.id, {
@@ -294,7 +297,7 @@ export const AuthProvider = ({ children }) => {
           email: result.user.email,
         }).catch(console.error)
       }
-      
+
       return { data, error: null }
     } catch (err) {
       setError(err.message)
