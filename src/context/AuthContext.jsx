@@ -300,6 +300,10 @@ export const AuthProvider = ({ children }) => {
 
       return { data, error: null }
     } catch (err) {
+      // Apple Sign In 취소 (error 1001)는 무시
+      if (err.message?.includes('1001') || err.message?.includes('canceled') || err.message?.includes('cancelled')) {
+        return { data: null, error: null }
+      }
       setError(err.message)
       return { data: null, error: err }
     } finally {
