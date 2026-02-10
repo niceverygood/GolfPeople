@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, MapPin, Trophy, Clock, Settings, ChevronRight, LogOut,
@@ -88,6 +88,7 @@ const GOLF_BRANDS = [
 
 export default function Profile() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { currentUser, proposals } = useApp()
   const { user, profile: authProfile, isAuthenticated, signOut, loading: authLoading } = useAuth()
   const { balance } = useMarker()
@@ -100,6 +101,14 @@ export default function Profile() {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showBlockModal, setShowBlockModal] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
+  // URL 파라미터로 설정 모달 자동 열기 (?settings=open)
+  useEffect(() => {
+    if (searchParams.get('settings') === 'open') {
+      setShowSettingsModal(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     // Supabase 프로필이 있으면 그것을 사용, 없으면 로컬스토리지
