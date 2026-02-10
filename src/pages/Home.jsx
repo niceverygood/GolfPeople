@@ -653,11 +653,6 @@ function FlipCard({ card, isUnlocked, onClick }) {
                 </div>
               )}
               
-              {/* 탭 힌트 */}
-              <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                <span className="text-[9px] text-white/80">상세</span>
-              </div>
-              
               <div className="absolute bottom-0 left-0 right-0 p-2">
                 <div className="flex items-center gap-1.5">
                   <p className="font-bold text-white text-sm">

@@ -439,18 +439,6 @@ function ShareModal({ join, onClose }) {
       setTimeout(() => setCopied(false), 2000)
     }
   }
-  
-  // 카카오톡 공유 (카카오 SDK가 없으므로 URL scheme 사용)
-  const handleKakaoShare = () => {
-    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
-    window.open(kakaoUrl, '_blank', 'width=500,height=600')
-  }
-  
-  // 문자 공유
-  const handleSMSShare = () => {
-    const smsBody = encodeURIComponent(`${shareText}\n${shareUrl}`)
-    window.location.href = `sms:?body=${smsBody}`
-  }
 
   const shareOptions = [
     { 
@@ -460,22 +448,11 @@ function ShareModal({ join, onClose }) {
       action: handleCopyLink,
       iconColor: copied ? 'text-white' : 'text-gp-text'
     },
-    { 
-      icon: () => (
-        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="#FEE500">
-          <path d="M12 3C6.477 3 2 6.463 2 10.586c0 2.648 1.758 4.976 4.396 6.306-.179.67-.656 2.433-.752 2.81-.118.464.171.458.36.334.148-.098 2.357-1.599 3.318-2.248.55.078 1.11.117 1.678.117 5.523 0 10-3.463 10-7.319C21 6.463 17.523 3 12 3z"/>
-        </svg>
-      ), 
-      label: '카카오톡', 
-      color: 'bg-[#FEE500]',
-      action: handleKakaoShare,
-      iconColor: 'text-black'
-    },
-    { 
-      icon: MessageCircle, 
-      label: '문자', 
-      color: 'bg-gp-green',
-      action: handleSMSShare,
+    {
+      icon: Share2,
+      label: '공유하기',
+      color: 'bg-gp-blue',
+      action: handleNativeShare,
       iconColor: 'text-white'
     },
   ]
