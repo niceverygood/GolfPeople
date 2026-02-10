@@ -1005,6 +1005,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
 // 설정 모달
 function SettingsModal({ onClose }) {
   const { user, deleteAccount } = useAuth()
+  const navigate = useNavigate()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
@@ -1204,33 +1205,27 @@ function SettingsModal({ onClose }) {
         {/* 정보 */}
         <h3 className="text-sm text-gp-text-secondary mb-2 px-2">정보</h3>
         <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">
-          <a
-            href="/support"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-between p-4 border-b border-gp-border"
+          <button
+            onClick={() => { onClose(); navigate('/support') }}
+            className="w-full flex items-center justify-between p-4 border-b border-gp-border text-left"
           >
             <span>고객 지원</span>
             <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
-          </a>
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-between p-4 border-b border-gp-border"
+          </button>
+          <button
+            onClick={() => { onClose(); navigate('/privacy') }}
+            className="w-full flex items-center justify-between p-4 border-b border-gp-border text-left"
           >
             <span>개인정보처리방침</span>
             <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
-          </a>
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-between p-4"
+          </button>
+          <button
+            onClick={() => { onClose(); navigate('/terms') }}
+            className="w-full flex items-center justify-between p-4 text-left"
           >
             <span>이용약관</span>
             <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
-          </a>
+          </button>
         </div>
 
         {/* 계정 관리 */}
