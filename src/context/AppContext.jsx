@@ -378,14 +378,14 @@ export function AppProvider({ children }) {
 
   // 조인 생성/삭제
   const createJoin = async (joinData) => {
-    if (!userId) return null
+    if (!userId) return { success: false, error: '로그인이 필요합니다' }
     const result = await createJoinApi(userId, joinData)
     if (result.success) {
       await refreshMyJoins()
       await refreshJoins()
-      return result.join
+      return { success: true, join: result.join }
     }
-    return null
+    return { success: false, error: result.error || '조인 생성에 실패했습니다' }
   }
 
   const deleteMyJoin = async (joinId) => {

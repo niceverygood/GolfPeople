@@ -7,6 +7,17 @@ import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 
+const formatJoinDate = (dateStr) => {
+  if (!dateStr) return ''
+  if (dateStr.includes('월')) return dateStr
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return dateStr
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+  return `${month}월 ${day}일 (${dayOfWeek})`
+}
+
 // 메인 탭 정의
 const TABS = [
   { id: 'saved', label: '관심', icon: Heart },
@@ -684,7 +695,7 @@ function SavedJoinCard({ join, onRemove, onClick }) {
             <div className="text-gp-text-secondary text-sm space-y-1">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
-                <span>{join.date}</span>
+                <span>{formatJoinDate(join.date)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />

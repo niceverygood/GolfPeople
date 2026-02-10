@@ -11,6 +11,17 @@ import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 
+const formatJoinDate = (dateStr) => {
+  if (!dateStr) return ''
+  if (dateStr.includes('월')) return dateStr
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return dateStr
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+  return `${month}월 ${day}일 (${dayOfWeek})`
+}
+
 export default function JoinDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -184,7 +195,7 @@ export default function JoinDetail() {
               <Calendar className="w-4 h-4" />
               <span className="text-sm">날짜</span>
             </div>
-            <p className="font-semibold">{join.date}</p>
+            <p className="font-semibold">{formatJoinDate(join.date)}</p>
           </div>
           <div className="bg-gp-card rounded-xl p-4">
             <div className="flex items-center gap-2 text-gp-text-secondary mb-1">
@@ -387,7 +398,7 @@ function ShareModal({ join, onClose }) {
   const [copied, setCopied] = useState(false)
   
   const shareUrl = `${window.location.origin}/join/${join.id}`
-  const shareText = `🏌️ ${join.title}\n📅 ${join.date} ${join.time}\n📍 ${join.location}\n\n골프피플에서 함께 라운딩해요!`
+  const shareText = `🏌️ ${join.title}\n📅 ${formatJoinDate(join.date)} ${join.time}\n📍 ${join.location}\n\n골프피플에서 함께 라운딩해요!`
   
   // 네이티브 공유 API 지원 여부
   const canShare = navigator.share !== undefined
@@ -502,7 +513,7 @@ function ShareModal({ join, onClose }) {
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold truncate">{join.title}</h3>
               <p className="text-sm text-gp-text-secondary">
-                {join.date} · {join.location}
+                {formatJoinDate(join.date)} · {join.location}
               </p>
             </div>
           </div>

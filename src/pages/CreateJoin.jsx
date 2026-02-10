@@ -259,14 +259,13 @@ export default function CreateJoin() {
         }
       } else {
         // 생성 모드
-        const created = await createJoin(joinData)
+        const result = await createJoin(joinData)
 
-        if (created) {
-          console.log('Created join:', created)
+        if (result.success) {
           showToast.success('조인이 생성되었습니다!')
           navigate('/join')
         } else {
-          showToast.error('조인 생성에 실패했습니다.')
+          showToast.error(result.error || '조인 생성에 실패했습니다.')
         }
       }
 
@@ -278,21 +277,23 @@ export default function CreateJoin() {
   const dateOptions = useMemo(() => {
     const options = []
     const today = new Date()
-    
+
     for (let i = 1; i <= 14; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      
-      const month = date.getMonth() + 1
-      const day = date.getDate()
-      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
-      
+      const d = new Date(today)
+      d.setDate(today.getDate() + i)
+
+      const month = d.getMonth() + 1
+      const day = d.getDate()
+      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+      const isoDate = d.toISOString().split('T')[0] // "2026-02-14" 형식
+
       options.push({
-        value: `${month}월 ${day}일 (${dayOfWeek})`,
-        isWeekend: date.getDay() === 0 || date.getDay() === 6
+        value: isoDate,
+        label: `${month}월 ${day}일 (${dayOfWeek})`,
+        isWeekend: d.getDay() === 0 || d.getDay() === 6
       })
     }
-    
+
     return options
   }, [])
 
@@ -429,7 +430,7 @@ export default function CreateJoin() {
                           : 'bg-gp-card text-gp-text-secondary hover:bg-gp-border'
                       }`}
                     >
-                      {option.value}
+                      {option.label}
                     </button>
                   ))}
                 </div>
