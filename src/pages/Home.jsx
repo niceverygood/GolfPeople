@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History } from 'lucide-react'
+import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History, ArrowLeft, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
@@ -49,6 +49,7 @@ export default function Home({ onPropose }) {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     deleteNotification,
+    deleteAllNotifications,
     addPastCard,
     recommendationHistory,
     saveDailyRecommendation
@@ -408,6 +409,7 @@ export default function Home({ onPropose }) {
             onMarkAsRead={markNotificationAsRead}
             onMarkAllAsRead={markAllNotificationsAsRead}
             onDelete={deleteNotification}
+            onDeleteAll={deleteAllNotifications}
           />
         )}
       </AnimatePresence>
@@ -937,7 +939,7 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
 }
 
 // 알림 모달
-function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRead, onDelete }) {
+function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRead, onDelete, onDeleteAll }) {
   const navigate = useNavigate()
   
   const handleNotificationClick = (notification) => {
@@ -1008,7 +1010,12 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-gp-border safe-top">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-gp-gold" />
+            <button
+              onClick={onClose}
+              className="p-1.5 -ml-1.5 text-gp-text hover:text-gp-gold transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <h2 className="text-lg font-bold">알림</h2>
             {unreadCount > 0 && (
               <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
@@ -1016,22 +1023,25 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {unreadCount > 0 && (
               <button
                 onClick={onMarkAllAsRead}
-                className="p-2 text-gp-text-secondary hover:text-gp-gold transition-colors"
-                title="모두 읽음"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gp-gold bg-gp-gold/10 rounded-lg hover:bg-gp-gold/20 transition-colors"
               >
-                <CheckCheck className="w-5 h-5" />
+                <CheckCheck className="w-3.5 h-3.5" />
+                <span>전체 읽기</span>
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="p-2 text-gp-text-secondary hover:text-gp-text transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {notifications.length > 0 && (
+              <button
+                onClick={onDeleteAll}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-400 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>전체 삭제</span>
+              </button>
+            )}
           </div>
         </div>
         

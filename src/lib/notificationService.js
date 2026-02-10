@@ -339,6 +339,27 @@ export const markAllNotificationsAsRead = async (userId) => {
 }
 
 /**
+ * 모든 알림 삭제
+ */
+export const deleteAllNotifications = async (userId) => {
+  if (!isConnected() || !userId) return { success: false }
+
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (e) {
+    console.error('전체 알림 삭제 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
  * 읽지 않은 알림 개수
  */
 export const getUnreadCount = async (userId) => {

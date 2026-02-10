@@ -27,10 +27,13 @@ export const initKakao = () => {
 export const shareJoinToKakao = ({ title, date, time, location, url }) => {
   if (!window.Kakao) {
     console.error('Kakao SDK not loaded')
-    return false
+    return { success: false, reason: 'sdk_not_loaded' }
   }
 
-  initKakao()
+  const initialized = initKakao()
+  if (!initialized) {
+    return { success: false, reason: 'init_failed' }
+  }
 
   try {
     window.Kakao.Share.sendDefault({
@@ -54,9 +57,9 @@ export const shareJoinToKakao = ({ title, date, time, location, url }) => {
         },
       ],
     })
-    return true
+    return { success: true }
   } catch (e) {
     console.error('Kakao share error:', e)
-    return false
+    return { success: false, reason: 'share_error', message: e.message }
   }
 }
