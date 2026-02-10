@@ -385,20 +385,26 @@ export const appleSignIn = {
   isAvailable: () => isIOS(),
   
   // Apple 로그인 실행
-  signIn: async () => {
+  signIn: async (rawNonce) => {
     if (!isIOS()) {
       return { success: false, error: 'Apple Sign In is only available on iOS' }
     }
-    
+
     try {
-      const result = await SignInWithApple.authorize({
-        clientId: 'com.bottle.golfpeople', // 앱 번들 ID (capacitor.config.json의 appId와 일치)
+      const options = {
+        clientId: 'com.bottle.golfpeople',
         redirectURI: 'https://golf-people.vercel.app/auth/callback',
         scopes: 'email name',
         state: 'golfpeople_state',
-        nonce: 'golfpeople_nonce_' + Date.now(),
-      })
-      
+      }
+
+      // nonce가 전달된 경우에만 설정 (Supabase signInWithIdToken과 동일한 nonce 사용)
+      if (rawNonce) {
+        options.nonce = rawNonce
+      }
+
+      const result = await SignInWithApple.authorize(options)
+
       return {
         success: true,
         response: result.response,
@@ -406,7 +412,7 @@ export const appleSignIn = {
         user: {
           id: result.response.user,
           email: result.response.email || null,
-          name: result.response.givenName 
+          name: result.response.givenName
             ? `${result.response.givenName} ${result.response.familyName || ''}`.trim()
             : null,
           identityToken: result.response.identityToken,
