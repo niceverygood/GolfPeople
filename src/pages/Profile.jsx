@@ -9,7 +9,7 @@ import {
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
-import { db } from '../lib/supabase'
+import { db, storage } from '../lib/supabase'
 import { getNotificationSettings, updateNotificationSettings } from '../lib/notificationService'
 import { getUserRating } from '../lib/reviewService'
 import VerificationBadges from '../components/VerificationBadges'
@@ -90,7 +90,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { currentUser, proposals } = useApp()
-  const { user, profile: authProfile, isAuthenticated, signOut, loading: authLoading } = useAuth()
+  const { user, profile: authProfile, isAuthenticated, signOut, updateProfile, loading: authLoading } = useAuth()
   const { balance } = useMarker()
   const [profile, setProfile] = useState(null)
   const [scoreStats, setScoreStats] = useState(null)
@@ -181,15 +181,57 @@ export default function Profile() {
     window.location.reload()
   }
   
-  const handleProfileUpdate = (updatedProfile) => {
-    setProfile(updatedProfile)
-    localStorage.setItem('gp_profile', JSON.stringify(updatedProfile))
+  const handleProfileUpdate = async (updatedProfile) => {
+    // base64 사진을 Supabase Storage에 업로드
+    const uploadedPhotos = []
+    for (const photo of (updatedProfile.photos || [])) {
+      if (photo.startsWith('data:')) {
+        // base64 → Blob → 업로드
+        const res = await fetch(photo)
+        const blob = await res.blob()
+        const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' })
+        const { url, error } = await storage.uploadProfileImage(user.id, file)
+        if (!error && url) {
+          uploadedPhotos.push(url)
+        } else {
+          console.error('사진 업로드 실패:', error)
+          uploadedPhotos.push(photo) // 실패 시 base64 유지
+        }
+      } else {
+        uploadedPhotos.push(photo) // 이미 URL인 사진
+      }
+    }
+
+    const dbUpdates = {
+      photos: uploadedPhotos,
+      regions: updatedProfile.regions || [],
+      handicap: updatedProfile.handicap || '',
+      styles: updatedProfile.styles || [],
+      times: updatedProfile.times || [],
+      brands: updatedProfile.brands || [],
+    }
+
+    // Supabase DB 저장
+    if (isAuthenticated && user?.id) {
+      const { error } = await updateProfile(dbUpdates)
+      if (error) {
+        showToast.error('프로필 저장에 실패했습니다')
+        console.error('프로필 업데이트 에러:', error)
+      } else {
+        showToast.success('프로필이 저장되었습니다')
+      }
+    }
+
+    // 로컬 상태 업데이트
+    const merged = { ...updatedProfile, photos: uploadedPhotos }
+    setProfile(merged)
+    localStorage.setItem('gp_profile', JSON.stringify(merged))
     setShowEditModal(false)
   }
 
   // 유저 이름 (Supabase 프로필 또는 로컬)
   const displayName = authProfile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || currentUser?.name || '닉네임 설정'
-  const displayPhoto = authProfile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || profile?.photo
+  const displayPhoto = authProfile?.photos?.[0] || authProfile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || profile?.photos?.[0] || profile?.photo
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto pb-24">
