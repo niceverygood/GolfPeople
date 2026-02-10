@@ -302,6 +302,17 @@ export const applyToJoin = async (userId, joinId, message = '') => {
   }
 
   try {
+    // 본인 조인에 신청 방지
+    const { data: joinInfo } = await supabase
+      .from('joins')
+      .select('host_id')
+      .eq('id', joinId)
+      .single()
+
+    if (joinInfo?.host_id === userId) {
+      return { success: false, error: 'own_join' }
+    }
+
     // 이미 신청했는지 확인
     const { data: existing } = await supabase
       .from('join_applications')

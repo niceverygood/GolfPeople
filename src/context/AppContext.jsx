@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext'
 import { db, isConnected, realtime } from '../lib/supabase'
 import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
 import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi } from '../lib/joinService'
-import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi } from '../lib/notificationService'
+import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi, deleteAllNotifications as deleteAllNotificationsApi } from '../lib/notificationService'
 import { mapProfileToUser, mapNotification } from '../utils/profileMapper'
 
 const AppContext = createContext()
@@ -347,6 +347,7 @@ export function AppProvider({ children }) {
   // 조인 신청
   const applyToJoin = async (join, message = '') => {
     if (!userId) return false
+    if (join.hostId === userId) return false
     if (joinApplications.some(app => app.joinId === join.id)) return false
     const result = await applyToJoinApi(userId, join.id, message)
     if (result.success) {
@@ -410,6 +411,11 @@ export function AppProvider({ children }) {
   const deleteNotification = async (notificationId) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId))
     await db.notifications.delete(notificationId)
+  }
+
+  const deleteAllNotifications = async () => {
+    setNotifications([])
+    if (userId) await deleteAllNotificationsApi(userId)
   }
 
   const unreadNotificationCount = notifications.filter(n => !n.isRead).length
@@ -557,6 +563,7 @@ export function AppProvider({ children }) {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     deleteNotification,
+    deleteAllNotifications,
     // 새로고침
     refreshUsers,
     refreshJoins,

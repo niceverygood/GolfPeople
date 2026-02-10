@@ -43,7 +43,7 @@ export default function JoinDetail() {
   const join = joins.find(j => String(j.id) === String(id))
   const isSaved = savedJoins.includes(join?.id)
   const isApplied = joinApplications.some(app => app.joinId === join?.id)
-  const isHost = join?.hostId === user?.id
+  const isHost = join?.hostId && user?.id && String(join.hostId) === String(user.id)
 
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
@@ -448,13 +448,17 @@ function ShareModal({ join, onClose }) {
 
   // 카카오톡 공유
   const handleKakaoShare = () => {
-    // Capacitor 네이티브 앱에서는 카카오 SDK가 작동 안 할 수 있음
     if (!window.Kakao) {
-      showToast.error('카카오톡 공유는 웹에서만 지원됩니다.')
+      // SDK 미로드 시 네이티브 공유로 폴백
+      if (navigator.share) {
+        handleNativeShare()
+      } else {
+        showToast.error('카카오톡 공유를 사용할 수 없습니다. 링크를 복사해주세요.')
+      }
       return
     }
 
-    const success = shareJoinToKakao({
+    const result = shareJoinToKakao({
       title: join.title,
       date: formatJoinDate(join.date),
       time: join.time,
@@ -462,10 +466,12 @@ function ShareModal({ join, onClose }) {
       url: shareUrl
     })
 
-    if (success) {
+    if (result.success) {
       onClose()
+    } else if (result.reason === 'init_failed') {
+      showToast.error('카카오 SDK 초기화에 실패했습니다. 다시 시도해주세요.')
     } else {
-      showToast.error('카카오톡 공유에 실패했습니다.')
+      showToast.error('카카오톡 공유에 실패했습니다. 링크 복사를 이용해주세요.')
     }
   }
 

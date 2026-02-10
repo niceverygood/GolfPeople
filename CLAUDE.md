@@ -1,9 +1,116 @@
+<!--
+[CLAUDE 지시사항]
+이 파일은 골프피플 프로젝트 전용 문서입니다.
+- 위치: /Users/bottle/GolfPeople/CLAUDE.md (프로젝트 루트)
+- 용도: 이 프로젝트의 모든 정보를 여기에 기록
+  - 프로젝트 구조, 기술 스택, 핵심 파일
+  - 진행 상황, 남은 일정, TODO
+  - 코드 수정 내역, 버그 트래킹
+  - 노션 작성 초안, 회의 메모 등
+- 작업 일지(일별 요약)는 여기가 아니라 상위 폴더 /Users/bottle/CLAUDE.md에 작성
+- 이 파일은 Git에 커밋되어 다른 환경에서도 동일한 컨텍스트를 공유함
+-->
+
 # 골프피플 (GolfPeople) 개발 일지
 
 ## 프로젝트 개요
 - 골프 소셜 매칭 앱 (React + Vite + Capacitor + Supabase)
 - 배포: https://golf-people.vercel.app
 - iOS/Android 네이티브 빌드 (Capacitor 7)
+
+## 기술 스택
+- **프론트엔드**: React 18 + Vite + Tailwind CSS + Framer Motion
+- **백엔드/DB**: Supabase (PostgreSQL + Auth + Storage + Realtime + Edge Functions)
+- **네이티브**: Capacitor 7 (iOS/Android)
+- **상태관리**: React Context (AppContext, AuthContext, MarkerContext)
+- **라우팅**: React Router v6
+- **배포**: Vercel (Web) + App Store (iOS) + Google Play (Android)
+
+## 주요 파일 구조
+```
+src/
+├── context/       # AppContext, AuthContext, MarkerContext
+├── pages/         # Home, Join, JoinDetail, Profile, Saved, ChatList, ChatRoom 등
+├── components/    # 공통 컴포넌트 (VerificationBadges, OfflineBanner 등)
+├── lib/           # Supabase 서비스 (joinService, friendService, notificationService, kakao 등)
+├── utils/         # 유틸리티 (formatTime, errorHandler, storage, profileMapper 등)
+└── hooks/         # 커스텀 훅 (usePhoneVerification 등)
+```
+
+## 주요 컨벤션
+- Supabase RPC/쿼리 사용 (직접 SQL 없음)
+- showToast로 사용자 피드백 (alert() 사용 안 함)
+- Tailwind CSS 클래스 (gp-dark, gp-card, gp-gold, gp-border, gp-text, gp-text-secondary)
+- lucide-react 아이콘 사용
+- framer-motion 애니메이션
+
+---
+
+## 2026-02-10 (화) 작업일지
+
+### 이전 커밋 (오늘 오전~오후)
+- 조인 신청 관련 4가지 버그 수정 (1d270c8)
+- 카카오 SDK 공유 기능 추가 (c79c32f)
+- 추천 카드 '상세' 텍스트 제거 + 카카오 공유→네이티브 공유 시트 (876016d)
+- 전체 앱 뒤로가기 네비게이션 안전 처리 10개 페이지 (8322a48)
+- 조인 만들기 더블클릭 중복 생성 방지 (0539a1e)
+
+### 현재 세션 수정사항
+1. **카카오톡 공유 에러 수정**
+   - `src/lib/kakao.js`: `shareJoinToKakao` 반환값을 `{ success, reason }` 객체로 변경
+   - `initKakao()` 실패 시 공유 시도하지 않도록 수정
+   - `src/pages/JoinDetail.jsx`: SDK 미로드 시 네이티브 공유로 폴백, 에러 원인별 메시지 분기
+
+2. **알림 모달 UI 개선**
+   - 닫기(X) 버튼 → 뒤로가기(←) 버튼 변경 (ArrowLeft 아이콘)
+   - "전체 삭제" 버튼 신규 추가 (빨간색 Trash2 아이콘, 텍스트 라벨 포함)
+   - "전체 읽기" 버튼에 텍스트 라벨 추가 (아이콘만 → 아이콘+텍스트)
+   - `src/lib/notificationService.js`: `deleteAllNotifications()` 함수 신규
+   - `src/context/AppContext.jsx`: `deleteAllNotifications` 상태 함수 + export
+   - `src/pages/Home.jsx`: NotificationModal에 `onDeleteAll` prop 연결
+
+3. **자기 조인에 자기 신청 방지**
+   - `src/lib/joinService.js`: `applyToJoin`에서 host_id === userId 체크 추가
+   - `src/context/AppContext.jsx`: 클라이언트 사이드 hostId 체크 추가
+   - `src/pages/JoinDetail.jsx`: `isHost` 비교를 String 변환으로 타입 안전하게 수정
+
+### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | v1.0.2 | App Store 심사 제출 완료 |
+| Android | v1.0.2 | Google Play 심사 제출 완료 |
+| Web | 최신 | Vercel 자동 배포 (git push 시) |
+
+### 남은 작업
+| 우선순위 | 항목 | 상태 |
+|---------|------|------|
+| 🔴 | iOS/Android 심사 승인 대기 | 심사 중 |
+| 🟡 | 카카오 알림톡 템플릿 검수 완료 확인 | 카카오 심사 대기 |
+| 🟡 | 카카오 JS 키 교체 확인 (현재 키 유효성) | 확인 필요 |
+| 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
+| 🟢 | 시드 데이터 정리 (실 서비스 전 삭제) | 나중에 |
+
+---
+
+## 2026-02-09 (일) 작업일지
+
+### 완료된 작업
+- async/await 누락 수정 7곳 (createNotification 6곳, markAsRead 1곳)
+- ChatRoom 신고 결과 미확인 → DB 에러 체크 후 토스트 분기 처리
+- formatTime.js Invalid Date 가드 추가 (4개 함수 전체)
+- 추천 카드 알고리즘 전면 개선: modulo → seeded shuffle + 시간대별 중복 제거
+- 추천 카드 3장 레이아웃, 지나간 추천 14일 보관
+- 저장함 조인신청 호스트 정보 매핑 수정
+- 하단 탭 '프로필' → '마이페이지' 변경
+- 채팅 페이지 '친구' 탭 제거
+- 저장함 친구요청 프로필 이미지 fallback
+- 조인 지역 필터 UI 개선 (주요 5개 + 더보기)
+- 카카오 알림톡 동의 고지 문구 추가 (검수 재신청)
+- 골프장 크롤링 자동화 (101개 → 242개)
+- 지역 필터 동적 생성 (하드코딩 제거)
+- 조인 생성 async/await 누락 버그 수정
+- 매칭완료 "대화 시작하기" 버튼 수정
+- 회원탈퇴 로직 개선 (신고/차단 기록 보존 + 아카이브)
 
 ---
 
