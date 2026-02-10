@@ -10,6 +10,7 @@ import MarkerIcon from '../components/icons/MarkerIcon'
 import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
+import { shareJoinToKakao } from '../lib/kakao'
 
 const formatJoinDate = (dateStr) => {
   if (!dateStr) return ''
@@ -440,17 +441,45 @@ function ShareModal({ join, onClose }) {
     }
   }
 
+  // 카카오톡 공유
+  const handleKakaoShare = () => {
+    const success = shareJoinToKakao({
+      title: join.title,
+      date: formatJoinDate(join.date),
+      time: join.time,
+      location: join.location,
+      url: shareUrl
+    })
+
+    if (success) {
+      onClose()
+    } else {
+      showToast.error('카카오톡 공유에 실패했습니다.')
+    }
+  }
+
   const shareOptions = [
-    { 
-      icon: Link, 
-      label: copied ? '복사됨!' : '링크 복사', 
+    {
+      icon: Link,
+      label: copied ? '복사됨!' : '링크 복사',
       color: copied ? 'bg-gp-green' : 'bg-gp-card',
       action: handleCopyLink,
       iconColor: copied ? 'text-white' : 'text-gp-text'
     },
     {
+      icon: () => (
+        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="#3C1E1E">
+          <path d="M12 3C6.477 3 2 6.463 2 10.586c0 2.648 1.758 4.976 4.396 6.306-.179.67-.656 2.433-.752 2.81-.118.464.171.458.36.334.148-.098 2.357-1.599 3.318-2.248.55.078 1.11.117 1.678.117 5.523 0 10-3.463 10-7.319C21 6.463 17.523 3 12 3z"/>
+        </svg>
+      ),
+      label: '카카오톡',
+      color: 'bg-[#FEE500]',
+      action: handleKakaoShare,
+      iconColor: 'text-black'
+    },
+    {
       icon: Share2,
-      label: '공유하기',
+      label: '더보기',
       color: 'bg-gp-blue',
       action: handleNativeShare,
       iconColor: 'text-white'
