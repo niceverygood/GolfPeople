@@ -101,6 +101,7 @@ export default function Profile() {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showBlockModal, setShowBlockModal] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // URL 파라미터로 설정 모달 자동 열기 (?settings=open)
   useEffect(() => {
@@ -182,51 +183,57 @@ export default function Profile() {
   }
   
   const handleProfileUpdate = async (updatedProfile) => {
-    // base64 사진을 Supabase Storage에 업로드
-    const uploadedPhotos = []
-    for (const photo of (updatedProfile.photos || [])) {
-      if (photo.startsWith('data:')) {
-        // base64 → Blob → 업로드
-        const res = await fetch(photo)
-        const blob = await res.blob()
-        const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' })
-        const { url, error } = await storage.uploadProfileImage(user.id, file)
-        if (!error && url) {
-          uploadedPhotos.push(url)
+    if (isSaving) return
+    setIsSaving(true)
+
+    try {
+      // base64 사진을 Supabase Storage에 업로드
+      const uploadedPhotos = []
+      for (const photo of (updatedProfile.photos || [])) {
+        if (photo.startsWith('data:')) {
+          const res = await fetch(photo)
+          const blob = await res.blob()
+          const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' })
+          const { url, error } = await storage.uploadProfileImage(user.id, file)
+          uploadedPhotos.push(!error && url ? url : photo)
         } else {
-          console.error('사진 업로드 실패:', error)
-          uploadedPhotos.push(photo) // 실패 시 base64 유지
+          uploadedPhotos.push(photo)
         }
-      } else {
-        uploadedPhotos.push(photo) // 이미 URL인 사진
       }
-    }
 
-    const dbUpdates = {
-      photos: uploadedPhotos,
-      regions: updatedProfile.regions || [],
-      handicap: updatedProfile.handicap || '',
-      styles: updatedProfile.styles || [],
-      times: updatedProfile.times || [],
-      brands: updatedProfile.brands || [],
-    }
-
-    // Supabase DB 저장
-    if (isAuthenticated && user?.id) {
-      const { error } = await updateProfile(dbUpdates)
-      if (error) {
-        showToast.error('프로필 저장에 실패했습니다')
-        console.error('프로필 업데이트 에러:', error)
-      } else {
+      // Supabase DB 저장 (brands 컬럼 미존재 → 제외)
+      if (isAuthenticated && user?.id) {
+        const { error } = await updateProfile({
+          photos: uploadedPhotos,
+          regions: updatedProfile.regions || [],
+          handicap: updatedProfile.handicap || '',
+          styles: updatedProfile.styles || [],
+          times: updatedProfile.times || [],
+        })
+        if (error) {
+          showToast.error('프로필 저장에 실패했습니다')
+          console.error('프로필 업데이트 에러:', error)
+          return
+        }
         showToast.success('프로필이 저장되었습니다')
       }
-    }
 
-    // 로컬 상태 업데이트
-    const merged = { ...updatedProfile, photos: uploadedPhotos }
-    setProfile(merged)
-    localStorage.setItem('gp_profile', JSON.stringify(merged))
-    setShowEditModal(false)
+      // brands 로컬 저장 (DB 컬럼 추가 전)
+      if (updatedProfile.brands?.length) {
+        localStorage.setItem('gp_brands', JSON.stringify(updatedProfile.brands))
+      }
+
+      // 로컬 상태 업데이트 + 모달 닫기
+      const merged = { ...updatedProfile, photos: uploadedPhotos }
+      setProfile(merged)
+      localStorage.setItem('gp_profile', JSON.stringify(merged))
+      setShowEditModal(false)
+    } catch (err) {
+      console.error('프로필 저장 중 에러:', err)
+      showToast.error('저장 중 오류가 발생했습니다')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // 유저 이름 (Supabase 프로필 또는 로컬)
@@ -236,7 +243,7 @@ export default function Profile() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto pb-24">
       {/* 헤더 배경 */}
-      <div className="relative h-40 bg-gradient-to-br from-gp-gold/20 to-gp-green-dark/20">
+      <div className="relative h-40 bg-gradient-to-br from-gp-gold/20 to-gp-green-dark/20 flex-shrink-0">
         <div className="absolute inset-0 bg-gp-black/50" />
       </div>
 
@@ -531,6 +538,7 @@ export default function Profile() {
             profile={profile}
             onClose={() => setShowEditModal(false)}
             onSave={handleProfileUpdate}
+            isSaving={isSaving}
           />
         )}
       </AnimatePresence>
@@ -567,7 +575,7 @@ export default function Profile() {
 }
 
 // 프로필 수정 모달
-function EditProfileModal({ profile, onClose, onSave }) {
+function EditProfileModal({ profile, onClose, onSave, isSaving }) {
   const [editedProfile, setEditedProfile] = useState(() => {
     const base = profile || {
       photos: [],
@@ -736,11 +744,12 @@ function EditProfileModal({ profile, onClose, onSave }) {
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h2 className="text-lg font-bold">프로필 수정</h2>
-        <button 
+        <button
           onClick={handleSave}
-          className="text-gp-gold font-semibold"
+          disabled={isSaving}
+          className={`font-semibold ${isSaving ? 'text-gp-text-secondary' : 'text-gp-gold'}`}
         >
-          저장
+          {isSaving ? '저장중...' : '저장'}
         </button>
       </div>
       
