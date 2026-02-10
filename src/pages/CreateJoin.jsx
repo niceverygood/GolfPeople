@@ -218,6 +218,7 @@ export default function CreateJoin() {
   }
 
   const handleNext = async () => {
+    if (loading) return
     if (step < 2) {
       setStep(step + 1)
     } else {
@@ -820,15 +821,15 @@ export default function CreateJoin() {
         <div className="max-w-[430px] mx-auto">
           <button
             onClick={handleNext}
-            disabled={!canProceed()}
+            disabled={!canProceed() || loading}
             className={`w-full py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
-              canProceed()
+              canProceed() && !loading
                 ? 'btn-gold'
                 : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
             }`}
           >
-            {step === 2 ? '조인 만들기' : '다음'}
-            <ChevronRight className="w-5 h-5" />
+            {loading ? '생성 중...' : step === 2 ? '조인 만들기' : '다음'}
+            {!loading && <ChevronRight className="w-5 h-5" />}
           </button>
         </div>
       </div>
