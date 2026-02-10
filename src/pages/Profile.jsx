@@ -1201,10 +1201,42 @@ function SettingsModal({ onClose }) {
           ))}
         </div>
 
+        {/* 정보 */}
+        <h3 className="text-sm text-gp-text-secondary mb-2 px-2">정보</h3>
+        <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">
+          <a
+            href="/support"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between p-4 border-b border-gp-border"
+          >
+            <span>고객 지원</span>
+            <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
+          </a>
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between p-4 border-b border-gp-border"
+          >
+            <span>개인정보처리방침</span>
+            <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
+          </a>
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between p-4"
+          >
+            <span>이용약관</span>
+            <ChevronRight className="w-5 h-5 text-gp-text-secondary" />
+          </a>
+        </div>
+
         {/* 계정 관리 */}
         <h3 className="text-sm text-gp-text-secondary mb-2 px-2">계정 관리</h3>
         <div className="bg-gp-card rounded-2xl overflow-hidden">
-          <button 
+          <button
             className="w-full flex items-center justify-between p-4 text-gp-red"
             onClick={() => setShowDeleteConfirm(true)}
           >
