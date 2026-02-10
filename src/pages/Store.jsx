@@ -521,7 +521,7 @@ export default function Store() {
                     {isNative() ? (
                       <span className="flex items-center justify-center gap-1">
                         <Smartphone className="w-3 h-3" />
-                        {isIOS() ? 'Apple Pay' : 'Google Pay'}로 결제됩니다
+                        {isIOS() ? 'App Store' : 'Google Play'} 인앱 결제로 진행됩니다
                       </span>
                     ) : (
                       '신용카드/간편결제로 결제됩니다'

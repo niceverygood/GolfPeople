@@ -1127,7 +1127,7 @@ function SettingsModal({ onClose }) {
         <div className="w-10" />
       </div>
 
-      <div className="p-4 overflow-y-auto" style={{ height: 'calc(100vh - 60px)' }}>
+      <div className="p-4 pb-20 overflow-y-auto" style={{ height: 'calc(100vh - 60px)', WebkitOverflowScrolling: 'touch' }}>
         {/* 알림 설정 */}
         <h3 className="text-sm text-gp-text-secondary mb-2 px-2">알림 설정</h3>
         <div className="bg-gp-card rounded-2xl overflow-hidden mb-6">

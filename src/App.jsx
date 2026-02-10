@@ -25,6 +25,7 @@ import Friends from './pages/Friends'
 import Review from './pages/Review'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import Support from './pages/Support'
 
 // Components
 import TabBar from './components/TabBar'
@@ -187,6 +188,9 @@ function AppContent() {
   }
   if (location.pathname === '/terms') {
     return <Terms />
+  }
+  if (location.pathname === '/support') {
+    return <Support />
   }
 
   const isCallbackPage = location.pathname.startsWith('/auth/callback')
