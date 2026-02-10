@@ -47,7 +47,7 @@ const TABS = [
 
 export default function Join() {
   const navigate = useNavigate()
-  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin } = useApp()
+  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests } = useApp()
   const { balance, spendMarkers } = useMarker()
 
   // 전화번호 인증 훅
@@ -239,17 +239,21 @@ export default function Join() {
               {filteredJoins.length === 0 ? (
                 <EmptyState message="조인이 없어요" />
               ) : (
-                filteredJoins.map((join, index) => (
-                  <JoinCard 
-                    key={join.id} 
-                    join={join} 
-                    index={index}
-                    isSaved={savedJoins.includes(join.id)}
-                    onSave={handleSave}
-                    onClick={() => handleJoinClick(join.id)}
-                    onProfileClick={handleProfileClick}
-                  />
-                ))
+                filteredJoins.map((join, index) => {
+                  const pendingCount = receivedJoinRequests.filter(req => req.joinId === join.id && req.status === 'pending').length
+                  return (
+                    <JoinCard
+                      key={join.id}
+                      join={join}
+                      index={index}
+                      isSaved={savedJoins.includes(join.id)}
+                      onSave={handleSave}
+                      onClick={() => handleJoinClick(join.id)}
+                      onProfileClick={handleProfileClick}
+                      pendingCount={pendingCount}
+                    />
+                  )
+                })
               )}
             </motion.div>
           )}
@@ -271,16 +275,20 @@ export default function Join() {
                   onButtonClick={() => navigate('/join/create')}
                 />
               ) : (
-                filteredMyJoins.map((join, index) => (
-                  <MyJoinCard
-                    key={join.id}
-                    join={join}
-                    index={index}
-                    onDelete={() => setShowDeleteConfirm(join.id)}
-                    onEdit={() => navigate(`/join/create?edit=${join.id}`)}
-                    onClick={() => handleJoinClick(join.id)}
-                  />
-                ))
+                filteredMyJoins.map((join, index) => {
+                  const pendingCount = receivedJoinRequests.filter(req => req.joinId === join.id && req.status === 'pending').length
+                  return (
+                    <MyJoinCard
+                      key={join.id}
+                      join={join}
+                      index={index}
+                      onDelete={() => setShowDeleteConfirm(join.id)}
+                      onEdit={() => navigate(`/join/create?edit=${join.id}`)}
+                      onClick={() => handleJoinClick(join.id)}
+                      pendingCount={pendingCount}
+                    />
+                  )
+                })
               )}
             </motion.div>
           )}
@@ -358,7 +366,7 @@ export default function Join() {
 }
 
 // 조인 카드 (모든 조인)
-function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
+function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick, pendingCount = 0 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -464,7 +472,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick }) {
 }
 
 // 내가 올린 조인 카드
-function MyJoinCard({ join, index, onDelete, onEdit, onClick }) {
+function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0 }) {
   const [showMenu, setShowMenu] = useState(false)
 
   return (
@@ -591,7 +599,7 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick }) {
         {/* 신청 현황 */}
         <div className="mt-3 pt-3 border-t border-gp-border flex items-center justify-between">
           <span className="text-sm text-gp-text-secondary">
-            신청 대기중: <span className="text-gp-gold font-semibold">0명</span>
+            신청 대기중: <span className="text-gp-gold font-semibold">{pendingCount}명</span>
           </span>
           <span className={`text-xs px-2 py-1 rounded-full ${
             join.spotsFilled >= join.spotsTotal

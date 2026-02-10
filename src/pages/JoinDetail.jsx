@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Bookmark, BookmarkCheck, Share2, Copy, MessageCircle, Link, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerConfirmModal from '../components/MarkerConfirmModal'
@@ -28,6 +29,7 @@ export default function JoinDetail() {
   const navigate = useNavigate()
   const location = useLocation()
   const { joins, savedJoins, saveJoin, unsaveJoin, applyToJoin, joinApplications } = useApp()
+  const { user } = useAuth()
   const { balance, spendMarkers } = useMarker()
 
   // 전화번호 인증 훅
@@ -41,6 +43,7 @@ export default function JoinDetail() {
   const join = joins.find(j => String(j.id) === String(id))
   const isSaved = savedJoins.includes(join?.id)
   const isApplied = joinApplications.some(app => app.joinId === join?.id)
+  const isHost = join?.hostId === user?.id
 
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
@@ -284,28 +287,30 @@ export default function JoinDetail() {
         </div>
       </div>
 
-      {/* 하단 신청 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
-        <div className="max-w-[430px] mx-auto">
-          <button
-            onClick={handleApplyClick}
-            disabled={spotsLeft === 0 || isApplied}
-            className={`w-full py-4 rounded-2xl font-semibold text-lg ${
-              isApplied
-                ? 'bg-gp-green/20 text-gp-green cursor-not-allowed'
+      {/* 하단 신청 버튼 (호스트는 숨김) */}
+      {!isHost && (
+        <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
+          <div className="max-w-[430px] mx-auto">
+            <button
+              onClick={handleApplyClick}
+              disabled={spotsLeft === 0 || isApplied}
+              className={`w-full py-4 rounded-2xl font-semibold text-lg ${
+                isApplied
+                  ? 'bg-gp-green/20 text-gp-green cursor-not-allowed'
+                  : spotsLeft > 0
+                    ? 'btn-gold'
+                    : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
+              }`}
+            >
+              {isApplied
+                ? '✓ 신청 완료'
                 : spotsLeft > 0
-                  ? 'btn-gold'
-                  : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
-            }`}
-          >
-            {isApplied 
-              ? '✓ 신청 완료' 
-              : spotsLeft > 0 
-                ? `신청하기 (${spotsLeft}자리 남음)` 
-                : '마감되었습니다'}
-          </button>
+                  ? `신청하기 (${spotsLeft}자리 남음)`
+                  : '마감되었습니다'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 신청 모달 */}
       {showApplyModal && (
@@ -443,6 +448,12 @@ function ShareModal({ join, onClose }) {
 
   // 카카오톡 공유
   const handleKakaoShare = () => {
+    // Capacitor 네이티브 앱에서는 카카오 SDK가 작동 안 할 수 있음
+    if (!window.Kakao) {
+      showToast.error('카카오톡 공유는 웹에서만 지원됩니다.')
+      return
+    }
+
     const success = shareJoinToKakao({
       title: join.title,
       date: formatJoinDate(join.date),
