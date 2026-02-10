@@ -1,7 +1,19 @@
+import { useNavigate } from 'react-router-dom'
+
 export default function Terms() {
+  const navigate = useNavigate()
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">이용약관</h1>
+    <div className="min-h-screen bg-white text-gray-900 max-w-2xl mx-auto">
+      <div className="sticky top-0 bg-white border-b border-gray-200 flex items-center px-4 py-3">
+        <button onClick={() => navigate(-1)} className="p-1 mr-3">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <h1 className="text-lg font-bold">이용약관</h1>
+      </div>
+      <div className="p-6">
       <p className="text-sm text-gray-500 mb-6">시행일: 2026년 2월 5일</p>
 
       <section className="mb-6">
@@ -96,6 +108,7 @@ export default function Terms() {
           이 약관은 2026년 2월 5일부터 시행됩니다.
         </p>
       </section>
+    </div>
     </div>
   )
 }
