@@ -601,13 +601,13 @@ export const storage = {
     const fileName = `${userId}/${Date.now()}.${fileExt}`
     
     const { error } = await supabase.storage
-      .from('profile-images')
+      .from('avatars')
       .upload(fileName, file, { cacheControl: '3600', upsert: false })
     
     if (error) return { url: null, error }
     
     const { data: { publicUrl } } = supabase.storage
-      .from('profile-images')
+      .from('avatars')
       .getPublicUrl(fileName)
     
     return { url: publicUrl, error: null }
