@@ -193,26 +193,39 @@ export const createNotification = async ({
     }
 
     // 푸시 알림 요청 (Edge Function 호출)
+    let pushFailed = false
+    let kakaoFailed = false
+
     if (options.push) {
-      await requestPushNotification({
-        recipientId,
-        title,
-        body,
-        data: { type, ...data }
-      })
+      try {
+        await requestPushNotification({
+          recipientId,
+          title,
+          body,
+          data: { type, ...data }
+        })
+      } catch (e) {
+        pushFailed = true
+        console.error('푸시 알림 발송 실패:', e)
+      }
     }
 
     // 카카오 알림톡 요청 (Edge Function 호출)
     if (options.kakao && template.kakaoTemplate) {
-      const kakaoVariables = convertToKakaoVariables(type, data)
-      await requestKakaoNotification({
-        recipientId,
-        templateCode: template.kakaoTemplate,
-        variables: kakaoVariables
-      })
+      try {
+        const kakaoVariables = convertToKakaoVariables(type, data)
+        await requestKakaoNotification({
+          recipientId,
+          templateCode: template.kakaoTemplate,
+          variables: kakaoVariables
+        })
+      } catch (e) {
+        kakaoFailed = true
+        console.error('카카오 알림톡 발송 실패:', e)
+      }
     }
 
-    return { success: true }
+    return { success: true, pushFailed, kakaoFailed }
   } catch (e) {
     console.error('알림 생성 에러:', e)
     return { success: false, error: e.message }

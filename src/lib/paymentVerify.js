@@ -69,9 +69,11 @@ export const pollPurchaseConfirmation = async (transactionId, timeout = 15000) =
   const startTime = Date.now()
   const interval = 2000 // 2초 간격
 
+  let consecutiveErrors = 0
+
   while (Date.now() - startTime < timeout) {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('purchase_records')
         .select('verification_status')
         .eq('transaction_id', transactionId)
@@ -80,8 +82,22 @@ export const pollPurchaseConfirmation = async (transactionId, timeout = 15000) =
       if (data?.verification_status === 'verified') {
         return true
       }
-    } catch {
-      // 아직 레코드 없음 → 계속 폴링
+      // PGRST116 = 레코드 없음 (정상 → 계속 폴링)
+      if (error && error.code !== 'PGRST116') {
+        consecutiveErrors++
+        if (consecutiveErrors >= 3) {
+          console.error('결제 확인 반복 에러:', error)
+          return false
+        }
+      } else {
+        consecutiveErrors = 0
+      }
+    } catch (e) {
+      consecutiveErrors++
+      if (consecutiveErrors >= 3) {
+        console.error('결제 확인 네트워크 에러:', e)
+        return false
+      }
     }
 
     await new Promise(resolve => setTimeout(resolve, interval))

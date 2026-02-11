@@ -44,18 +44,29 @@ export function ChatProvider({ children }) {
   }, [user?.id])
 
   // 채팅방 입장
+  const enterRoomIdRef = useRef(null)
+
   const enterRoom = useCallback(async (roomId) => {
     if (!user?.id || !roomId) return
 
+    // race condition 방지: 현재 요청 ID 기록
+    enterRoomIdRef.current = roomId
     setLoading(true)
 
-    // 기존 구독 해제
+    // 기존 구독 즉시 해제
     if (roomUnsubscribeRef.current) {
       roomUnsubscribeRef.current()
+      roomUnsubscribeRef.current = null
     }
 
     // 메시지 로드
     const result = await getMessages(roomId)
+
+    // 로드 완료 시점에 다른 방으로 전환된 경우 무시
+    if (enterRoomIdRef.current !== roomId) {
+      setLoading(false)
+      return
+    }
 
     if (result.success) {
       setMessages(result.messages)
@@ -162,6 +173,16 @@ export function ChatProvider({ children }) {
 
   // 읽지 않은 메시지 총 개수
   const totalUnreadCount = chatRooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0)
+
+  // 로그아웃 시 상태 초기화
+  useEffect(() => {
+    if (!user?.id) {
+      setChatRooms([])
+      setCurrentRoom(null)
+      setMessages([])
+      setError(null)
+    }
+  }, [user?.id])
 
   // 초기 로드 및 전체 채팅방 구독
   useEffect(() => {

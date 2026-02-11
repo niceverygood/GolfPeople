@@ -52,19 +52,27 @@ export const MarkerProvider = ({ children }) => {
     }
   })
 
-  // 잔액 저장 (로컬 우선)
+  // 잔액 저장 (로컬 우선 + 서버 동기화 재시도)
   const saveBalance = useCallback((newBalance) => {
-    console.log('잔액 저장:', newBalance)
     setBalance(newBalance)
     localStorage.setItem('gp_marker_balance', newBalance.toString())
-    
-    // Supabase 동기화 (비동기, 에러 무시)
+
+    // Supabase 동기화 (실패 시 1회 재시도)
     if (isConnected() && user) {
-      supabase
-        .from('marker_wallets')
-        .upsert({ user_id: user.id, balance: newBalance }, { onConflict: 'user_id' })
-        .then(() => console.log('Supabase 잔액 동기화 완료'))
-        .catch(err => console.log('Supabase 동기화 실패 (무시됨):', err.message))
+      const syncToServer = (retryCount = 0) => {
+        supabase
+          .from('marker_wallets')
+          .upsert({ user_id: user.id, balance: newBalance }, { onConflict: 'user_id' })
+          .then(() => {})
+          .catch(err => {
+            if (retryCount < 1) {
+              setTimeout(() => syncToServer(retryCount + 1), 3000)
+            } else {
+              console.error('마커 잔액 동기화 실패 (재시도 소진):', err.message)
+            }
+          })
+      }
+      syncToServer()
     }
   }, [user])
 
@@ -132,7 +140,7 @@ export const MarkerProvider = ({ children }) => {
           return { success: false, error: 'insufficient_balance', message: data.message || '마커가 부족합니다' }
         } else if (data && data.success) {
           // 서버 검증 성공 - 서버 잔액으로 동기화
-          const serverBalance = data.new_balance
+          const serverBalance = typeof data.new_balance === 'number' ? data.new_balance : balance - cost
           setBalance(serverBalance)
           localStorage.setItem('gp_marker_balance', serverBalance.toString())
 
