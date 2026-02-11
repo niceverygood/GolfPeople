@@ -45,11 +45,39 @@ import { initializePush } from './lib/pushService'
 import { initializeIAP, setUserId as setIAPUserId } from './lib/iap'
 import { supabase } from './lib/supabase'
 
+// 공개 페이지 (인증 없이 접근 가능)
+const PUBLIC_PATHS = ['/privacy', '/terms', '/support']
+const PUBLIC_COMPONENTS = {
+  '/privacy': Privacy,
+  '/terms': Terms,
+  '/support': Support,
+}
+
+// 인증이 필요한 라우트를 보호하는 컴포넌트
+function ProtectedRoute({ children }) {
+  const location = useLocation()
+  const { isAuthenticated } = useAuth()
+
+  if (!isAuthenticated) {
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </AnimatePresence>
+    )
+  }
+
+  return children
+}
+
 // 메인 앱 콘텐츠 (AuthProvider 내부에서 사용)
 function AppContent() {
   const location = useLocation()
   const { user, profile, loading: authLoading, isAuthenticated } = useAuth()
-  
+
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
@@ -181,41 +209,34 @@ function AppContent() {
     return <Splash /> // 로딩 중에도 스플래시 표시
   }
 
-  // 3. 로그인 안 되어 있으면 로그인 화면 (콜백 페이지 제외)
-  // 개인정보 처리방침, 이용약관은 로그인 없이 접근 가능
-  if (location.pathname === '/privacy') {
-    return <Privacy />
-  }
-  if (location.pathname === '/terms') {
-    return <Terms />
-  }
-  if (location.pathname === '/support') {
-    return <Support />
+  // 3. 공개 페이지 - 인증 없이 접근 가능
+  const PublicPage = PUBLIC_COMPONENTS[location.pathname]
+  if (PublicPage) {
+    return <PublicPage />
   }
 
-  const isCallbackPage = location.pathname.startsWith('/auth/callback')
-  if (!isAuthenticated && !isCallbackPage) {
-    return (
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
-          <Route path="*" element={<Login />} />
-        </Routes>
-      </AnimatePresence>
-    )
-  }
+  // 4. 인증 보호 영역 (로그인 필요)
+  return (
+    <ProtectedRoute>
+      <AuthenticatedApp
+        isOnboarded={isOnboarded}
+        onOnboardingComplete={handleOnboardingComplete}
+        openProposalModal={openProposalModal}
+        closeProposalModal={closeProposalModal}
+        proposalModal={proposalModal}
+      />
+    </ProtectedRoute>
+  )
+}
 
-  // 4. 로그인 후 온보딩 (사진등록 + 프로필등록)
+// 인증 후 메인 앱 (온보딩 + 라우팅)
+function AuthenticatedApp({ isOnboarded, onOnboardingComplete, openProposalModal, closeProposalModal, proposalModal }) {
+  const location = useLocation()
+
   if (!isOnboarded) {
-    return <Onboarding onComplete={handleOnboardingComplete} />
+    return <Onboarding onComplete={onOnboardingComplete} />
   }
 
-  // 5. 전화번호 인증 - 선택적 (프로필에서 나중에 인증 가능)
-  // 인증 강제하지 않음 - 사용자가 원할 때 프로필에서 인증
-
-  // 6. 메인 앱
-  // 탭바 표시 여부
   const showTabBar = ['/', '/join', '/chat', '/saved', '/profile'].includes(location.pathname)
 
   return (
