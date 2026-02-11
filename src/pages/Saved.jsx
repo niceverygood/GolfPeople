@@ -45,6 +45,7 @@ function StatusBadge({ status }) {
     pending: { label: '대기중', color: 'bg-yellow-500/20 text-yellow-400', icon: Loader },
     accepted: { label: '매칭완료', color: 'bg-gp-green/20 text-gp-green', icon: CheckCircle },
     rejected: { label: '거절됨', color: 'bg-red-500/20 text-red-400', icon: XCircle },
+    expired: { label: '만료됨', color: 'bg-gray-500/20 text-gray-400', icon: Clock },
   }
   
   const config = statusConfig[status] || statusConfig.pending
@@ -99,7 +100,7 @@ function Section({ title, count, children, defaultOpen = true }) {
   )
 }
 
-export default function Saved({ onPropose }) {
+export default function Saved() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
@@ -173,6 +174,10 @@ export default function Saved({ onPropose }) {
   const handleStartJoinChat = async (request, type) => {
     const targetUserId = type === 'sent' ? request.hostId : request.userId
     if (!targetUserId) return
+    if (String(targetUserId) === String(user?.id)) {
+      showToast.error('자기 자신과는 채팅할 수 없습니다')
+      return
+    }
     const result = await startDirectChat(targetUserId)
     if (result.success) {
       navigate(`/chat/${result.roomId}`)
@@ -200,9 +205,9 @@ export default function Saved({ onPropose }) {
   const sentPendingFriends = friendRequests.filter(r => r.status === 'pending')
   const receivedPendingFriends = receivedFriendRequests.filter(r => r.status === 'pending')
   
-  // 조인신청 - 대기중만 (내가 보낸 + 내가 받은)
-  const sentPendingJoins = joinApplications.filter(a => a.status === 'pending')
-  const receivedPendingJoins = receivedJoinRequests.filter(r => r.status === 'pending')
+  // 조인신청 - 대기중 + 만료됨 (내가 보낸 + 내가 받은)
+  const sentPendingJoins = joinApplications.filter(a => a.status === 'pending' || a.status === 'expired')
+  const receivedPendingJoins = receivedJoinRequests.filter(r => r.status === 'pending' || r.status === 'expired')
   
   // 매칭완료 - 친구 (수락된 것들, 탈퇴 유저 제외)
   const matchedSentFriends = friendRequests.filter(r => r.status === 'accepted' && r.userName)
@@ -338,7 +343,7 @@ export default function Saved({ onPropose }) {
                         key={user.id}
                         user={user}
                         onRemove={() => unlikeUser(user.id)}
-                        onPropose={() => onPropose(user)}
+                        onProfileClick={() => navigate(`/user/${user.id}`)}
                       />
                     ))
                   )}
@@ -600,7 +605,7 @@ export default function Saved({ onPropose }) {
 }
 
 // 관심 유저 카드
-function SavedUserCard({ user, onRemove, onPropose }) {
+function SavedUserCard({ user, onRemove, onProfileClick }) {
   return (
     <motion.div
       layout
@@ -649,10 +654,10 @@ function SavedUserCard({ user, onRemove, onPropose }) {
           </div>
 
           <button
-            onClick={onPropose}
+            onClick={onProfileClick}
             className="w-full py-2 rounded-xl btn-gold text-sm font-semibold"
           >
-            라운딩 제안
+            프로필 보기
           </button>
         </div>
       </div>

@@ -1,8 +1,8 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 
-// Pages - 핵심 (즉시 로드)
+// Pages
 import Splash from './pages/Splash'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
@@ -16,22 +16,20 @@ import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import AuthCallbackNative from './pages/AuthCallbackNative'
 import PhoneVerification from './pages/PhoneVerification'
+import Store from './pages/Store'
+import ScoreRecord from './pages/ScoreRecord'
+import ScoreStats from './pages/ScoreStats'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
-
-// Pages - 비핵심 (Lazy Loading)
-const Store = lazy(() => import('./pages/Store'))
-const ScoreRecord = lazy(() => import('./pages/ScoreRecord'))
-const ScoreStats = lazy(() => import('./pages/ScoreStats'))
-const Friends = lazy(() => import('./pages/Friends'))
-const Review = lazy(() => import('./pages/Review'))
-const Privacy = lazy(() => import('./pages/Privacy'))
-const Terms = lazy(() => import('./pages/Terms'))
-const Support = lazy(() => import('./pages/Support'))
+import Friends from './pages/Friends'
+import Review from './pages/Review'
+import RoundingHistory from './pages/RoundingHistory'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
+import Support from './pages/Support'
 
 // Components
 import TabBar from './components/TabBar'
-import ProposalModal from './components/ProposalModal'
 import ToastContainer from './components/ToastContainer'
 import OfflineBanner from './components/OfflineBanner'
 
@@ -44,10 +42,16 @@ import { ChatProvider } from './context/ChatContext'
 // Native
 import { initializeNative, isNative, app, haptic } from './lib/native'
 import { initializePush } from './lib/pushService'
+import { initializeIAP, setUserId as setIAPUserId } from './lib/iap'
 import { supabase } from './lib/supabase'
 
 // 공개 페이지 (인증 없이 접근 가능)
 const PUBLIC_PATHS = ['/privacy', '/terms', '/support']
+const PUBLIC_COMPONENTS = {
+  '/privacy': Privacy,
+  '/terms': Terms,
+  '/support': Support,
+}
 
 // 인증이 필요한 라우트를 보호하는 컴포넌트
 function ProtectedRoute({ children }) {
@@ -77,7 +81,6 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
-  const [proposalModal, setProposalModal] = useState({ open: false, user: null })
 
   useEffect(() => {
     // 저장된 테마 복원
@@ -86,8 +89,8 @@ function AppContent() {
 
     // 네이티브 기능 초기화
     initializeNative()
-    // 인앱 결제 초기화 (게스트 모드로 우선 초기화, 지연 로딩)
-    import('./lib/iap').then(({ initializeIAP }) => initializeIAP())
+    // 인앱 결제 초기화 (게스트 모드로 우선 초기화)
+    initializeIAP()
     
     // 스플래시 화면 2초 후 종료
     const timer = setTimeout(() => setShowSplash(false), 2000)
@@ -178,21 +181,13 @@ function AppContent() {
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       initializePush(user.id)
-      import('./lib/iap').then(({ setUserId }) => setUserId(user.id))
+      setIAPUserId(user.id)
     }
   }, [isAuthenticated, user?.id])
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('gp_onboarded', 'true')
     setIsOnboarded(true)
-  }
-
-  const openProposalModal = (user) => {
-    setProposalModal({ open: true, user })
-  }
-
-  const closeProposalModal = () => {
-    setProposalModal({ open: false, user: null })
   }
 
   // 1. 스플래시 화면
@@ -205,14 +200,10 @@ function AppContent() {
     return <Splash /> // 로딩 중에도 스플래시 표시
   }
 
-  // 3. 공개 페이지 - 인증 없이 접근 가능 (Lazy)
-  if (PUBLIC_PATHS.includes(location.pathname)) {
-    const PublicPage = { '/privacy': Privacy, '/terms': Terms, '/support': Support }[location.pathname]
-    return (
-      <Suspense fallback={<Splash />}>
-        <PublicPage />
-      </Suspense>
-    )
+  // 3. 공개 페이지 - 인증 없이 접근 가능
+  const PublicPage = PUBLIC_COMPONENTS[location.pathname]
+  if (PublicPage) {
+    return <PublicPage />
   }
 
   // 4. 인증 보호 영역 (로그인 필요)
@@ -221,16 +212,13 @@ function AppContent() {
       <AuthenticatedApp
         isOnboarded={isOnboarded}
         onOnboardingComplete={handleOnboardingComplete}
-        openProposalModal={openProposalModal}
-        closeProposalModal={closeProposalModal}
-        proposalModal={proposalModal}
       />
     </ProtectedRoute>
   )
 }
 
 // 인증 후 메인 앱 (온보딩 + 라우팅)
-function AuthenticatedApp({ isOnboarded, onOnboardingComplete, openProposalModal, closeProposalModal, proposalModal }) {
+function AuthenticatedApp({ isOnboarded, onOnboardingComplete }) {
   const location = useLocation()
 
   if (!isOnboarded) {
@@ -244,38 +232,32 @@ function AuthenticatedApp({ isOnboarded, onOnboardingComplete, openProposalModal
       <MarkerProvider>
         <ChatProvider>
         <div className="app-container">
-          <Suspense fallback={<div className="flex items-center justify-center h-screen gp-dark"><div className="animate-spin rounded-full h-8 w-8 border-2 border-gp-gold border-t-transparent" /></div>}>
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<Home onPropose={openProposalModal} />} />
-                <Route path="/join" element={<Join />} />
-                <Route path="/join/create" element={<CreateJoin />} />
-                <Route path="/join/:id" element={<JoinDetail />} />
-                <Route path="/saved" element={<Saved onPropose={openProposalModal} />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/user/:userId" element={<ProfileDetail />} />
-                <Route path="/store" element={<Store />} />
-                <Route path="/score" element={<ScoreRecord />} />
-                <Route path="/score-stats" element={<ScoreStats />} />
-                <Route path="/phone-verify" element={<PhoneVerification />} />
-                <Route path="/chat" element={<ChatList />} />
-                <Route path="/chat/:chatId" element={<ChatRoom />} />
-                <Route path="/friends" element={<Friends />} />
-                <Route path="/review" element={<Review />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Home />} />
+              <Route path="/join" element={<Join />} />
+              <Route path="/join/create" element={<CreateJoin />} />
+              <Route path="/join/:id" element={<JoinDetail />} />
+              <Route path="/saved" element={<Saved />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/user/:userId" element={<ProfileDetail />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/score" element={<ScoreRecord />} />
+              <Route path="/score-stats" element={<ScoreStats />} />
+              <Route path="/phone-verify" element={<PhoneVerification />} />
+              <Route path="/chat" element={<ChatList />} />
+              <Route path="/chat/:chatId" element={<ChatRoom />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/review" element={<Review />} />
+              <Route path="/rounding-history" element={<RoundingHistory />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
+            </Routes>
+          </AnimatePresence>
 
           {showTabBar && <TabBar />}
 
-          <ProposalModal
-            isOpen={proposalModal.open}
-            user={proposalModal.user}
-            onClose={closeProposalModal}
-          />
           <ToastContainer />
           <OfflineBanner />
         </div>

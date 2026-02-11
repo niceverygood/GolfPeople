@@ -9,13 +9,6 @@ export default defineConfig({
         manualChunks: {
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-ui': ['framer-motion', 'lucide-react'],
-          'vendor-router': ['react-router-dom'],
-          'vendor-capacitor': [
-            '@capacitor/core', '@capacitor/app', '@capacitor/browser',
-            '@capacitor/haptics', '@capacitor/keyboard',
-            '@capacitor/status-bar', '@capacitor/splash-screen',
-          ],
-          'vendor-firebase': ['firebase/app', 'firebase/auth'],
         }
       }
     }

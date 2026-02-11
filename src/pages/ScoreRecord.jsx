@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { db } from '../lib/supabase'
 import { haptic } from '../lib/native'
+import { getJoinDetail } from '../lib/joinService'
 import golfCourses from '../data/golfCourses.json'
 import { showToast } from '../utils/errorHandler'
 import { validateRequired, validateGolfScore } from '../utils/validation'
@@ -20,14 +21,16 @@ const WEATHER_OPTIONS = [
 export default function ScoreRecord() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
-  
+
   const [loading, setLoading] = useState(false)
   const [scores, setScores] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingScore, setEditingScore] = useState(null)
   const [stats, setStats] = useState(null)
-  
+  const [fromJoinId, setFromJoinId] = useState(null)
+
   // 폼 상태
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -44,7 +47,7 @@ export default function ScoreRecord() {
     note: '',
     partners: [],
   })
-  
+
   const [searchCourse, setSearchCourse] = useState('')
   const [showCourseDropdown, setShowCourseDropdown] = useState(false)
   
@@ -62,6 +65,30 @@ export default function ScoreRecord() {
       loadStats()
     }
   }, [user?.id])
+
+  // fromJoin 파라미터로 조인 데이터 자동 채움
+  useEffect(() => {
+    const joinId = searchParams.get('fromJoin')
+    if (!joinId) return
+
+    setFromJoinId(joinId)
+
+    const loadJoinData = async () => {
+      const result = await getJoinDetail(joinId)
+      if (result.success && result.join) {
+        const j = result.join
+        setForm(prev => ({
+          ...prev,
+          date: j.date || prev.date,
+          course_name: j.course_name || j.location || '',
+          course_region: j.region || '',
+        }))
+        setSearchCourse(j.course_name || j.location || '')
+        setShowAddModal(true)
+      }
+    }
+    loadJoinData()
+  }, [searchParams])
 
   const loadScores = async () => {
     const { data } = await db.scores.getAll(user.id)
@@ -116,6 +143,7 @@ export default function ScoreRecord() {
         weather: form.weather,
         note: form.note,
         partners: form.partners,
+        ...(fromJoinId && !editingScore ? { join_id: fromJoinId } : {}),
       }
 
       if (editingScore) {
