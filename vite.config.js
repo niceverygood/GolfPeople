@@ -3,6 +3,16 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-ui': ['framer-motion', 'lucide-react'],
+        }
+      }
+    }
+  },
   server: {
     port: 3000,
     host: true
@@ -13,4 +23,3 @@ export default defineConfig({
     setupFiles: './src/test/setup.js',
   }
 })
-

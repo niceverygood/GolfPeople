@@ -7,10 +7,8 @@
     "iosScheme": "https",
     "allowNavigation": [
       "*.supabase.co",
-      "*.kakao.com",
-      "*.google.com",
-      "accounts.google.com",
       "kauth.kakao.com",
+      "accounts.google.com",
       "golf-people.vercel.app"
     ]
   },
