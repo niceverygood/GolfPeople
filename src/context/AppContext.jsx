@@ -80,18 +80,7 @@ export function AppProvider({ children }) {
 
     setLoading(true)
     try {
-      const [
-        profilesRes,
-        joinsRes,
-        myJoinsRes,
-        likesRes,
-        savedJoinsRes,
-        sentFriendsRes,
-        receivedFriendsRes,
-        sentJoinAppsRes,
-        receivedJoinAppsRes,
-        notificationsRes,
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         db.profiles.getAll(),
         getJoins(),
         getMyJoins(userId),
@@ -104,8 +93,11 @@ export function AppProvider({ children }) {
         getNotifications(userId),
       ])
 
+      const v = (i) => results[i].status === 'fulfilled' ? results[i].value : null
+      const [profilesRes, joinsRes, myJoinsRes, likesRes, savedJoinsRes, sentFriendsRes, receivedFriendsRes, sentJoinAppsRes, receivedJoinAppsRes, notificationsRes] = results.map((_, i) => v(i))
+
       // 유저 프로필 (자신 제외)
-      if (profilesRes.data) {
+      if (profilesRes?.data) {
         setUsers(profilesRes.data
           .filter(p => p.id !== userId)
           .map(p => mapProfileToUser(p))
@@ -113,15 +105,15 @@ export function AppProvider({ children }) {
       }
 
       // 조인
-      if (joinsRes.success) setJoins(joinsRes.joins || [])
-      if (myJoinsRes.success) setMyJoins(myJoinsRes.joins || [])
+      if (joinsRes?.success) setJoins(joinsRes.joins || [])
+      if (myJoinsRes?.success) setMyJoins(myJoinsRes.joins || [])
 
       // 좋아요 / 저장
-      if (likesRes.data) setLikedUsers(likesRes.data.map(l => l.liked_user_id))
-      if (savedJoinsRes.data) setSavedJoins(savedJoinsRes.data.map(s => s.join_id))
+      if (likesRes?.data) setLikedUsers(likesRes.data.map(l => l.liked_user_id))
+      if (savedJoinsRes?.data) setSavedJoins(savedJoinsRes.data.map(s => s.join_id))
 
       // 친구 요청
-      if (sentFriendsRes.requests) {
+      if (sentFriendsRes?.requests) {
         setFriendRequests(sentFriendsRes.requests.map(r => ({
           id: r.id,
           userId: r.to_user_id,
@@ -135,7 +127,7 @@ export function AppProvider({ children }) {
           isDbRequest: true,
         })))
       }
-      if (receivedFriendsRes.requests) {
+      if (receivedFriendsRes?.requests) {
         setReceivedFriendRequests(receivedFriendsRes.requests.map(r => ({
           id: r.id,
           userId: r.from_user_id,
@@ -151,7 +143,7 @@ export function AppProvider({ children }) {
       }
 
       // 조인 신청
-      if (sentJoinAppsRes.applications) {
+      if (sentJoinAppsRes?.applications) {
         setJoinApplications(sentJoinAppsRes.applications.map(a => ({
           id: a.id,
           joinId: a.joinId,
@@ -168,7 +160,7 @@ export function AppProvider({ children }) {
           isDbRequest: true,
         })))
       }
-      if (receivedJoinAppsRes.applications) {
+      if (receivedJoinAppsRes?.applications) {
         setReceivedJoinRequests(receivedJoinAppsRes.applications.map(a => ({
           id: a.id,
           userId: a.userId,
@@ -186,7 +178,7 @@ export function AppProvider({ children }) {
       }
 
       // 알림
-      if (notificationsRes.success) {
+      if (notificationsRes?.success) {
         setNotifications((notificationsRes.notifications || []).map(mapNotification))
       }
     } catch (e) {
