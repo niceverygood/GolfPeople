@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from './AuthContext'
 import { db, isConnected, realtime } from '../lib/supabase'
 import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
@@ -50,6 +50,23 @@ export function AppProvider({ children }) {
 
   // === currentUser (하위 호환) ===
   const currentUser = profile ? mapProfileToUser(profile) : null
+
+  // === 로그아웃 시 전체 상태 초기화 ===
+  useEffect(() => {
+    if (!userId) {
+      setUsers([])
+      setJoins([])
+      setMyJoins([])
+      setLikedUsers([])
+      setSavedJoins([])
+      setFriendRequests([])
+      setReceivedFriendRequests([])
+      setJoinApplications([])
+      setReceivedJoinRequests([])
+      setNotifications([])
+      setProposals([])
+    }
+  }, [userId])
 
   // ==============================
   // 데이터 로드
@@ -202,7 +219,7 @@ export function AppProvider({ children }) {
       realtime.unsubscribe(notifChannel)
       realtime.unsubscribe(friendChannel)
     }
-  }, [userId])
+  }, [userId, refreshFriendRequests])
 
   // ==============================
   // 새로고침 함수들
@@ -285,33 +302,53 @@ export function AppProvider({ children }) {
   // ==============================
 
   // 좋아요
-  const likeUser = async (targetUserId) => {
+  const likeUser = useCallback(async (targetUserId) => {
     if (!userId) return
+    const prevLiked = likedUsers
     setLikedUsers(prev => [...prev, targetUserId])
-    await db.likes.add(userId, targetUserId)
-  }
+    try {
+      await db.likes.add(userId, targetUserId)
+    } catch {
+      setLikedUsers(prevLiked)
+    }
+  }, [userId, likedUsers])
 
-  const unlikeUser = async (targetUserId) => {
+  const unlikeUser = useCallback(async (targetUserId) => {
     if (!userId) return
+    const prevLiked = likedUsers
     setLikedUsers(prev => prev.filter(id => id !== targetUserId))
-    await db.likes.remove(userId, targetUserId)
-  }
+    try {
+      await db.likes.remove(userId, targetUserId)
+    } catch {
+      setLikedUsers(prevLiked)
+    }
+  }, [userId, likedUsers])
 
   // 조인 저장
-  const saveJoin = async (joinId) => {
+  const saveJoin = useCallback(async (joinId) => {
     if (!userId) return
+    const prevSaved = savedJoins
     setSavedJoins(prev => [...prev, joinId])
-    await db.savedJoins.add(userId, joinId)
-  }
+    try {
+      await db.savedJoins.add(userId, joinId)
+    } catch {
+      setSavedJoins(prevSaved)
+    }
+  }, [userId, savedJoins])
 
-  const unsaveJoin = async (joinId) => {
+  const unsaveJoin = useCallback(async (joinId) => {
     if (!userId) return
+    const prevSaved = savedJoins
     setSavedJoins(prev => prev.filter(id => id !== joinId))
-    await db.savedJoins.remove(userId, joinId)
-  }
+    try {
+      await db.savedJoins.remove(userId, joinId)
+    } catch {
+      setSavedJoins(prevSaved)
+    }
+  }, [userId, savedJoins])
 
   // 친구 요청
-  const sendFriendRequest = async (targetUser, message = '') => {
+  const sendFriendRequest = useCallback(async (targetUser, message = '') => {
     if (!userId) return false
     if (friendRequests.some(req => req.userId === targetUser.id)) return false
     const result = await sendFriendRequestApi(userId, targetUser.id, message)
@@ -320,32 +357,32 @@ export function AppProvider({ children }) {
       return true
     }
     return false
-  }
+  }, [userId, friendRequests, refreshFriendRequests])
 
-  const cancelFriendRequest = async (requestId) => {
+  const cancelFriendRequest = useCallback(async (requestId) => {
     const req = friendRequests.find(r => r.id === requestId)
     if (req?.isDbRequest) {
       await cancelFriendRequestApi(requestId)
     }
     setFriendRequests(prev => prev.filter(r => r.id !== requestId))
-  }
+  }, [friendRequests])
 
-  const acceptFriendRequest = async (requestId) => {
+  const acceptFriendRequest = useCallback(async (requestId) => {
     const result = await acceptFriendRequestApi(requestId)
     if (result.success) {
       await refreshFriendRequests()
     }
-  }
+  }, [refreshFriendRequests])
 
-  const rejectFriendRequest = async (requestId) => {
+  const rejectFriendRequest = useCallback(async (requestId) => {
     const result = await rejectFriendRequestApi(requestId)
     if (result.success) {
       await refreshFriendRequests()
     }
-  }
+  }, [refreshFriendRequests])
 
   // 조인 신청
-  const applyToJoin = async (join, message = '') => {
+  const applyToJoin = useCallback(async (join, message = '') => {
     if (!userId) return false
     if (join.hostId === userId) return false
     if (joinApplications.some(app => app.joinId === join.id)) return false
@@ -355,30 +392,30 @@ export function AppProvider({ children }) {
       return true
     }
     return false
-  }
+  }, [userId, joinApplications, refreshJoinApplications])
 
-  const cancelJoinApplication = async (applicationId) => {
+  const cancelJoinApplication = useCallback(async (applicationId) => {
     await cancelJoinApplicationApi(applicationId)
     setJoinApplications(prev => prev.filter(a => a.id !== applicationId))
-  }
+  }, [])
 
-  const acceptJoinRequest = async (requestId) => {
+  const acceptJoinRequest = useCallback(async (requestId) => {
     const result = await acceptJoinApplication(requestId)
     if (result.success) {
       await refreshJoinApplications()
       await refreshJoins()
     }
-  }
+  }, [refreshJoinApplications, refreshJoins])
 
-  const rejectJoinRequest = async (requestId) => {
+  const rejectJoinRequest = useCallback(async (requestId) => {
     const result = await rejectJoinApplication(requestId)
     if (result.success) {
       await refreshJoinApplications()
     }
-  }
+  }, [refreshJoinApplications])
 
   // 조인 생성/삭제
-  const createJoin = async (joinData) => {
+  const createJoin = useCallback(async (joinData) => {
     if (!userId) return { success: false, error: '로그인이 필요합니다' }
     const result = await createJoinApi(userId, joinData)
     if (result.success) {
@@ -387,46 +424,46 @@ export function AppProvider({ children }) {
       return { success: true, join: result.join }
     }
     return { success: false, error: result.error || '조인 생성에 실패했습니다' }
-  }
+  }, [userId, refreshMyJoins, refreshJoins])
 
-  const deleteMyJoin = async (joinId) => {
+  const deleteMyJoin = useCallback(async (joinId) => {
     if (!userId) return
     await deleteJoinApi(joinId, userId)
     await refreshMyJoins()
-  }
+  }, [userId, refreshMyJoins])
 
   // 알림
-  const markNotificationAsRead = async (notificationId) => {
+  const markNotificationAsRead = useCallback(async (notificationId) => {
     setNotifications(prev => prev.map(n =>
       n.id === notificationId ? { ...n, isRead: true } : n
     ))
     await markNotificationAsReadApi(notificationId)
-  }
+  }, [])
 
-  const markAllNotificationsAsRead = async () => {
+  const markAllNotificationsAsRead = useCallback(async () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
     if (userId) await markAllNotificationsAsReadApi(userId)
-  }
+  }, [userId])
 
-  const deleteNotification = async (notificationId) => {
+  const deleteNotification = useCallback(async (notificationId) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId))
     await db.notifications.delete(notificationId)
-  }
+  }, [])
 
-  const deleteAllNotifications = async () => {
+  const deleteAllNotifications = useCallback(async () => {
     setNotifications([])
     if (userId) await deleteAllNotificationsApi(userId)
-  }
+  }, [userId])
 
   const unreadNotificationCount = notifications.filter(n => !n.isRead).length
 
   // 프로필 업데이트 (하위 호환)
-  const updateProfile = () => {}
+  const updateProfile = useCallback(() => {}, [])
 
   // 제안
-  const sendProposal = (proposal) => {
+  const sendProposal = useCallback((proposal) => {
     setProposals(prev => [...prev, { ...proposal, id: Date.now(), status: 'pending' }])
-  }
+  }, [])
 
   // 지난 카드 (localStorage)
   const addPastCard = useCallback((user) => {
@@ -523,7 +560,7 @@ export function AppProvider({ children }) {
     })
   }, [users])
 
-  const value = {
+  const value = useMemo(() => ({
     // 데이터
     users,
     joins,
@@ -571,7 +608,17 @@ export function AppProvider({ children }) {
     refreshFriendRequests,
     refreshJoinApplications,
     refreshNotifications,
-  }
+  }), [
+    users, joins, currentUser, likedUsers, savedJoins, proposals, pastCards,
+    recommendationHistory, friendRequests, receivedFriendRequests, joinApplications,
+    receivedJoinRequests, myJoins, notifications, unreadNotificationCount, loading,
+    likeUser, unlikeUser, saveJoin, unsaveJoin, sendProposal,
+    sendFriendRequest, cancelFriendRequest, acceptFriendRequest, rejectFriendRequest,
+    applyToJoin, cancelJoinApplication, acceptJoinRequest, rejectJoinRequest,
+    updateProfile, createJoin, deleteMyJoin, addPastCard, saveDailyRecommendation,
+    markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications,
+    refreshUsers, refreshJoins, refreshMyJoins, refreshFriendRequests, refreshJoinApplications, refreshNotifications,
+  ])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
