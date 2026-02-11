@@ -48,3 +48,12 @@ coverage/
 *.aab
 screenshots/output/
 .claude/
+
+# Firebase service files (민감 정보)
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
+
+# Android signing
+*.keystore
+*.jks
+android/app/signing.properties

@@ -6,6 +6,9 @@
 import { supabase, isConnected } from './supabase'
 import { createNotification, NOTIFICATION_TYPES } from './notificationService'
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isValidUUID = (id) => typeof id === 'string' && UUID_REGEX.test(id)
+
 /**
  * 보낸 친구 요청 목록 가져오기
  */
@@ -106,7 +109,7 @@ export const getReceivedFriendRequests = async (userId) => {
  * 친구 요청 보내기
  */
 export const sendFriendRequest = async (fromUserId, toUserId, message = '') => {
-  if (!isConnected() || !fromUserId || !toUserId) {
+  if (!isConnected() || !fromUserId || !toUserId || !isValidUUID(fromUserId) || !isValidUUID(toUserId)) {
     return { success: false, error: 'invalid_params' }
   }
 
@@ -308,7 +311,7 @@ export const getFriends = async (userId) => {
  * 친구 삭제
  */
 export const removeFriend = async (userId, friendId) => {
-  if (!isConnected() || !userId || !friendId) {
+  if (!isConnected() || !userId || !friendId || !isValidUUID(userId) || !isValidUUID(friendId)) {
     return { success: false }
   }
 
@@ -332,7 +335,7 @@ export const removeFriend = async (userId, friendId) => {
  * 두 사용자가 친구인지 확인
  */
 export const checkFriendship = async (userId, targetUserId) => {
-  if (!isConnected() || !userId || !targetUserId) {
+  if (!isConnected() || !userId || !targetUserId || !isValidUUID(userId) || !isValidUUID(targetUserId)) {
     return { isFriend: false, isPending: false }
   }
 
