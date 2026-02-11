@@ -177,7 +177,7 @@ export default function ChatRoom() {
     )
   }
 
-  const formatDate = (timestamp) => {
+  const getDateGroupLabel = (timestamp) => {
     const date = new Date(timestamp)
     const today = new Date()
     const yesterday = new Date(today)
@@ -193,7 +193,7 @@ export default function ChatRoom() {
 
   // 메시지를 날짜별로 그룹화
   const groupedMessages = messages.reduce((groups, msg) => {
-    const date = formatDate(msg.timestamp)
+    const date = getDateGroupLabel(msg.timestamp)
     if (!groups[date]) {
       groups[date] = []
     }
