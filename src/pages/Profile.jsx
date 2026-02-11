@@ -189,16 +189,25 @@ export default function Profile() {
     try {
       // base64 사진을 Supabase Storage에 업로드
       const uploadedPhotos = []
+      let uploadFailed = false
       for (const photo of (updatedProfile.photos || [])) {
         if (photo.startsWith('data:')) {
           const res = await fetch(photo)
           const blob = await res.blob()
           const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' })
           const { url, error } = await storage.uploadProfileImage(user.id, file)
-          uploadedPhotos.push(!error && url ? url : photo)
+          if (error || !url) {
+            uploadFailed = true
+            uploadedPhotos.push(photo) // 업로드 실패 시 base64 유지
+          } else {
+            uploadedPhotos.push(url)
+          }
         } else {
           uploadedPhotos.push(photo)
         }
+      }
+      if (uploadFailed) {
+        showToast.error('일부 사진 업로드에 실패했습니다')
       }
 
       // Supabase DB 저장 (brands 컬럼 미존재 → 제외)

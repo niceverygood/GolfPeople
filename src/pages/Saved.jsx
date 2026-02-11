@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
+import { showToast } from '../utils/errorHandler'
 
 const formatJoinDate = (dateStr) => {
   if (!dateStr) return ''
@@ -159,22 +160,24 @@ export default function Saved({ onPropose }) {
 
   // 친구 채팅 시작 핸들러
   const handleStartFriendChat = async (request) => {
-    if (request.userId) {
-      const result = await startDirectChat(request.userId)
-      if (result.success) {
-        navigate(`/chat/${result.roomId}`)
-      }
+    if (!request.userId) return
+    const result = await startDirectChat(request.userId)
+    if (result.success) {
+      navigate(`/chat/${result.roomId}`)
+    } else {
+      showToast.error('채팅방을 열 수 없습니다')
     }
   }
 
   // 조인 채팅 시작 핸들러
   const handleStartJoinChat = async (request, type) => {
     const targetUserId = type === 'sent' ? request.hostId : request.userId
-    if (targetUserId) {
-      const result = await startDirectChat(targetUserId)
-      if (result.success) {
-        navigate(`/chat/${result.roomId}`)
-      }
+    if (!targetUserId) return
+    const result = await startDirectChat(targetUserId)
+    if (result.success) {
+      navigate(`/chat/${result.roomId}`)
+    } else {
+      showToast.error('채팅방을 열 수 없습니다')
     }
   }
   
