@@ -39,8 +39,8 @@ export const getChatRooms = async (userId) => {
       return { success: true, rooms: [] }
     }
 
-    // 각 채팅방의 상세 정보 조회
-    const rooms = await Promise.all(
+    // 각 채팅방의 상세 정보 조회 (개별 실패 허용)
+    const results = await Promise.allSettled(
       participants.map(async (p) => {
         const room = p.chat_rooms
         if (!room) return null
@@ -116,6 +116,10 @@ export const getChatRooms = async (userId) => {
         }
       })
     )
+
+    const rooms = results
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value)
 
     return {
       success: true,
