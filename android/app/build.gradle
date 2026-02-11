@@ -18,10 +18,15 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('golfpeople-release.keystore')
-            storePassword 'golfpeople123'
-            keyAlias 'golfpeople'
-            keyPassword 'golfpeople123'
+            def signingProps = new Properties()
+            def signingFile = file('signing.properties')
+            if (signingFile.exists()) {
+                signingProps.load(new FileInputStream(signingFile))
+            }
+            storeFile file(signingProps.getProperty('storeFile', 'golfpeople-release.keystore'))
+            storePassword signingProps.getProperty('storePassword', '')
+            keyAlias signingProps.getProperty('keyAlias', '')
+            keyPassword signingProps.getProperty('keyPassword', '')
         }
     }
     buildTypes {
