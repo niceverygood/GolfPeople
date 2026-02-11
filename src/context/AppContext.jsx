@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { useAuth } from './AuthContext'
 import { db, isConnected, realtime } from '../lib/supabase'
 import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
-import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi } from '../lib/joinService'
+import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi, completePastJoins } from '../lib/joinService'
 import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi, deleteAllNotifications as deleteAllNotificationsApi } from '../lib/notificationService'
 import { mapProfileToUser, mapNotification } from '../utils/profileMapper'
 
@@ -38,7 +38,6 @@ export function AppProvider({ children }) {
   const [notifications, setNotifications] = useState([])
 
   // === 로컬 전용 (localStorage) ===
-  const [proposals, setProposals] = useState([])
   const [pastCards, setPastCards] = useState(() => {
     const saved = localStorage.getItem('gp_past_cards')
     return saved ? JSON.parse(saved) : []
@@ -64,7 +63,6 @@ export function AppProvider({ children }) {
       setJoinApplications([])
       setReceivedJoinRequests([])
       setNotifications([])
-      setProposals([])
     }
   }, [userId])
 
@@ -80,6 +78,9 @@ export function AppProvider({ children }) {
 
     setLoading(true)
     try {
+      // 지난 조인 자동 완료 (앱 로드 시 1회)
+      completePastJoins().catch(() => {})
+
       const results = await Promise.allSettled([
         db.profiles.getAll(),
         getJoins(),
@@ -191,30 +192,8 @@ export function AppProvider({ children }) {
     loadAllData()
   }, [loadAllData])
 
-  // === 실시간 알림 구독 ===
-  useEffect(() => {
-    if (!userId || !isConnected()) return
-
-    const notifChannel = realtime.subscribeToNotifications(userId, (payload) => {
-      const n = payload.new
-      if (n) {
-        setNotifications(prev => [mapNotification(n), ...prev])
-      }
-    })
-
-    const friendChannel = realtime.subscribeToFriendRequests(userId, () => {
-      // 친구 요청 변경 시 새로고침
-      refreshFriendRequests()
-    })
-
-    return () => {
-      realtime.unsubscribe(notifChannel)
-      realtime.unsubscribe(friendChannel)
-    }
-  }, [userId, refreshFriendRequests])
-
   // ==============================
-  // 새로고침 함수들
+  // 새로고침 함수들 (Realtime 구독보다 먼저 선언해야 TDZ 방지)
   // ==============================
 
   const refreshUsers = useCallback(async () => {
@@ -288,6 +267,28 @@ export function AppProvider({ children }) {
     const result = await getNotifications(userId)
     if (result.success) setNotifications((result.notifications || []).map(mapNotification))
   }, [userId])
+
+  // === 실시간 알림 구독 ===
+  useEffect(() => {
+    if (!userId || !isConnected()) return
+
+    const notifChannel = realtime.subscribeToNotifications(userId, (payload) => {
+      const n = payload.new
+      if (n) {
+        setNotifications(prev => [mapNotification(n), ...prev])
+      }
+    })
+
+    const friendChannel = realtime.subscribeToFriendRequests(userId, () => {
+      // 친구 요청 변경 시 새로고침
+      refreshFriendRequests()
+    })
+
+    return () => {
+      realtime.unsubscribe(notifChannel)
+      realtime.unsubscribe(friendChannel)
+    }
+  }, [userId, refreshFriendRequests])
 
   // ==============================
   // 액션 함수들 (Supabase 연동)
@@ -452,11 +453,6 @@ export function AppProvider({ children }) {
   // 프로필 업데이트 (하위 호환)
   const updateProfile = useCallback(() => {}, [])
 
-  // 제안
-  const sendProposal = useCallback((proposal) => {
-    setProposals(prev => [...prev, { ...proposal, id: Date.now(), status: 'pending' }])
-  }, [])
-
   // 지난 카드 (localStorage)
   const addPastCard = useCallback((user) => {
     setPastCards(prev => {
@@ -559,7 +555,6 @@ export function AppProvider({ children }) {
     currentUser,
     likedUsers,
     savedJoins,
-    proposals,
     pastCards,
     recommendationHistory,
     friendRequests,
@@ -575,7 +570,6 @@ export function AppProvider({ children }) {
     unlikeUser,
     saveJoin,
     unsaveJoin,
-    sendProposal,
     sendFriendRequest,
     cancelFriendRequest,
     acceptFriendRequest,
@@ -601,10 +595,10 @@ export function AppProvider({ children }) {
     refreshJoinApplications,
     refreshNotifications,
   }), [
-    users, joins, currentUser, likedUsers, savedJoins, proposals, pastCards,
+    users, joins, currentUser, likedUsers, savedJoins, pastCards,
     recommendationHistory, friendRequests, receivedFriendRequests, joinApplications,
     receivedJoinRequests, myJoins, notifications, unreadNotificationCount, loading,
-    likeUser, unlikeUser, saveJoin, unsaveJoin, sendProposal,
+    likeUser, unlikeUser, saveJoin, unsaveJoin,
     sendFriendRequest, cancelFriendRequest, acceptFriendRequest, rejectFriendRequest,
     applyToJoin, cancelJoinApplication, acceptJoinRequest, rejectJoinRequest,
     updateProfile, createJoin, deleteMyJoin, addPastCard, saveDailyRecommendation,

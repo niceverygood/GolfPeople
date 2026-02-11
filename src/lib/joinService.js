@@ -187,6 +187,7 @@ export const getSentJoinApplications = async (userId) => {
           time,
           location,
           region,
+          status,
           host:host_id (
             id,
             name,
@@ -199,20 +200,25 @@ export const getSentJoinApplications = async (userId) => {
 
     if (error) throw error
 
-    const applications = (data || []).map(app => ({
-      id: app.id,
-      joinId: app.join?.id,
-      joinTitle: app.join?.title,
-      joinDate: app.join?.date,
-      joinTime: app.join?.time,
-      joinRegion: app.join?.region,
-      hostId: app.join?.host?.id,
-      hostName: app.join?.host?.name || '알 수 없음',
-      hostPhoto: app.join?.host?.photos?.[0] || 'https://via.placeholder.com/100',
-      message: app.message,
-      status: app.status,
-      createdAt: app.created_at,
-    }))
+    const today = new Date().toISOString().split('T')[0]
+    const applications = (data || []).map(app => {
+      const joinExpired = !app.join?.date || app.join.date < today || app.join.status !== 'open'
+      const effectiveStatus = (app.status === 'pending' && joinExpired) ? 'expired' : app.status
+      return {
+        id: app.id,
+        joinId: app.join?.id,
+        joinTitle: app.join?.title,
+        joinDate: app.join?.date,
+        joinTime: app.join?.time,
+        joinRegion: app.join?.region,
+        hostId: app.join?.host?.id,
+        hostName: app.join?.host?.name || '알 수 없음',
+        hostPhoto: app.join?.host?.photos?.[0] || 'https://via.placeholder.com/100',
+        message: app.message,
+        status: effectiveStatus,
+        createdAt: app.created_at,
+      }
+    })
 
     return { success: true, applications }
   } catch (e) {
@@ -254,7 +260,8 @@ export const getReceivedJoinApplications = async (userId) => {
           title,
           date,
           time,
-          region
+          region,
+          status
         ),
         applicant:user_id (
           id,
@@ -269,22 +276,27 @@ export const getReceivedJoinApplications = async (userId) => {
 
     if (error) throw error
 
-    const applications = (data || []).map(app => ({
-      id: app.id,
-      joinId: app.join?.id,
-      joinTitle: app.join?.title,
-      joinDate: app.join?.date,
-      joinTime: app.join?.time,
-      joinRegion: app.join?.region,
-      userId: app.applicant?.id,
-      userName: app.applicant?.name || '알 수 없음',
-      userPhoto: app.applicant?.photos?.[0] || 'https://via.placeholder.com/100',
-      userRegion: app.applicant?.regions?.[0] || '',
-      userHandicap: app.applicant?.handicap || '',
-      message: app.message,
-      status: app.status,
-      createdAt: app.created_at,
-    }))
+    const today = new Date().toISOString().split('T')[0]
+    const applications = (data || []).map(app => {
+      const joinExpired = !app.join?.date || app.join.date < today || app.join.status !== 'open'
+      const effectiveStatus = (app.status === 'pending' && joinExpired) ? 'expired' : app.status
+      return {
+        id: app.id,
+        joinId: app.join?.id,
+        joinTitle: app.join?.title,
+        joinDate: app.join?.date,
+        joinTime: app.join?.time,
+        joinRegion: app.join?.region,
+        userId: app.applicant?.id,
+        userName: app.applicant?.name || '알 수 없음',
+        userPhoto: app.applicant?.photos?.[0] || 'https://via.placeholder.com/100',
+        userRegion: app.applicant?.regions?.[0] || '',
+        userHandicap: app.applicant?.handicap || '',
+        message: app.message,
+        status: effectiveStatus,
+        createdAt: app.created_at,
+      }
+    })
 
     return { success: true, applications }
   } catch (e) {
@@ -651,6 +663,134 @@ export const getJoinDetail = async (joinId) => {
   }
 }
 
+/**
+ * 지난 조인 자동 완료 (open → completed)
+ * 앱 로드 시 1회 호출
+ */
+export const completePastJoins = async () => {
+  if (!isConnected()) return { success: false }
+
+  try {
+    const { data, error } = await supabase.rpc('complete_past_joins')
+    if (error) throw error
+    return { success: true, count: data }
+  } catch (e) {
+    console.error('지난 조인 완료 처리 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
+ * 완료된 라운딩 목록 (내가 참가한 과거 조인)
+ */
+export const getCompletedRoundings = async (userId) => {
+  if (!isConnected() || !userId) {
+    return { success: false, roundings: [] }
+  }
+
+  try {
+    // 내가 참가한 조인 중 completed 상태인 것
+    const { data: participations, error: pError } = await supabase
+      .from('join_participants')
+      .select('join_id')
+      .eq('user_id', userId)
+
+    if (pError) throw pError
+    if (!participations || participations.length === 0) {
+      return { success: true, roundings: [] }
+    }
+
+    const joinIds = participations.map(p => p.join_id)
+
+    const { data, error } = await supabase
+      .from('joins')
+      .select(`
+        id,
+        title,
+        date,
+        time,
+        location,
+        region,
+        course_name,
+        spots_total,
+        spots_filled,
+        status,
+        host:host_id (
+          id,
+          name,
+          photos
+        ),
+        participants:join_participants (
+          user:user_id (
+            id,
+            name,
+            photos
+          )
+        )
+      `)
+      .in('id', joinIds)
+      .eq('status', 'completed')
+      .order('date', { ascending: false })
+
+    if (error) throw error
+
+    const roundings = (data || []).map(j => ({
+      id: j.id,
+      title: j.title,
+      date: j.date,
+      time: j.time,
+      location: j.location,
+      region: j.region,
+      courseName: j.course_name,
+      spotsTotal: j.spots_total,
+      spotsFilled: j.spots_filled,
+      status: j.status,
+      hostId: j.host?.id,
+      hostName: j.host?.name || '알 수 없음',
+      hostPhoto: j.host?.photos?.[0] || 'https://via.placeholder.com/100',
+      participants: (j.participants || []).map(p => ({
+        id: p.user?.id,
+        name: p.user?.name || '',
+        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+      })).filter(p => p.id),
+    }))
+
+    return { success: true, roundings }
+  } catch (e) {
+    console.error('완료 라운딩 조회 에러:', e)
+    return { success: false, roundings: [], error: e.message }
+  }
+}
+
+/**
+ * 완료된 라운딩 수
+ */
+export const getCompletedRoundingCount = async (userId) => {
+  if (!isConnected() || !userId) return 0
+
+  try {
+    const { data: participations, error: pError } = await supabase
+      .from('join_participants')
+      .select('join_id')
+      .eq('user_id', userId)
+
+    if (pError || !participations?.length) return 0
+
+    const joinIds = participations.map(p => p.join_id)
+
+    const { count, error } = await supabase
+      .from('joins')
+      .select('id', { count: 'exact', head: true })
+      .in('id', joinIds)
+      .eq('status', 'completed')
+
+    if (error) return 0
+    return count || 0
+  } catch {
+    return 0
+  }
+}
+
 export default {
   getJoins,
   getMyJoins,
@@ -664,4 +804,7 @@ export default {
   updateJoin,
   deleteJoin,
   getJoinDetail,
+  completePastJoins,
+  getCompletedRoundings,
+  getCompletedRoundingCount,
 }

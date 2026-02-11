@@ -40,7 +40,7 @@ const seededShuffle = (array, seed) => {
   return shuffled
 }
 
-export default function Home({ onPropose }) {
+export default function Home() {
   const navigate = useNavigate()
   const {
     users,

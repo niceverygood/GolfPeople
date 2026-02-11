@@ -12,6 +12,8 @@ import { useMarker } from '../context/MarkerContext'
 import { db, storage } from '../lib/supabase'
 import { getNotificationSettings, updateNotificationSettings } from '../lib/notificationService'
 import { getUserRating } from '../lib/reviewService'
+import { getLikedByCount, getReceivedApplicationCount } from '../lib/profileStatsService'
+import { getCompletedRoundingCount } from '../lib/joinService'
 import VerificationBadges from '../components/VerificationBadges'
 import { showToast } from '../utils/errorHandler'
 import MarkerIcon from '../components/icons/MarkerIcon'
@@ -89,12 +91,13 @@ const GOLF_BRANDS = [
 export default function Profile() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { currentUser, proposals } = useApp()
+  const { currentUser } = useApp()
   const { user, profile: authProfile, isAuthenticated, signOut, updateProfile, loading: authLoading } = useAuth()
   const { balance } = useMarker()
   const [profile, setProfile] = useState(null)
   const [scoreStats, setScoreStats] = useState(null)
   const [myRating, setMyRating] = useState(null)
+  const [profileStats, setProfileStats] = useState({ likedBy: 0, receivedApps: 0, completedRoundings: 0 })
 
   // 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)
@@ -145,10 +148,25 @@ export default function Profile() {
     loadMyRating()
   }, [user?.id])
 
+  // 프로필 통계 로드 (관심받음, 받은 신청, 완료 라운딩)
+  useEffect(() => {
+    const loadProfileStats = async () => {
+      if (user?.id) {
+        const [likedBy, receivedApps, completedRoundings] = await Promise.all([
+          getLikedByCount(user.id),
+          getReceivedApplicationCount(user.id),
+          getCompletedRoundingCount(user.id),
+        ])
+        setProfileStats({ likedBy, receivedApps, completedRoundings })
+      }
+    }
+    loadProfileStats()
+  }, [user?.id])
+
   const stats = [
-    { label: '관심받음', value: 23 },
-    { label: '라운딩 제안', value: proposals.length },
-    { label: '완료 라운딩', value: 0 },
+    { label: '관심받음', value: profileStats.likedBy, action: null },
+    { label: '받은 신청', value: profileStats.receivedApps, action: () => navigate('/saved?tab=applications') },
+    { label: '완료 라운딩', value: profileStats.completedRoundings, action: () => navigate('/rounding-history') },
   ]
 
   // 전화번호 인증 여부
@@ -156,6 +174,7 @@ export default function Profile() {
 
   const menuItems = [
     { icon: Users, label: '내 친구', action: () => navigate('/friends') },
+    { icon: Calendar, label: '라운딩 기록', action: () => navigate('/rounding-history') },
     { icon: Star, label: '라운딩 리뷰', action: () => navigate('/review') },
     { icon: Edit2, label: '프로필 수정', action: () => setShowEditModal(true) },
     // 전화번호 미인증시 인증 메뉴 표시
@@ -454,52 +473,27 @@ export default function Profile() {
       {/* 통계 */}
       <div className="px-6 mt-4">
         <div className="grid grid-cols-3 gap-3">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-gp-card rounded-2xl p-4 text-center"
-            >
-              <p className="text-2xl font-bold text-gp-gold mb-1">{stat.value}</p>
-              <p className="text-gp-text-secondary text-xs">{stat.label}</p>
-            </motion.div>
-          ))}
+          {stats.map((stat, index) => {
+            const Wrapper = stat.action ? 'button' : 'div'
+            return (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Wrapper
+                  onClick={stat.action || undefined}
+                  className={`w-full bg-gp-card rounded-2xl p-4 text-center ${stat.action ? 'hover:bg-gp-border/50 transition-colors' : ''}`}
+                >
+                  <p className="text-2xl font-bold text-gp-gold mb-1">{stat.value}</p>
+                  <p className="text-gp-text-secondary text-xs">{stat.label}</p>
+                </Wrapper>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
-
-      {/* 보낸 제안 */}
-      {proposals.length > 0 && (
-        <div className="px-6 mt-6">
-          <h3 className="font-semibold mb-3">보낸 라운딩 제안</h3>
-          <div className="space-y-2">
-            {proposals.map((proposal) => (
-              <div
-                key={proposal.id}
-                className="bg-gp-card rounded-xl p-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium">{proposal.userName}</p>
-                  <p className="text-gp-text-secondary text-sm">
-                    {proposal.datePreference} · {proposal.region}
-                  </p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  proposal.status === 'pending'
-                    ? 'bg-gp-gold/20 text-gp-gold'
-                    : proposal.status === 'accepted'
-                    ? 'bg-gp-green/20 text-gp-green'
-                    : 'bg-gp-red/20 text-gp-red'
-                }`}>
-                  {proposal.status === 'pending' ? '대기중' : 
-                   proposal.status === 'accepted' ? '수락됨' : '거절됨'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 메뉴 */}
       <div className="px-6 mt-6">
