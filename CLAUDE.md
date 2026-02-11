@@ -46,6 +46,71 @@ src/
 
 ---
 
+## 2026-02-11 (수) 작업일지
+
+### 앱 전체 코드 리뷰 및 수정 (이전 세션 ~현재)
+
+#### CRITICAL (7건) - 커밋 f30d6a0, e949141
+- `.gitignore`: Firebase 서비스 파일 + 키스토어/서명 파일 제외
+- `android/app/build.gradle`: 서명 비밀번호 → signing.properties 외부화
+- `src/lib/friendService.js`: UUID 검증 추가 (SQL 인젝션 방지)
+- `src/context/AppContext.jsx`: Provider value useMemo + 로그아웃 상태 클리어
+- `src/context/AppContext.jsx`: Realtime 구독 의존성 배열 수정
+- `src/lib/chatService.js`: Promise.all → Promise.allSettled
+
+#### HIGH (7건) - 커밋 335fad7
+- `src/context/MarkerContext.jsx`: 서버 동기화 1회 재시도 + null 안전성
+- `src/context/ChatContext.jsx`: enterRoomIdRef 레이스 컨디션 방지 + 로그아웃 클리어
+- `src/pages/Saved.jsx`: startDirectChat 실패 시 에러 토스트
+- `src/pages/Profile.jsx`: 이미지 업로드 실패 피드백
+- `src/lib/notificationService.js`: push/kakao 개별 try-catch
+- `src/lib/paymentVerify.js`: 에러 타입 구분 (PGRST116 vs 실 에러)
+
+#### MEDIUM (5건+) - 커밋 2f2b606
+- `src/context/AppContext.jsx`: loadAllData Promise.allSettled + null-safe
+- `capacitor.config.json`: allowNavigation 와일드카드 정리
+- `vercel.json`: 보안 헤더 + 에셋 캐싱 추가
+- `vite.config.js`: 코드 스플리팅 (메인 번들 1,096KB → 778KB, 29% 감소)
+- `supabase/migrations/008_rls_security_fixes.sql`: RLS 활성화 + 정책 생성 (수동 실행 완료)
+
+#### 코드 품질 (2건) - 커밋 52bde45
+- `src/pages/ChatRoom.jsx`: formatDate → getDateGroupLabel 이름 변경 (공유 유틸과 혼동 방지)
+- `src/App.jsx`: ProtectedRoute + AuthenticatedApp 컴포넌트 분리 (인증 보호 명시적 패턴)
+
+#### 번들 최적화 (추가)
+- `src/App.jsx`: 비핵심 페이지 8개 React.lazy 전환 (Store, ScoreRecord, ScoreStats, Friends, Review, Privacy, Terms, Support)
+- `src/App.jsx`: IAP 초기화 dynamic import로 지연 로딩
+- `vite.config.js`: manualChunks 추가 (vendor-router, vendor-capacitor, vendor-firebase)
+- **메인 번들: 778KB → 342KB (56% 추가 감소, 총 1,096KB → 342KB = 69% 감소)**
+
+### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | v1.0.2 | ⚠️ 심사 리젝 → 수정 중 |
+| Android | v1.0.2 | ⚠️ 심사 리젝 → 수정 중 |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+### 카카오 알림톡 검수 현황 (4차 반려)
+- **템플릿**: 친구 요청 알림 (UF_2416)
+- **반려 이력**:
+  - 1차 (02-02): 수신 대상 불명확 → 수신자 액션 기반 고정값 필요
+  - 2차 (02-03): 동일 사유 → 메시지 내 액션 근거 추가 필요
+  - 3차 (02-06): 다발성 메시지 → 수신자 동의/고지 문구 필요
+  - 4차 (02-09): 다발성 문구 부족 → **"고객님께서 요청하신" 형태의 명확한 고정값 필요**
+- **핵심 반려 사유**: 수신자가 직접 동의/요청했음을 확인할 수 있는 **고정 문구**가 메시지 본문에 포함되어야 함
+- **개선 방향**: 아래 "카카오 알림톡 개선안" 참조
+
+### 남은 작업
+| 우선순위 | 항목 | 상태 |
+|---------|------|------|
+| 🔴 | iOS/Android 심사 리젝 수정 후 재제출 | 수정 중 |
+| 🔴 | 카카오 알림톡 템플릿 수정 후 재검수 신청 | 4차 반려 → 수정 필요 |
+| 🟡 | 번들 최적화 적용 후 빌드/배포 | 완료 (342KB) |
+| 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
+| 🟢 | 시드 데이터 정리 (실 서비스 전 삭제) | 나중에 |
+
+---
+
 ## 2026-02-10 (화) 작업일지
 
 ### 이전 커밋 (오늘 오전~오후)
