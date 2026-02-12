@@ -84,10 +84,8 @@ export default function JoinDetail() {
     const result = await confirmJoin(join.id, user.id)
     if (result.success) {
       showToast.success('조인이 확정되었습니다!')
-      // 상태 갱신
-      if (fetchedJoin) {
-        setFetchedJoin(prev => ({ ...prev, status: 'confirmed', confirmed_at: new Date().toISOString() }))
-      }
+      // 상태 갱신 (stateJoin이 refreshJoins 후 사라질 수 있으므로 fetchedJoin에 저장)
+      setFetchedJoin(prev => ({ ...(prev || join), status: 'confirmed', confirmed_at: new Date().toISOString() }))
       refreshJoins()
       refreshMyJoins()
     } else {
@@ -108,9 +106,8 @@ export default function JoinDetail() {
     const result = await startRounding(join.id, user.id)
     if (result.success) {
       showToast.success('라운딩을 시작합니다! 즐거운 라운딩 되세요!')
-      if (fetchedJoin) {
-        setFetchedJoin(prev => ({ ...prev, status: 'in_progress', started_at: new Date().toISOString() }))
-      }
+      // stateJoin이 refreshJoins 후 사라질 수 있으므로 fetchedJoin에 저장
+      setFetchedJoin(prev => ({ ...(prev || join), status: 'in_progress', started_at: new Date().toISOString() }))
       refreshJoins()
       refreshMyJoins()
     } else {
@@ -126,6 +123,12 @@ export default function JoinDetail() {
 
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
+    // 자기 자신은 무료로 프로필 페이지 이동
+    if (user?.id && String(userId) === String(user.id)) {
+      navigate('/profile')
+      return
+    }
+
     // 전화번호 미인증 시 인증 모달 표시
     if (!phoneVerify.checkVerification()) return
 
@@ -408,8 +411,8 @@ export default function JoinDetail() {
             </button>
           )}
 
-          {/* confirmed: 당일이면 '라운딩 시작', 미래면 D-day 표시 */}
-          {joinStatus === 'confirmed' && isMember && isToday && (
+          {/* confirmed: 당일이면 '라운딩 시작'(호스트만), 미래면 D-day 표시 */}
+          {joinStatus === 'confirmed' && isHostCheck && isToday && (
             <button
               onClick={handleStartRounding}
               disabled={actionProcessing}
@@ -419,7 +422,7 @@ export default function JoinDetail() {
               {actionProcessing ? '처리 중...' : '라운딩 시작'}
             </button>
           )}
-          {joinStatus === 'confirmed' && isMember && !isToday && (
+          {joinStatus === 'confirmed' && isMember && !(isHostCheck && isToday) && (
             <button disabled className="w-full py-4 rounded-2xl bg-gp-blue/20 text-gp-blue cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-2">
               <CheckCircle className="w-5 h-5" />
               확정됨 — {getDDay()}

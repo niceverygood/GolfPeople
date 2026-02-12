@@ -196,13 +196,12 @@ export default function Saved() {
         .single()
 
       if (room?.id) {
-        // 채팅방은 있지만 나간 상태 → 다시 참가
-        await supabase
-          .from('chat_participants')
-          .upsert(
-            { room_id: room.id, user_id: user.id },
-            { onConflict: 'room_id,user_id' }
-          )
+        // 채팅방은 있지만 나간 상태 → RPC로 재입장
+        const { data: rejoinResult } = await supabase.rpc('rejoin_chat_room', { p_room_id: room.id })
+        if (rejoinResult && !rejoinResult.success) {
+          showToast.error('채팅방에 재입장할 수 없습니다')
+          return
+        }
 
         await loadChatRooms()
         navigate(`/chat/${room.id}`)
