@@ -152,12 +152,16 @@ export default function Profile() {
   useEffect(() => {
     const loadProfileStats = async () => {
       if (user?.id) {
-        const [likedBy, receivedApps, completedRoundings] = await Promise.all([
+        const results = await Promise.allSettled([
           getLikedByCount(user.id),
           getReceivedApplicationCount(user.id),
           getCompletedRoundingCount(user.id),
         ])
-        setProfileStats({ likedBy, receivedApps, completedRoundings })
+        setProfileStats({
+          likedBy: results[0].status === 'fulfilled' ? results[0].value : 0,
+          receivedApps: results[1].status === 'fulfilled' ? results[1].value : 0,
+          completedRoundings: results[2].status === 'fulfilled' ? results[2].value : 0,
+        })
       }
     }
     loadProfileStats()
@@ -174,7 +178,7 @@ export default function Profile() {
 
   const menuItems = [
     { icon: Users, label: '내 친구', action: () => navigate('/friends') },
-    { icon: Calendar, label: '라운딩 기록', action: () => navigate('/rounding-history') },
+    { icon: Calendar, label: '내 조인 기록', action: () => navigate('/rounding-history') },
     { icon: Star, label: '라운딩 리뷰', action: () => navigate('/review') },
     { icon: Edit2, label: '프로필 수정', action: () => setShowEditModal(true) },
     // 전화번호 미인증시 인증 메뉴 표시

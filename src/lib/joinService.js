@@ -314,15 +314,28 @@ export const applyToJoin = async (userId, joinId, message = '') => {
   }
 
   try {
-    // 본인 조인에 신청 방지
+    // 조인 정보 조회 (호스트/날짜/상태 검증)
     const { data: joinInfo } = await supabase
       .from('joins')
-      .select('host_id')
+      .select('host_id, date, status')
       .eq('id', joinId)
       .single()
 
-    if (joinInfo?.host_id === userId) {
+    if (!joinInfo) {
+      return { success: false, error: 'join_not_found' }
+    }
+
+    if (joinInfo.host_id === userId) {
       return { success: false, error: 'own_join' }
+    }
+
+    // 만료된 조인 신청 방지
+    const today = new Date().toISOString().split('T')[0]
+    if (joinInfo.status !== 'open') {
+      return { success: false, error: 'join_closed' }
+    }
+    if (joinInfo.date < today) {
+      return { success: false, error: 'join_expired' }
     }
 
     // 이미 신청했는지 확인
@@ -531,7 +544,7 @@ export const createJoin = async (userId, joinData) => {
         region: joinData.region,
         course_name: joinData.courseName,
         spots_total: joinData.spotsTotal || 4,
-        spots_filled: 1,
+        spots_filled: joinData.spotsFilled || 1,
         handicap_range: joinData.handicapRange,
         styles: joinData.styles || [],
         description: joinData.description,
@@ -791,6 +804,69 @@ export const getCompletedRoundingCount = async (userId) => {
   }
 }
 
+/**
+ * 내가 참가한 모든 조인 목록 (상태 무관 — 마이페이지 조인 기록용)
+ */
+export const getMyJoinHistory = async (userId) => {
+  if (!isConnected() || !userId) {
+    return { success: false, joins: [] }
+  }
+
+  try {
+    const { data: participations, error: pError } = await supabase
+      .from('join_participants')
+      .select('join_id')
+      .eq('user_id', userId)
+
+    if (pError) throw pError
+    if (!participations || participations.length === 0) {
+      return { success: true, joins: [] }
+    }
+
+    const joinIds = participations.map(p => p.join_id)
+
+    const { data, error } = await supabase
+      .from('joins')
+      .select(`
+        id, title, date, time, location, region, course_name,
+        spots_total, spots_filled, status, created_at,
+        host:host_id ( id, name, photos ),
+        participants:join_participants ( user:user_id ( id, name, photos ) )
+      `)
+      .in('id', joinIds)
+      .order('date', { ascending: false })
+
+    if (error) throw error
+
+    const joins = (data || []).map(j => ({
+      id: j.id,
+      title: j.title,
+      date: j.date,
+      time: j.time,
+      location: j.location,
+      region: j.region,
+      courseName: j.course_name,
+      spotsTotal: j.spots_total,
+      spotsFilled: j.spots_filled,
+      status: j.status,
+      createdAt: j.created_at,
+      hostId: j.host?.id,
+      hostName: j.host?.name || '알 수 없음',
+      hostPhoto: j.host?.photos?.[0] || '/default-profile.png',
+      participants: (j.participants || []).map(p => ({
+        id: p.user?.id,
+        name: p.user?.name || '',
+        photo: p.user?.photos?.[0] || '/default-profile.png',
+      })).filter(p => p.id),
+    }))
+
+    return { success: true, joins }
+  } catch (e) {
+    console.error('조인 기록 조회 에러:', e)
+    return { success: false, joins: [], error: e.message }
+  }
+}
+
 export default {
   getJoins,
   getMyJoins,
@@ -807,4 +883,5 @@ export default {
   completePastJoins,
   getCompletedRoundings,
   getCompletedRoundingCount,
+  getMyJoinHistory,
 }

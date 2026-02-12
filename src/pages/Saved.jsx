@@ -617,7 +617,7 @@ function SavedUserCard({ user, onRemove, onProfileClick }) {
       <div className="flex">
         <div className="w-28 h-36 flex-shrink-0">
           <img
-            src={user.photos[0]}
+            src={user.photos?.[0] || '/default-profile.png'}
             alt={user.name}
             className="w-full h-full object-cover"
           />
@@ -645,7 +645,7 @@ function SavedUserCard({ user, onRemove, onProfileClick }) {
             </div>
 
             <div className="flex flex-wrap gap-1 mb-2">
-              {user.style.slice(0, 2).map((tag) => (
+              {(user.style || []).slice(0, 2).map((tag) => (
                 <span key={tag} className="tag text-xs py-0.5 px-2">
                   {tag}
                 </span>

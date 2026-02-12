@@ -44,6 +44,8 @@ export default function JoinDetail() {
   const isSaved = savedJoins.includes(join?.id)
   const isApplied = joinApplications.some(app => app.joinId === join?.id)
   const isHost = join?.hostId && user?.id && String(join.hostId) === String(user.id)
+  const isExpired = join?.date && join.date < new Date().toISOString().split('T')[0]
+  const isClosed = join?.status && join.status !== 'open'
 
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
@@ -133,9 +135,10 @@ export default function JoinDetail() {
       {/* 헤더 이미지 */}
       <div className="relative h-72">
         <img
-          src={join.hostPhoto}
+          src={join.hostPhoto || '/default-profile.png'}
           alt={join.hostName}
           className="w-full h-full object-cover"
+          onError={(e) => { e.target.src = '/default-profile.png' }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gp-black via-gp-black/20 to-transparent" />
 
@@ -293,20 +296,26 @@ export default function JoinDetail() {
           <div className="max-w-[430px] mx-auto">
             <button
               onClick={handleApplyClick}
-              disabled={spotsLeft === 0 || isApplied}
+              disabled={spotsLeft === 0 || isApplied || isExpired || isClosed}
               className={`w-full py-4 rounded-2xl font-semibold text-lg ${
-                isApplied
-                  ? 'bg-gp-green/20 text-gp-green cursor-not-allowed'
-                  : spotsLeft > 0
-                    ? 'btn-gold'
-                    : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
+                isExpired || isClosed
+                  ? 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
+                  : isApplied
+                    ? 'bg-gp-green/20 text-gp-green cursor-not-allowed'
+                    : spotsLeft > 0
+                      ? 'btn-gold'
+                      : 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
               }`}
             >
-              {isApplied
-                ? '✓ 신청 완료'
-                : spotsLeft > 0
-                  ? `신청하기 (${spotsLeft}자리 남음)`
-                  : '마감되었습니다'}
+              {isExpired
+                ? '만료된 조인입니다'
+                : isClosed
+                  ? '마감된 조인입니다'
+                  : isApplied
+                    ? '✓ 신청 완료'
+                    : spotsLeft > 0
+                      ? `신청하기 (${spotsLeft}자리 남음)`
+                      : '마감되었습니다'}
             </button>
           </div>
         </div>
@@ -349,8 +358,8 @@ function ApplyModal({ join, onClose }) {
   const { applyToJoin } = useApp()
   const [message, setMessage] = useState('')
 
-  const handleSubmit = () => {
-    const success = applyToJoin(join, message)
+  const handleSubmit = async () => {
+    const success = await applyToJoin(join, message)
     if (success) {
       showToast.success('신청이 완료되었습니다! 저장함에서 확인하세요.')
     } else {
