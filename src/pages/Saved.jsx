@@ -482,6 +482,7 @@ export default function Saved() {
                       onAccept={() => handleAcceptJoinRequest(request.id)}
                       onReject={() => handleRejectJoinRequest(request.id)}
                       onProfileClick={(userId) => navigate(`/user/${userId}`)}
+                      onJoinClick={() => request.joinId && navigate(`/join/${request.joinId}`)}
                     />
                   ))
                 )}
@@ -1009,7 +1010,7 @@ function SentJoinCard({ application, onCancel, onClick }) {
 }
 
 // 내가 받은 조인 신청 카드 (대기중)
-function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick }) {
+function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick, onJoinClick }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -1044,10 +1045,13 @@ function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick }) {
         <StatusBadge status={request.status} />
       </div>
       
-      <div className="bg-gp-black/30 rounded-lg p-3 mb-3">
+      <button
+        onClick={() => onJoinClick && onJoinClick()}
+        className="w-full bg-gp-black/30 rounded-lg p-3 mb-3 text-left hover:bg-gp-black/50 transition-all"
+      >
         <p className="text-xs text-gp-text-secondary mb-1">신청한 조인</p>
-        <p className="font-medium">{request.joinTitle}</p>
-      </div>
+        <p className="font-medium text-gp-gold">{request.joinTitle} →</p>
+      </button>
       
       {request.message && (
         <p className="text-sm text-gp-text bg-gp-black/30 rounded-lg p-3 mb-3">
