@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Search, X, Check, ChevronRight, UserPlus, Heart } from 'lucide-react'
@@ -101,6 +101,12 @@ export default function CreateJoin() {
   const [styles, setStyles] = useState([])
   const [meetingType, setMeetingType] = useState('') // 만남 유형 (선택사항)
   const [description, setDescription] = useState('')
+  const scrollRef = useRef(null)
+
+  // 스텝 변경 시 스크롤 맨 위로
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0)
+  }, [step])
 
   // 수정 모드일 때 기존 데이터 로드
   useEffect(() => {
@@ -334,7 +340,7 @@ export default function CreateJoin() {
       </div>
 
       {/* 컨텐츠 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-32">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-32">
         <AnimatePresence mode="wait">
           {/* Step 0: 골프장 선택 */}
           {step === 0 && (

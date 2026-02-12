@@ -46,6 +46,58 @@ src/
 
 ---
 
+## 2026-02-12 (목) 작업일지
+
+### 카카오 알림톡 연동 완료 (알리고 API + DB 직접 발송)
+
+#### 문제
+- 카카오 알림톡 템플릿 검수 승인 완료 (UF_2416 친구 요청)
+- Supabase Edge Function은 고정 IP가 없어 알리고 API 호출 불가 (에러 -99)
+- 알리고 보안정책상 고정 IP 필수
+
+#### 해결: DB 직접 발송 (Edge Function → DB RPC)
+- Supabase PostgreSQL DB는 고정 outbound IP 보유 (52.76.56.94)
+- `http` 확장 + `pg_net` 확장으로 DB에서 직접 알리고 API 호출
+- **AWS EC2 프록시 서버 불필요!**
+
+#### DB 변경사항
+- `profiles.kakao_notification_enabled` BOOLEAN 컬럼 추가
+- `notification_settings` 테이블 생성 + RLS 정책
+- `urlencode()` SQL 함수 신규 (한글 URL 인코딩, lpad 2자리 hex)
+- `send_kakao_alimtalk()` SQL 함수 신규 (5개 템플릿 지원)
+  - FRIEND_REQUEST (UF_2416) ✅ 승인됨
+  - FRIEND_ACCEPTED (UF_2418)
+  - JOIN_APPLICATION (UF_2419)
+  - JOIN_ACCEPTED (UF_2420)
+  - JOIN_REJECTED (UF_2421)
+- 마이그레이션: `010_kakao_alimtalk_function.sql`
+
+#### 프론트엔드 변경
+- `notificationService.js`: `supabase.functions.invoke('send-kakao')` → `supabase.rpc('send_kakao_alimtalk')` 변경
+- `send-kakao/index.ts`: 템플릿 메시지 승인본과 일치하도록 줄바꿈 수정
+
+#### 알리고 설정
+- 발송 서버 IP 등록: 52.76.56.94
+- API Key: emv0p0khgywmdl5wtt1aidjnx95dicdz
+- Sender Key: 072dd3d32fdd6a1e9f24d133f01868060b95fd86 (@bottle)
+- 발신번호: 010-8739-9771
+
+#### 테스트 결과
+- 로컬 테스트 (test-aligo-local.js): 성공 ✅
+- DB RPC 테스트 (send_kakao_alimtalk): 성공 ✅
+- 카카오톡 실제 도착: 확인 ✅ (010-4944-1503)
+
+### 남은 작업
+| 우선순위 | 항목 | 상태 |
+|---------|------|------|
+| 🔴 | iOS/Android 심사 리젝 수정 후 재제출 | 수정 중 |
+| ✅ | 카카오 알림톡 연동 (알리고 + DB 직접 발송) | 완료 |
+| 🟡 | 나머지 알림톡 템플릿 검수 신청 (UF_2418~2423) | 미신청 |
+| 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
+| 🟢 | 시드 데이터 정리 (실 서비스 전 삭제) | 나중에 |
+
+---
+
 ## 2026-02-11 (수) 작업일지
 
 ### 사용자 플로우 정비 (라운딩 완료 → 리뷰 → 스코어 연결)
