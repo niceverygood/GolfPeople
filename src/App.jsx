@@ -200,6 +200,11 @@ function AppContent() {
     return <Splash /> // 로딩 중에도 스플래시 표시
   }
 
+  // 2.5. 로그인됐지만 프로필 아직 로딩 중 — 온보딩 판단 전 대기
+  if (isAuthenticated && !profile && !isOnboarded) {
+    return <Splash />
+  }
+
   // 3. 공개 페이지 - 인증 없이 접근 가능
   const PublicPage = PUBLIC_COMPONENTS[location.pathname]
   if (PublicPage) {
