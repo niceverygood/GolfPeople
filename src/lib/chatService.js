@@ -326,6 +326,11 @@ export const getOrCreateDirectRoom = async (userId, partnerId) => {
     return { success: false }
   }
 
+  // 자기 자신과 채팅 방지
+  if (String(userId) === String(partnerId)) {
+    return { success: false, error: '자기 자신과는 채팅할 수 없습니다' }
+  }
+
   try {
     // 기존 1:1 채팅방 찾기
     const { data: myRooms } = await supabase

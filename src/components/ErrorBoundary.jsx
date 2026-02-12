@@ -53,11 +53,6 @@ class ErrorBoundary extends React.Component {
               홈으로
             </button>
           </div>
-          {import.meta.env.DEV && this.state.error && (
-            <pre className="mt-6 text-xs text-gp-text-secondary bg-gp-card p-4 rounded-xl max-w-sm overflow-auto text-left">
-              {this.state.error.toString()}
-            </pre>
-          )}
         </div>
       )
     }
