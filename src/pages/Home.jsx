@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History, ArrowLeft, Trash2 } from 'lucide-react'
+import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History, ArrowLeft, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
@@ -952,30 +952,45 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
     // 타입별 페이지 이동
     switch (notification.type) {
       case 'friend_request':
-        // 저장함 -> 친구요청 탭으로 이동 (상태 전달 가능하면 전달)
         navigate('/saved?tab=friends')
         break
       case 'join_request':
-        // 저장함 -> 조인신청 탭으로 이동
+      case 'join_application':
+        // 조인 신청 알림 → 해당 조인 상세로 이동
+        if (notification.data?.joinId || notification.data?.join_id) {
+          navigate(`/join/${notification.data.joinId || notification.data.join_id}`)
+        } else {
+          navigate('/saved?tab=applications')
+        }
+        break
+      case 'join_accepted':
+        // 조인 수락 알림 → 해당 조인 상세로 이동
+        if (notification.data?.join_id || notification.data?.joinId) {
+          navigate(`/join/${notification.data.join_id || notification.data.joinId}`)
+        } else {
+          navigate('/saved?tab=applications')
+        }
+        break
+      case 'join_rejected':
         navigate('/saved?tab=applications')
         break
       case 'match':
-        // 홈 화면 (이미 홈이지만 탭 전환이 필요할 수 있음)
-        // 만약 특정 유저 ID가 있다면 해당 유저 프로필로 이동
         if (notification.userId) {
           navigate(`/user/${notification.userId}`)
         } else {
-          // 기본적으로 홈의 오늘의 추천 탭
           navigate('/')
         }
         break
       case 'system':
-        // 시스템 공지 등 (필요시 특정 페이지 이동)
         if (notification.link) {
           navigate(notification.link)
         }
         break
       default:
+        // 알 수 없는 타입이라도 joinId가 있으면 조인 상세로
+        if (notification.data?.joinId || notification.data?.join_id) {
+          navigate(`/join/${notification.data.joinId || notification.data.join_id}`)
+        }
         break
     }
   }
@@ -983,7 +998,10 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'friend_request': return <UserPlus className="w-5 h-5 text-blue-400" />
-      case 'join_request': return <Calendar className="w-5 h-5 text-green-400" />
+      case 'join_request':
+      case 'join_application': return <Calendar className="w-5 h-5 text-green-400" />
+      case 'join_accepted': return <CheckCircle className="w-5 h-5 text-green-400" />
+      case 'join_rejected': return <XCircle className="w-5 h-5 text-red-400" />
       case 'match': return <Star className="w-5 h-5 text-gp-gold" />
       default: return <Bell className="w-5 h-5 text-gp-text-secondary" />
     }

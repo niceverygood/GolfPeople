@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2, Users, Pencil, X, Check } from 'lucide-react'
 import DOMPurify from 'dompurify'
 import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
@@ -21,12 +21,17 @@ export default function ChatRoom() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
-  const { chatRooms, messages, loading, enterRoom, leaveRoom, sendMessage } = useChat()
+  const { chatRooms, messages, loading, enterRoom, leaveRoom, sendMessage, leaveChatRoom, loadMembers, editMessage, deleteMessage } = useChat()
 
   const [messageInput, setMessageInput] = useState('')
   const [showMenu, setShowMenu] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
+  const [members, setMembers] = useState([])
   const [sending, setSending] = useState(false)
+  const [selectedMessage, setSelectedMessage] = useState(null)
+  const [editingMessage, setEditingMessage] = useState(null)
+  const [editText, setEditText] = useState('')
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -73,6 +78,16 @@ export default function ChatRoom() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  // 멤버 목록 보기
+  const handleShowMembers = async () => {
+    setShowMenu(false)
+    const result = await loadMembers(chatId)
+    if (result.success) {
+      setMembers(result.members)
+      setShowMembers(true)
     }
   }
 
@@ -132,11 +147,61 @@ export default function ChatRoom() {
     }
   }
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
     setShowMenu(false)
-    if (confirm('채팅방을 나가시겠습니까?')) {
-      navigate('/chat')
+    if (confirm('채팅방을 나가시겠습니까?\n나가면 대화 내용이 사라집니다.')) {
+      const result = await leaveChatRoom(chatId)
+      if (result.success) {
+        showToast.success('채팅방을 나갔습니다')
+      } else {
+        showToast.error('채팅방 나가기에 실패했습니다')
+      }
+      navigate('/chat', { replace: true })
     }
+  }
+
+  // 메시지 길게 누르기 (자기 메시지만)
+  const handleMessageLongPress = (msg) => {
+    if (msg.senderId !== user?.id || msg.type === 'system' || msg.pending) return
+    setSelectedMessage(msg)
+  }
+
+  // 메시지 수정
+  const handleEditMessage = () => {
+    if (!selectedMessage) return
+    setEditingMessage(selectedMessage)
+    setEditText(selectedMessage.text)
+    setSelectedMessage(null)
+  }
+
+  // 메시지 수정 확인
+  const handleEditConfirm = async () => {
+    if (!editingMessage || !editText.trim()) return
+
+    const sanitized = sanitizeMessage(editText.trim())
+    if (!sanitized) return
+
+    const result = await editMessage(editingMessage.id, sanitized)
+    if (result.success) {
+      showToast.success('메시지가 수정되었습니다')
+    } else {
+      showToast.error('메시지 수정에 실패했습니다')
+    }
+    setEditingMessage(null)
+    setEditText('')
+  }
+
+  // 메시지 삭제
+  const handleDeleteMessage = async () => {
+    if (!selectedMessage) return
+
+    const result = await deleteMessage(selectedMessage.id)
+    if (result.success) {
+      showToast.success('메시지가 삭제되었습니다')
+    } else {
+      showToast.error('메시지 삭제에 실패했습니다')
+    }
+    setSelectedMessage(null)
   }
 
   // 로딩 중
@@ -219,18 +284,30 @@ export default function ChatRoom() {
           </button>
 
           <button
-            onClick={() => chat?.partnerId && navigate(`/user/${chat.partnerId}`)}
+            onClick={() => {
+              if (chat?.type === 'join') {
+                handleShowMembers()
+              } else if (chat?.partnerId) {
+                navigate(`/user/${chat.partnerId}`)
+              }
+            }}
             className="flex items-center gap-3"
           >
-            <img
-              src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
-              alt={chat?.partnerName || ''}
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            {chat?.type === 'join' ? (
+              <div className="w-10 h-10 rounded-full bg-gp-card flex items-center justify-center">
+                <Users className="w-5 h-5 text-gp-gold" />
+              </div>
+            ) : (
+              <img
+                src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
+                alt={chat?.partnerName || ''}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            )}
             <div className="text-left">
-              <h2 className="font-semibold">{chat?.partnerName || '채팅'}</h2>
-              {chat?.type === 'join' && chat?.joinTitle && (
-                <p className="text-xs text-gp-text-secondary">{chat.joinTitle}</p>
+              <h2 className="font-semibold">{chat?.type === 'join' ? (chat?.joinTitle || '그룹 채팅') : (chat?.partnerName || '채팅')}</h2>
+              {chat?.type === 'join' && (
+                <p className="text-xs text-gp-text-secondary">멤버 보기</p>
               )}
             </div>
           </button>
@@ -260,6 +337,15 @@ export default function ChatRoom() {
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   className="absolute right-0 top-full mt-2 w-40 bg-gp-card rounded-xl overflow-hidden shadow-xl z-50 border border-gp-border"
                 >
+                  {chat?.type === 'join' && (
+                    <button
+                      onClick={handleShowMembers}
+                      className="w-full px-4 py-3 text-left text-sm hover:bg-gp-border flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4 text-gp-text-secondary" />
+                      멤버 목록
+                    </button>
+                  )}
                   <button
                     onClick={handleReport}
                     className="w-full px-4 py-3 text-left text-sm hover:bg-gp-border flex items-center gap-2"
@@ -321,9 +407,27 @@ export default function ChatRoom() {
 
               {dateMessages.map((msg, idx) => {
                 const isMe = msg.senderId === user?.id
-                const showTime = idx === dateMessages.length - 1 ||
+                const isSystem = msg.type === 'system'
+                const showTime = !isSystem && (idx === dateMessages.length - 1 ||
                   dateMessages[idx + 1]?.senderId !== msg.senderId ||
-                  new Date(dateMessages[idx + 1]?.timestamp).getMinutes() !== new Date(msg.timestamp).getMinutes()
+                  new Date(dateMessages[idx + 1]?.timestamp).getMinutes() !== new Date(msg.timestamp).getMinutes())
+                const showSenderName = !isMe && !isSystem && chat?.type === 'join' && (
+                  idx === 0 || dateMessages[idx - 1]?.senderId !== msg.senderId || dateMessages[idx - 1]?.type === 'system'
+                )
+                const showAvatar = !isMe && !isSystem && (
+                  idx === 0 || dateMessages[idx - 1]?.senderId !== msg.senderId || dateMessages[idx - 1]?.type === 'system'
+                )
+
+                // 시스템 메시지 (카카오톡 스타일)
+                if (isSystem) {
+                  return (
+                    <div key={msg.id || idx} className="flex justify-center my-3">
+                      <span className="px-4 py-1.5 bg-gp-card/60 rounded-full text-xs text-gp-text-secondary">
+                        {msg.text}
+                      </span>
+                    </div>
+                  )
+                }
 
                 return (
                   <motion.div
@@ -333,18 +437,29 @@ export default function ChatRoom() {
                     className={`flex mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
                     {!isMe && (
-                      <img
-                        src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
-                        alt=""
-                        className="w-8 h-8 rounded-full object-cover mr-2 mt-1"
-                      />
+                      <div className="w-8 mr-2">
+                        {showAvatar ? (
+                          <img
+                            src={msg.senderPhoto || 'https://via.placeholder.com/100'}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover mt-1 cursor-pointer"
+                            onClick={() => msg.senderId && navigate(`/user/${msg.senderId}`)}
+                          />
+                        ) : (
+                          <div className="w-8" />
+                        )}
+                      </div>
                     )}
 
-                    <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className={`flex flex-col max-w-[70%] ${isMe ? 'items-end' : 'items-start'}`}>
+                      {showSenderName && msg.senderName && (
+                        <span className="text-xs text-gp-text-secondary mb-1 px-1">{msg.senderName}</span>
+                      )}
                       <div
+                        onClick={() => isMe && !msg.pending && handleMessageLongPress(msg)}
                         className={`px-4 py-2.5 rounded-2xl ${
                           isMe
-                            ? 'bg-gp-gold text-gp-black rounded-br-md'
+                            ? 'bg-gp-gold text-gp-black rounded-br-md cursor-pointer active:opacity-80'
                             : 'bg-gp-card text-gp-text rounded-bl-md'
                         } ${msg.pending ? 'opacity-70' : ''}`}
                       >
@@ -407,6 +522,144 @@ export default function ChatRoom() {
             onSubmit={handleSubmitReport}
             onClose={() => setShowReportModal(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* 멤버 목록 모달 */}
+      <AnimatePresence>
+        {showMembers && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+            onClick={() => setShowMembers(false)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[430px] bg-gp-dark rounded-t-3xl p-6 safe-bottom"
+            >
+              <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
+              <h2 className="text-lg font-bold mb-4">멤버 ({members.length}명)</h2>
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                {members.map(member => (
+                  <button
+                    key={member.id}
+                    onClick={() => {
+                      setShowMembers(false)
+                      if (member.id !== user?.id) navigate(`/user/${member.id}`)
+                    }}
+                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-gp-card transition-colors"
+                  >
+                    <img
+                      src={member.photo || 'https://via.placeholder.com/100'}
+                      alt={member.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <span className="font-medium">
+                      {member.name}
+                      {member.id === user?.id && <span className="text-xs text-gp-text-secondary ml-1">(나)</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowMembers(false)}
+                className="w-full mt-4 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+              >
+                닫기
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 메시지 액션 모달 (수정/삭제) */}
+      <AnimatePresence>
+        {selectedMessage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setSelectedMessage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-64 bg-gp-dark rounded-2xl overflow-hidden border border-gp-border"
+            >
+              <button
+                onClick={handleEditMessage}
+                className="w-full px-4 py-3.5 text-left text-sm hover:bg-gp-card flex items-center gap-3 border-b border-gp-border"
+              >
+                <Pencil className="w-4 h-4 text-gp-gold" />
+                수정
+              </button>
+              <button
+                onClick={handleDeleteMessage}
+                className="w-full px-4 py-3.5 text-left text-sm hover:bg-gp-card flex items-center gap-3 text-red-400"
+              >
+                <Trash2 className="w-4 h-4" />
+                삭제
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 메시지 수정 모드 */}
+      <AnimatePresence>
+        {editingMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-0 left-0 right-0 bg-gp-card border-t border-gp-border safe-bottom z-30"
+          >
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-gp-border">
+              <Pencil className="w-4 h-4 text-gp-gold" />
+              <span className="text-xs text-gp-gold flex-1">메시지 수정 중</span>
+              <button onClick={() => { setEditingMessage(null); setEditText('') }}>
+                <X className="w-4 h-4 text-gp-text-secondary" />
+              </button>
+            </div>
+            <div className="flex items-end gap-2 px-4 py-3">
+              <div className="flex-1 bg-gp-surface rounded-2xl">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleEditConfirm()
+                    }
+                  }}
+                  rows={1}
+                  className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none max-h-32"
+                  style={{ minHeight: '44px' }}
+                  autoFocus
+                />
+              </div>
+              <button
+                onClick={handleEditConfirm}
+                disabled={!editText.trim()}
+                className={`p-3 rounded-full transition-all ${
+                  editText.trim()
+                    ? 'bg-gp-gold text-gp-black'
+                    : 'bg-gp-border text-gp-text-secondary'
+                }`}
+              >
+                <Check className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
