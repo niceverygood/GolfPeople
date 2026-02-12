@@ -259,16 +259,14 @@ const requestPushNotification = async ({ recipientId, title, body, data }) => {
 }
 
 /**
- * 카카오 알림톡 발송 요청 (Supabase Edge Function 호출)
+ * 카카오 알림톡 발송 요청 (DB 함수 RPC 호출 - 고정 IP로 발송)
  */
 const requestKakaoNotification = async ({ recipientId, templateCode, variables }) => {
   try {
-    const { data: result, error } = await supabase.functions.invoke('send-kakao', {
-      body: {
-        recipientId,
-        templateCode,
-        variables
-      }
+    const { data: result, error } = await supabase.rpc('send_kakao_alimtalk', {
+      p_recipient_id: recipientId,
+      p_template_code: templateCode,
+      p_variables: variables
     })
 
     if (error) {
@@ -276,7 +274,12 @@ const requestKakaoNotification = async ({ recipientId, templateCode, variables }
       return { success: false, error }
     }
 
-    return { success: true, result }
+    if (result && result.success) {
+      return { success: true, result }
+    } else {
+      console.error('카카오 알림톡 발송 실패:', result?.error)
+      return { success: false, error: result?.error }
+    }
   } catch (e) {
     console.error('카카오 알림톡 발송 에러:', e)
     return { success: false, error: e.message }
