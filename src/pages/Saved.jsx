@@ -104,7 +104,7 @@ export default function Saved() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
-  const { loadChatRooms, startDirectChat } = useChat()
+  const { chatRooms, loadChatRooms, startDirectChat } = useChat()
   const {
     users,
     joins,
@@ -170,20 +170,42 @@ export default function Saved() {
     }
   }
 
-  // 조인 채팅 시작 핸들러
-  const handleStartJoinChat = async (request, type) => {
-    const targetUserId = type === 'sent' ? request.hostId : request.userId
-    if (!targetUserId) return
-    if (String(targetUserId) === String(user?.id)) {
-      showToast.error('자기 자신과는 채팅할 수 없습니다')
+  // 조인 채팅 시작 핸들러 - 기존 조인 채팅방을 찾아서 이동
+  const handleStartJoinChat = async (request) => {
+    const joinId = request.joinId
+    if (!joinId) {
+      showToast.error('조인 정보를 찾을 수 없습니다')
       return
     }
-    const result = await startDirectChat(targetUserId)
-    if (result.success) {
-      navigate(`/chat/${result.roomId}`)
-    } else {
-      showToast.error('채팅방을 열 수 없습니다')
+
+    // 이미 로드된 채팅방에서 해당 조인의 채팅방 찾기
+    let joinRoom = chatRooms.find(room => room.joinId === joinId)
+
+    // 못 찾으면 채팅방 목록 새로고침 후 다시 시도
+    if (!joinRoom) {
+      await loadChatRooms()
+      // loadChatRooms 후 chatRooms가 업데이트되지만 현재 스코프에서는 이전 값
+      // Supabase에서 직접 조회
+      try {
+        const { default: supabase } = await import('../lib/supabase')
+        const { data } = await supabase
+          .from('chat_rooms')
+          .select('id')
+          .eq('join_id', joinId)
+          .single()
+
+        if (data?.id) {
+          navigate(`/chat/${data.id}`)
+          return
+        }
+      } catch (e) {
+        console.error('조인 채팅방 조회 에러:', e)
+      }
+      showToast.error('채팅방을 찾을 수 없습니다')
+      return
     }
+
+    navigate(`/chat/${joinRoom.id}`)
   }
   
   const [activeTab, setActiveTab] = useState('saved')
@@ -555,8 +577,8 @@ export default function Saved() {
                     <>
                       {/* 내가 받은 조인 (수락한) */}
                       {matchedReceivedJoins.length > 0 && (
-                        <Section 
-                          title="📥 내가 수락한" 
+                        <Section
+                          title="📥 내가 수락한"
                           count={matchedReceivedJoins.length}
                           defaultOpen={true}
                         >
@@ -565,17 +587,18 @@ export default function Saved() {
                               key={request.id}
                               request={request}
                               type="received"
+                              onClick={() => navigate(`/join/${request.joinId}`)}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onStartChat={() => handleStartJoinChat(request, 'received')}
+                              onStartChat={() => handleStartJoinChat(request)}
                             />
                           ))}
                         </Section>
                       )}
-                      
+
                       {/* 내가 보낸 조인 (수락받은) */}
                       {matchedSentJoins.length > 0 && (
-                        <Section 
-                          title="📤 내가 신청한 (수락됨)" 
+                        <Section
+                          title="📤 내가 신청한 (수락됨)"
                           count={matchedSentJoins.length}
                           defaultOpen={true}
                         >
@@ -586,7 +609,7 @@ export default function Saved() {
                               type="sent"
                               onClick={() => navigate(`/join/${application.joinId}`)}
                               onProfileClick={(userId) => navigate(`/user/${userId}`)}
-                              onStartChat={() => handleStartJoinChat(application, 'sent')}
+                              onStartChat={() => handleStartJoinChat(application)}
                             />
                           ))}
                         </Section>
@@ -1063,7 +1086,8 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick, onStartChat }
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="bg-gp-card rounded-2xl p-4"
+      className="bg-gp-card rounded-2xl p-4 cursor-pointer"
+      onClick={onClick}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -1083,11 +1107,9 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick, onStartChat }
             />
           </button>
           <div>
-            <h3 className="font-semibold">
-              {type === 'sent' ? request.joinTitle : (partnerName || '알 수 없음')}
-            </h3>
+            <h3 className="font-semibold">{request.joinTitle || '조인'}</h3>
             <p className="text-gp-text-secondary text-sm">
-              {type === 'sent' ? (partnerName || '탈퇴한 유저') : request.joinTitle}
+              {partnerName || '알 수 없음'} {type === 'sent' ? '주최' : '참가자'}
             </p>
           </div>
         </div>
@@ -1097,29 +1119,34 @@ function MatchedJoinCard({ request, type, onClick, onProfileClick, onStartChat }
         </span>
       </div>
 
-      {type === 'sent' && (
-        <div className="flex items-center gap-4 text-sm text-gp-text-secondary mb-3">
+      <div className="flex items-center gap-4 text-sm text-gp-text-secondary mb-3">
+        {request.joinDate && (
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            <span>{request.joinDate}</span>
+            <span>{formatJoinDate(request.joinDate)}</span>
           </div>
-          {request.joinTime && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>{request.joinTime}</span>
-            </div>
-          )}
+        )}
+        {request.joinTime && (
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span>{request.joinTime}</span>
+          </div>
+        )}
+        {request.joinRegion && (
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4" />
             <span>{request.joinRegion}</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <p className="text-gp-text-secondary text-xs">{timeAgo}</p>
 
       <button
-        onClick={() => onStartChat && onStartChat()}
+        onClick={(e) => {
+          e.stopPropagation()
+          onStartChat && onStartChat()
+        }}
         className="w-full mt-4 py-3 rounded-xl btn-gold text-sm font-semibold flex items-center justify-center gap-2"
       >
         <MessageCircle className="w-4 h-4" />
