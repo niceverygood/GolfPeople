@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 
-// 시간 옵션 (05~15시)
-const HOURS = Array.from({ length: 11 }, (_, i) => String(i + 5).padStart(2, '0'))
+// 시간 옵션 (05~19시)
+const HOURS = Array.from({ length: 15 }, (_, i) => String(i + 5).padStart(2, '0'))
 // 분 옵션 (00, 10, 20, 30, 40, 50)
 const MINUTES = ['00', '10', '20', '30', '40', '50']
 
