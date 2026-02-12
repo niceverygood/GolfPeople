@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Search, Users, X, Loader2 } from 'lucide-react'
+import { MessageCircle, Search, Users, X, Loader2, Trash2 } from 'lucide-react'
 import { useChat } from '../context/ChatContext'
+import { showToast } from '../utils/errorHandler'
 
 export default function ChatList() {
   const navigate = useNavigate()
-  const { chatRooms, loading, loadChatRooms } = useChat()
+  const { chatRooms, loading, loadChatRooms, leaveChatRoom } = useChat()
+
+  const handleLeaveChat = async (e, roomId, roomName) => {
+    e.stopPropagation()
+    if (confirm(`"${roomName}" 채팅방을 나가시겠습니까?`)) {
+      const result = await leaveChatRoom(roomId)
+      if (result.success) {
+        showToast.success('채팅방을 나갔습니다')
+      } else {
+        showToast.error('채팅방 나가기에 실패했습니다')
+      }
+    }
+  }
 
   // 컴포넌트 마운트 시 채팅방 목록 새로고침
   useEffect(() => {
@@ -124,60 +137,73 @@ export default function ChatList() {
           <div className="px-4">
             <AnimatePresence>
               {filteredChats.map((chat, index) => (
-                <motion.button
+                <motion.div
                   key={chat.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => navigate(`/chat/${chat.id}`)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gp-card transition-all"
+                  className="flex items-center gap-1"
                 >
-                  {/* 프로필 이미지 */}
-                  <div className="relative">
-                    <img
-                      src={chat.partnerPhoto}
-                      alt={chat.partnerName}
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
-                    {chat.type === 'join' && (
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gp-green rounded-full flex items-center justify-center border-2 border-gp-black">
-                        <Users className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                    {chat.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 rounded-full flex items-center justify-center px-1">
-                        <span className="text-xs font-bold text-white">
-                          {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 채팅 정보 */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className={`font-semibold truncate ${chat.unreadCount > 0 ? 'text-white' : 'text-gp-text'}`}>
-                        {chat.partnerName}
-                      </h3>
-                      <span className="text-xs text-gp-text-secondary ml-2 shrink-0">
-                        {formatTime(chat.lastMessageTime)}
-                      </span>
+                  <button
+                    onClick={() => navigate(`/chat/${chat.id}`)}
+                    className="flex-1 flex items-center gap-3 p-3 rounded-xl hover:bg-gp-card transition-all min-w-0"
+                  >
+                    {/* 프로필 이미지 */}
+                    <div className="relative shrink-0">
+                      {chat.type === 'join' ? (
+                        <div className="w-14 h-14 rounded-full bg-gp-card flex items-center justify-center">
+                          <Users className="w-7 h-7 text-gp-gold" />
+                        </div>
+                      ) : (
+                        <img
+                          src={chat.partnerPhoto}
+                          alt={chat.partnerName}
+                          className="w-14 h-14 rounded-full object-cover"
+                        />
+                      )}
+                      {chat.unreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 rounded-full flex items-center justify-center px-1">
+                          <span className="text-xs font-bold text-white">
+                            {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {chat.type === 'join' && chat.joinTitle && (
-                      <p className="text-xs text-gp-gold truncate mb-0.5">
-                        {chat.joinTitle}
-                      </p>
-                    )}
+                    {/* 채팅 정보 */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={`font-semibold truncate ${chat.unreadCount > 0 ? 'text-white' : 'text-gp-text'}`}>
+                          {chat.type === 'join' ? (chat.joinTitle || chat.partnerName) : chat.partnerName}
+                        </h3>
+                        <span className="text-xs text-gp-text-secondary ml-2 shrink-0">
+                          {formatTime(chat.lastMessageTime)}
+                        </span>
+                      </div>
 
-                    <p className={`text-sm truncate ${
-                      chat.unreadCount > 0 ? 'text-gp-text font-medium' : 'text-gp-text-secondary'
-                    }`}>
-                      {chat.lastMessage || '새로운 대화를 시작해보세요'}
-                    </p>
-                  </div>
-                </motion.button>
+                      {chat.type === 'join' && chat.partnerName && (
+                        <p className="text-xs text-gp-text-secondary truncate mb-0.5">
+                          {chat.partnerName}
+                        </p>
+                      )}
+
+                      <p className={`text-sm truncate ${
+                        chat.unreadCount > 0 ? 'text-gp-text font-medium' : 'text-gp-text-secondary'
+                      }`}>
+                        {chat.lastMessage || '새로운 대화를 시작해보세요'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* 나가기 버튼 */}
+                  <button
+                    onClick={(e) => handleLeaveChat(e, chat.id, chat.type === 'join' ? chat.joinTitle : chat.partnerName)}
+                    className="p-2 rounded-full hover:bg-red-500/20 transition-colors shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4 text-gp-text-secondary hover:text-red-400" />
+                  </button>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>

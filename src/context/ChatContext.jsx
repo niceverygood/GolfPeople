@@ -12,6 +12,10 @@ import {
   subscribeToRoom,
   subscribeToAllRooms,
   getOrCreateDirectRoom,
+  leaveChatRoom as leaveChatRoomService,
+  getChatMembers,
+  editMessage as editChatMessage,
+  deleteMessage as deleteChatMessage,
   unsubscribeAll
 } from '../lib/chatService'
 
@@ -84,6 +88,21 @@ export function ChatProvider({ children }) {
 
       // 실시간 구독
       roomUnsubscribeRef.current = subscribeToRoom(roomId, user.id, (newMessage) => {
+        // UPDATE 이벤트
+        if (newMessage._event === 'UPDATE') {
+          setMessages(prev =>
+            prev.map(m => m.id === newMessage.id ? { ...m, text: newMessage.text } : m)
+          )
+          return
+        }
+
+        // DELETE 이벤트
+        if (newMessage._event === 'DELETE') {
+          setMessages(prev => prev.filter(m => m.id !== newMessage.id))
+          return
+        }
+
+        // INSERT 이벤트
         setMessages(prev => {
           // 중복 체크
           if (prev.some(m => m.id === newMessage.id)) {
@@ -158,6 +177,63 @@ export function ChatProvider({ children }) {
     return result
   }, [user?.id, currentRoom])
 
+  // 채팅방 나가기 (DB에서 실제 삭제)
+  const leaveChatRoom = useCallback(async (roomId) => {
+    if (!user?.id || !roomId) return { success: false }
+
+    // 구독 해제
+    if (roomUnsubscribeRef.current) {
+      roomUnsubscribeRef.current()
+      roomUnsubscribeRef.current = null
+    }
+
+    const result = await leaveChatRoomService(roomId, user.id)
+
+    if (result.success) {
+      setChatRooms(prev => prev.filter(room => room.id !== roomId))
+      if (currentRoom === roomId) {
+        setCurrentRoom(null)
+        setMessages([])
+      }
+    }
+
+    return result
+  }, [user?.id, currentRoom])
+
+  // 멤버 목록 조회
+  const loadMembers = useCallback(async (roomId) => {
+    if (!roomId) return { success: false, members: [] }
+    return await getChatMembers(roomId)
+  }, [])
+
+  // 메시지 수정
+  const editMessage = useCallback(async (messageId, newContent) => {
+    if (!user?.id || !messageId) return { success: false }
+
+    const result = await editChatMessage(messageId, user.id, newContent)
+
+    if (result.success) {
+      setMessages(prev =>
+        prev.map(m => m.id === messageId ? { ...m, text: newContent.trim() } : m)
+      )
+    }
+
+    return result
+  }, [user?.id])
+
+  // 메시지 삭제
+  const deleteMessage = useCallback(async (messageId) => {
+    if (!user?.id || !messageId) return { success: false }
+
+    const result = await deleteChatMessage(messageId, user.id)
+
+    if (result.success) {
+      setMessages(prev => prev.filter(m => m.id !== messageId))
+    }
+
+    return result
+  }, [user?.id])
+
   // 1:1 채팅 시작
   const startDirectChat = useCallback(async (partnerId) => {
     if (!user?.id || !partnerId) return { success: false }
@@ -223,7 +299,11 @@ export function ChatProvider({ children }) {
     enterRoom,
     leaveRoom,
     sendMessage,
-    startDirectChat
+    startDirectChat,
+    leaveChatRoom,
+    loadMembers,
+    editMessage,
+    deleteMessage
   }
 
   return (

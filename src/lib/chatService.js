@@ -59,7 +59,8 @@ export const getChatRooms = async (userId) => {
           .eq('room_id', room.id)
           .neq('user_id', userId)
 
-        const partner = otherParticipants?.[0]?.profiles
+        const allPartners = (otherParticipants || []).map(p => p.profiles).filter(Boolean)
+        const partner = allPartners[0]
 
         // 마지막 메시지 조회
         const { data: lastMessages } = await supabase
@@ -105,10 +106,13 @@ export const getChatRooms = async (userId) => {
           id: room.id,
           type: room.type === 'direct' ? 'friend' : 'join',
           partnerId: partner?.id,
-          partnerName: partner?.name || '알 수 없음',
+          partnerName: room.type === 'group'
+            ? allPartners.map(p => p.name).join(', ') || '그룹 채팅'
+            : (partner?.name || '알 수 없음'),
           partnerPhoto: partner?.photos?.[0] || 'https://via.placeholder.com/100',
+          memberCount: (allPartners?.length || 0) + 1,
           joinId: room.join_id,
-          joinTitle: joinInfo?.title,
+          joinTitle: joinInfo?.title || room.name,
           joinInfo: joinInfo,
           lastMessage: lastMessage?.content || '',
           lastMessageTime: lastMessage?.created_at,
@@ -273,6 +277,30 @@ export const subscribeToRoom = (roomId, userId, onNewMessage) => {
         }
       }
     )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'messages',
+        filter: `room_id=eq.${roomId}`
+      },
+      (payload) => {
+        onNewMessage({ _event: 'UPDATE', id: payload.new.id, text: payload.new.content })
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'messages',
+        filter: `room_id=eq.${roomId}`
+      },
+      (payload) => {
+        onNewMessage({ _event: 'DELETE', id: payload.old.id })
+      }
+    )
     .subscribe()
 
   roomSubscriptions.set(roomId, channel)
@@ -431,6 +459,116 @@ export const getOrCreateJoinRoom = async (joinId, userIds) => {
 }
 
 /**
+ * 채팅방 나가기 (DB에서 참가자 삭제)
+ */
+export const leaveChatRoom = async (roomId, userId) => {
+  if (!isConnected() || !roomId || !userId) {
+    return { success: false }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('chat_participants')
+      .delete()
+      .eq('room_id', roomId)
+      .eq('user_id', userId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (e) {
+    console.error('채팅방 나가기 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
+ * 채팅방 멤버 목록 가져오기
+ */
+export const getChatMembers = async (roomId) => {
+  if (!isConnected() || !roomId) {
+    return { success: false, members: [] }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('chat_participants')
+      .select(`
+        user_id,
+        profiles:user_id (
+          id,
+          name,
+          photos
+        )
+      `)
+      .eq('room_id', roomId)
+
+    if (error) throw error
+
+    const members = (data || []).map(p => ({
+      id: p.profiles?.id,
+      name: p.profiles?.name || '알 수 없음',
+      photo: p.profiles?.photos?.[0] || null
+    })).filter(m => m.id)
+
+    return { success: true, members }
+  } catch (e) {
+    console.error('멤버 목록 조회 에러:', e)
+    return { success: false, members: [], error: e.message }
+  }
+}
+
+/**
+ * 메시지 수정
+ */
+export const editMessage = async (messageId, userId, newContent) => {
+  if (!isConnected() || !messageId || !userId || !newContent?.trim()) {
+    return { success: false }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ content: newContent.trim() })
+      .eq('id', messageId)
+      .eq('sender_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, message: data }
+  } catch (e) {
+    console.error('메시지 수정 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
+ * 메시지 삭제
+ */
+export const deleteMessage = async (messageId, userId) => {
+  if (!isConnected() || !messageId || !userId) {
+    return { success: false }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('id', messageId)
+      .eq('sender_id', userId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (e) {
+    console.error('메시지 삭제 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
  * 모든 구독 해제
  */
 export const unsubscribeAll = () => {
@@ -452,5 +590,9 @@ export default {
   subscribeToAllRooms,
   getOrCreateDirectRoom,
   getOrCreateJoinRoom,
+  leaveChatRoom,
+  getChatMembers,
+  editMessage,
+  deleteMessage,
   unsubscribeAll
 }
