@@ -380,7 +380,7 @@ export const applyToJoin = async (userId, joinId, message = '') => {
 
     const { data: applicantProfile } = await supabase
       .from('profiles')
-      .select('name')
+      .select('name, photos')
       .eq('id', userId)
       .single()
 
@@ -391,6 +391,7 @@ export const applyToJoin = async (userId, joinId, message = '') => {
         data: {
           senderName: applicantProfile?.name || '골퍼',
           senderId: userId,
+          userPhoto: applicantProfile?.photos?.[0] || null,
           joinTitle: joinData.title,
           joinId: joinId,
         },
@@ -431,7 +432,7 @@ export const acceptJoinApplication = async (applicationId) => {
     // 알림 발송 (신청자에게 수락 알림)
     const { data: joinData } = await supabase
       .from('joins')
-      .select('title, date, time, location')
+      .select('title, date, time, location, host:host_id(name, photos)')
       .eq('id', data.join_id)
       .single()
 
@@ -441,6 +442,7 @@ export const acceptJoinApplication = async (applicationId) => {
       data: {
         joinTitle: joinData?.title || '',
         joinId: data.join_id,
+        userPhoto: joinData?.host?.photos?.[0] || null,
         roundingDate: joinData?.date ? `${joinData.date} ${joinData.time || ''}` : '',
         location: joinData?.location || '',
       },
@@ -481,7 +483,7 @@ export const rejectJoinApplication = async (applicationId) => {
     if (appData) {
       const { data: joinData } = await supabase
         .from('joins')
-        .select('title')
+        .select('title, host:host_id(photos)')
         .eq('id', appData.join_id)
         .single()
 
@@ -491,6 +493,7 @@ export const rejectJoinApplication = async (applicationId) => {
         data: {
           joinTitle: joinData?.title || '',
           joinId: appData.join_id,
+          userPhoto: joinData?.host?.photos?.[0] || null,
         },
         options: { push: true, kakao: true, inApp: true }
       })
