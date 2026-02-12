@@ -632,6 +632,10 @@ function ShareModal({ join, onClose }) {
 
     if (result.success) {
       onClose()
+    } else if (result.reason === 'pc_browser') {
+      // PC에서는 자동으로 링크 복사
+      handleCopyLink()
+      showToast.success('PC에서는 링크가 복사됩니다. 카카오톡에 붙여넣기 해주세요!')
     } else if (result.reason === 'init_failed') {
       showToast.error('카카오 SDK 초기화에 실패했습니다. 다시 시도해주세요.')
     } else {

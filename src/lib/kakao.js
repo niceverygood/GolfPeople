@@ -21,10 +21,19 @@ export const initKakao = () => {
   return true
 }
 
+// 모바일 디바이스 판별
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
 /**
  * 카카오톡 조인 공유
+ * PC에서는 카카오 팝업 에러가 발생할 수 있어 모바일에서만 사용 권장
  */
 export const shareJoinToKakao = ({ title, date, time, location, url }) => {
+  // PC 브라우저에서는 카카오 공유 대신 링크 복사 안내
+  if (!isMobile()) {
+    return { success: false, reason: 'pc_browser' }
+  }
+
   if (!window.Kakao) {
     console.error('Kakao SDK not loaded')
     return { success: false, reason: 'sdk_not_loaded' }
