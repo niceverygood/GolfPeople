@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { useAuth } from './AuthContext'
 import { db, isConnected, realtime } from '../lib/supabase'
 import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
-import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi, completePastJoins } from '../lib/joinService'
+import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi, completePastJoins, confirmJoin as confirmJoinApi, startRounding as startRoundingApi } from '../lib/joinService'
 import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi, deleteAllNotifications as deleteAllNotificationsApi } from '../lib/notificationService'
 import { mapProfileToUser, mapNotification } from '../utils/profileMapper'
 
@@ -423,7 +423,29 @@ export function AppProvider({ children }) {
     if (!userId) return
     await deleteJoinApi(joinId, userId)
     await refreshMyJoins()
-  }, [userId, refreshMyJoins])
+    await refreshJoins()
+  }, [userId, refreshMyJoins, refreshJoins])
+
+  // 조인 확정 / 라운딩 시작
+  const confirmJoin = useCallback(async (joinId) => {
+    if (!userId) return { success: false }
+    const result = await confirmJoinApi(joinId, userId)
+    if (result.success) {
+      await refreshJoins()
+      await refreshMyJoins()
+    }
+    return result
+  }, [userId, refreshJoins, refreshMyJoins])
+
+  const startRoundingAction = useCallback(async (joinId) => {
+    if (!userId) return { success: false }
+    const result = await startRoundingApi(joinId, userId)
+    if (result.success) {
+      await refreshJoins()
+      await refreshMyJoins()
+    }
+    return result
+  }, [userId, refreshJoins, refreshMyJoins])
 
   // 알림
   const markNotificationAsRead = useCallback(async (notificationId) => {
@@ -581,6 +603,8 @@ export function AppProvider({ children }) {
     updateProfile,
     createJoin,
     deleteMyJoin,
+    confirmJoin,
+    startRounding: startRoundingAction,
     addPastCard,
     saveDailyRecommendation,
     markNotificationAsRead,
@@ -601,7 +625,7 @@ export function AppProvider({ children }) {
     likeUser, unlikeUser, saveJoin, unsaveJoin,
     sendFriendRequest, cancelFriendRequest, acceptFriendRequest, rejectFriendRequest,
     applyToJoin, cancelJoinApplication, acceptJoinRequest, rejectJoinRequest,
-    updateProfile, createJoin, deleteMyJoin, addPastCard, saveDailyRecommendation,
+    updateProfile, createJoin, deleteMyJoin, confirmJoin, startRoundingAction, addPastCard, saveDailyRecommendation,
     markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications,
     refreshUsers, refreshJoins, refreshMyJoins, refreshFriendRequests, refreshJoinApplications, refreshNotifications,
   ])

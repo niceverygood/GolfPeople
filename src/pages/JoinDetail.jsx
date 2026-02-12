@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Bookmark, BookmarkCheck, Share2, Copy, MessageCircle, Link, Check } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Bookmark, BookmarkCheck, Share2, Copy, MessageCircle, Link, Check, Star, Target, Play, CheckCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useMarker } from '../context/MarkerContext'
@@ -12,6 +12,7 @@ import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 import { shareJoinToKakao } from '../lib/kakao'
+import { getJoinDetail, confirmJoin, startRounding } from '../lib/joinService'
 
 const formatJoinDate = (dateStr) => {
   if (!dateStr) return ''
@@ -28,9 +29,10 @@ export default function JoinDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { joins, savedJoins, saveJoin, unsaveJoin, applyToJoin, joinApplications } = useApp()
+  const { joins, savedJoins, saveJoin, unsaveJoin, applyToJoin, joinApplications, refreshJoins, refreshMyJoins } = useApp()
   const { user } = useAuth()
   const { balance, spendMarkers } = useMarker()
+  const [actionProcessing, setActionProcessing] = useState(false)
 
   // 전화번호 인증 훅
   const phoneVerify = usePhoneVerification()
@@ -39,13 +41,88 @@ export default function JoinDetail() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // userId
   const [isProcessing, setIsProcessing] = useState(false)
+  const [fetchedJoin, setFetchedJoin] = useState(null)
 
-  const join = joins.find(j => String(j.id) === String(id))
+  // joins 상태에 없으면 DB에서 직접 조회 (완료된 조인 등)
+  const stateJoin = joins.find(j => String(j.id) === String(id))
+  useEffect(() => {
+    if (!stateJoin && id) {
+      getJoinDetail(id).then(result => {
+        if (result.success) setFetchedJoin(result.join)
+      })
+    }
+  }, [stateJoin, id])
+
+  const join = stateJoin || fetchedJoin
   const isSaved = savedJoins.includes(join?.id)
   const isApplied = joinApplications.some(app => app.joinId === join?.id)
   const isHost = join?.hostId && user?.id && String(join.hostId) === String(user.id)
-  const isExpired = join?.date && join.date < new Date().toISOString().split('T')[0]
-  const isClosed = join?.status && join.status !== 'open'
+  // fetchedJoin은 host.id로 오고 stateJoin은 hostId로 옴
+  const joinHostId = join?.hostId || join?.host?.id
+  const isHostCheck = joinHostId && user?.id && String(joinHostId) === String(user.id)
+  const isParticipant = (join?.participants || []).some(p => String(p.id || p.user?.id) === String(user?.id))
+  const isMember = isHostCheck || isParticipant
+  const joinStatus = join?.status || 'open'
+  const today = new Date().toISOString().split('T')[0]
+  const isToday = join?.date === today
+  const isExpired = join?.date && join.date < today
+  const isClosed = joinStatus !== 'open' && joinStatus !== 'confirmed'
+
+  // D-day 계산
+  const getDDay = () => {
+    if (!join?.date) return ''
+    const diff = Math.ceil((new Date(join.date + 'T00:00:00') - new Date(today + 'T00:00:00')) / (1000 * 60 * 60 * 24))
+    if (diff === 0) return 'D-Day'
+    if (diff > 0) return `D-${diff}`
+    return ''
+  }
+
+  // 조인 확정 처리
+  const handleConfirm = async () => {
+    if (actionProcessing || !user?.id || !join?.id) return
+    setActionProcessing(true)
+    const result = await confirmJoin(join.id, user.id)
+    if (result.success) {
+      showToast.success('조인이 확정되었습니다!')
+      // 상태 갱신
+      if (fetchedJoin) {
+        setFetchedJoin(prev => ({ ...prev, status: 'confirmed', confirmed_at: new Date().toISOString() }))
+      }
+      refreshJoins()
+      refreshMyJoins()
+    } else {
+      const msgs = {
+        not_host: '호스트만 확정할 수 있습니다.',
+        invalid_status: '이미 확정된 조인입니다.',
+        not_enough_participants: '2명 이상 참가해야 확정할 수 있습니다.',
+      }
+      showToast.error(msgs[result.error] || '조인 확정에 실패했습니다.')
+    }
+    setActionProcessing(false)
+  }
+
+  // 라운딩 시작 처리
+  const handleStartRounding = async () => {
+    if (actionProcessing || !user?.id || !join?.id) return
+    setActionProcessing(true)
+    const result = await startRounding(join.id, user.id)
+    if (result.success) {
+      showToast.success('라운딩을 시작합니다! 즐거운 라운딩 되세요!')
+      if (fetchedJoin) {
+        setFetchedJoin(prev => ({ ...prev, status: 'in_progress', started_at: new Date().toISOString() }))
+      }
+      refreshJoins()
+      refreshMyJoins()
+    } else {
+      const msgs = {
+        invalid_status: '확정된 조인만 시작할 수 있습니다.',
+        not_today: '라운딩 당일에만 시작할 수 있습니다.',
+        not_participant: '참가자만 라운딩을 시작할 수 있습니다.',
+      }
+      showToast.error(msgs[result.error] || '라운딩 시작에 실패했습니다.')
+    }
+    setActionProcessing(false)
+  }
 
   // 프로필 사진 클릭 - 마커 확인 모달 표시
   const handleProfileClick = (userId) => {
@@ -290,15 +367,92 @@ export default function JoinDetail() {
         </div>
       </div>
 
-      {/* 하단 신청 버튼 (호스트는 숨김) */}
-      {!isHost && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
-          <div className="max-w-[430px] mx-auto">
+      {/* 하단 상태별 액션바 */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
+        <div className="max-w-[430px] mx-auto">
+          {/* completed: 리뷰/스코어 버튼 (멤버) 또는 안내 (방문자) */}
+          {joinStatus === 'completed' && isMember && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate(`/review?joinId=${join.id}`)}
+                className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-gp-border font-semibold text-base hover:bg-gp-gold/20 hover:text-gp-gold transition-all"
+              >
+                <Star className="w-5 h-5" />
+                리뷰 작성
+              </button>
+              <button
+                onClick={() => navigate(`/score?fromJoin=${join.id}`)}
+                className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl btn-gold font-semibold text-base"
+              >
+                <Target className="w-5 h-5" />
+                스코어 기록
+              </button>
+            </div>
+          )}
+          {joinStatus === 'completed' && !isMember && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-border text-gp-text-secondary cursor-not-allowed font-semibold text-lg">
+              완료된 조인입니다
+            </button>
+          )}
+
+          {/* in_progress: 라운딩 중 표시 */}
+          {joinStatus === 'in_progress' && isMember && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-green/20 text-gp-green cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-2">
+              <Play className="w-5 h-5" />
+              라운딩 중...
+            </button>
+          )}
+          {joinStatus === 'in_progress' && !isMember && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-border text-gp-text-secondary cursor-not-allowed font-semibold text-lg">
+              진행중인 조인입니다
+            </button>
+          )}
+
+          {/* confirmed: 당일이면 '라운딩 시작', 미래면 D-day 표시 */}
+          {joinStatus === 'confirmed' && isMember && isToday && (
+            <button
+              onClick={handleStartRounding}
+              disabled={actionProcessing}
+              className="w-full py-4 rounded-2xl bg-gp-green text-white font-semibold text-lg flex items-center justify-center gap-2"
+            >
+              <Play className="w-5 h-5" />
+              {actionProcessing ? '처리 중...' : '라운딩 시작'}
+            </button>
+          )}
+          {joinStatus === 'confirmed' && isMember && !isToday && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-blue/20 text-gp-blue cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              확정됨 — {getDDay()}
+            </button>
+          )}
+          {joinStatus === 'confirmed' && !isMember && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-border text-gp-text-secondary cursor-not-allowed font-semibold text-lg">
+              마감된 조인입니다
+            </button>
+          )}
+
+          {/* open: 호스트는 확정/대기, 방문자는 신청 */}
+          {joinStatus === 'open' && isHostCheck && join.spotsFilled >= 2 && (
+            <button
+              onClick={handleConfirm}
+              disabled={actionProcessing}
+              className="w-full py-4 rounded-2xl btn-gold font-semibold text-lg flex items-center justify-center gap-2"
+            >
+              <CheckCircle className="w-5 h-5" />
+              {actionProcessing ? '처리 중...' : '조인 확정하기'}
+            </button>
+          )}
+          {joinStatus === 'open' && isHostCheck && join.spotsFilled < 2 && (
+            <button disabled className="w-full py-4 rounded-2xl bg-gp-border text-gp-text-secondary cursor-not-allowed font-semibold text-lg">
+              참가자를 기다리는 중...
+            </button>
+          )}
+          {joinStatus === 'open' && !isHostCheck && (
             <button
               onClick={handleApplyClick}
-              disabled={spotsLeft === 0 || isApplied || isExpired || isClosed}
+              disabled={spotsLeft === 0 || isApplied || isExpired}
               className={`w-full py-4 rounded-2xl font-semibold text-lg ${
-                isExpired || isClosed
+                isExpired
                   ? 'bg-gp-border text-gp-text-secondary cursor-not-allowed'
                   : isApplied
                     ? 'bg-gp-green/20 text-gp-green cursor-not-allowed'
@@ -309,17 +463,15 @@ export default function JoinDetail() {
             >
               {isExpired
                 ? '만료된 조인입니다'
-                : isClosed
-                  ? '마감된 조인입니다'
-                  : isApplied
-                    ? '✓ 신청 완료'
-                    : spotsLeft > 0
-                      ? `신청하기 (${spotsLeft}자리 남음)`
-                      : '마감되었습니다'}
+                : isApplied
+                  ? '✓ 신청 완료'
+                  : spotsLeft > 0
+                    ? `신청하기 (${spotsLeft}자리 남음)`
+                    : '마감되었습니다'}
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* 신청 모달 */}
       {showApplyModal && (

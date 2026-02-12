@@ -18,6 +18,8 @@ const formatDate = (dateStr) => {
 
 const STATUS_LABELS = {
   open: { text: '모집중', color: 'bg-gp-green/20 text-gp-green' },
+  confirmed: { text: '확정', color: 'bg-gp-blue/20 text-gp-blue' },
+  in_progress: { text: '라운딩중', color: 'bg-gp-green/20 text-gp-green' },
   completed: { text: '완료', color: 'bg-gp-gold/20 text-gp-gold' },
   closed: { text: '마감', color: 'bg-gp-border text-gp-text-secondary' },
   cancelled: { text: '취소됨', color: 'bg-red-500/20 text-red-400' },
@@ -57,8 +59,8 @@ export default function RoundingHistory() {
   const today = new Date().toISOString().split('T')[0]
 
   const filteredJoins = joins.filter(j => {
-    if (filter === 'upcoming') return j.date >= today && j.status === 'open'
-    if (filter === 'completed') return j.status === 'completed' || j.date < today
+    if (filter === 'upcoming') return ['open', 'confirmed', 'in_progress'].includes(j.status)
+    if (filter === 'completed') return j.status === 'completed'
     return true
   })
 
