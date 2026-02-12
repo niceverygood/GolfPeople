@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, Calendar, Users, Plus, Bookmark, Trash2, Edit2, MoreVertical } from 'lucide-react'
+import { MapPin, Calendar, Users, Plus, Bookmark, Trash2, Edit2, MoreVertical, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import PhoneVerifyModal from '../components/PhoneVerifyModal'
@@ -42,12 +42,14 @@ const OTHER_REGIONS = ALL_REGIONS.filter(r => !PRIORITY_REGIONS.includes(r))
 // 메인 탭
 const TABS = [
   { id: 'all', label: '모든 조인' },
-  { id: 'my', label: '내가 올린' },
+  { id: 'participating', label: '참여중' },
+  { id: 'pending', label: '신청중' },
+  { id: 'my', label: '내조인' },
 ]
 
 export default function Join() {
   const navigate = useNavigate()
-  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests } = useApp()
+  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests, joinApplications, cancelJoinApplication } = useApp()
   const { balance, spendMarkers } = useMarker()
 
   // 전화번호 인증 훅
@@ -72,6 +74,20 @@ export default function Join() {
   const filteredMyJoins = myJoins.filter(join => {
     if (selectedRegion === '전체') return true
     return join.region.includes(selectedRegion)
+  })
+
+  // 참여중 (승인받은 조인 신청)
+  const participatingApps = joinApplications.filter(app => app.status === 'accepted')
+  const filteredParticipating = participatingApps.filter(app => {
+    if (selectedRegion === '전체') return true
+    return (app.joinRegion || '').includes(selectedRegion)
+  })
+
+  // 신청중 (대기중인 조인 신청)
+  const pendingApps = joinApplications.filter(app => app.status === 'pending')
+  const filteredPending = pendingApps.filter(app => {
+    if (selectedRegion === '전체') return true
+    return (app.joinRegion || '').includes(selectedRegion)
   })
 
   const handleSave = (e, joinId) => {
@@ -160,26 +176,32 @@ export default function Join() {
       {/* 메인 탭 */}
       <div className="px-4 py-2">
         <div className="flex bg-gp-card rounded-xl p-1 gap-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); sessionStorage.setItem('join_active_tab', tab.id) }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-gp-gold text-gp-black'
-                  : 'text-gp-text-secondary'
-              }`}
-            >
-              {tab.label}
-              {tab.id === 'my' && myJoins.length > 0 && (
-                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                  activeTab === tab.id ? 'bg-gp-black/20' : 'bg-gp-border'
-                }`}>
-                  {myJoins.length}
-                </span>
-              )}
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const count = tab.id === 'my' ? myJoins.length
+              : tab.id === 'participating' ? participatingApps.length
+              : tab.id === 'pending' ? pendingApps.length
+              : 0
+            return (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); sessionStorage.setItem('join_active_tab', tab.id) }}
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-gp-gold text-gp-black'
+                    : 'text-gp-text-secondary'
+                }`}
+              >
+                {tab.label}
+                {count > 0 && (
+                  <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-xs ${
+                    activeTab === tab.id ? 'bg-gp-black/20' : 'bg-gp-border'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -260,6 +282,63 @@ export default function Join() {
             </motion.div>
           )}
           
+          {/* 참여중 (승인받은 조인) */}
+          {activeTab === 'participating' && (
+            <motion.div
+              key="participating"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              {filteredParticipating.length === 0 ? (
+                <EmptyState
+                  message="참여중인 조인이 없어요"
+                  subMessage="조인에 신청하고 승인받으면 여기에 표시됩니다"
+                />
+              ) : (
+                filteredParticipating.map((app, index) => (
+                  <ApplicationCard
+                    key={app.id}
+                    app={app}
+                    index={index}
+                    onClick={() => handleJoinClick(app.joinId)}
+                    variant="accepted"
+                  />
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {/* 신청중 (대기중인 신청) */}
+          {activeTab === 'pending' && (
+            <motion.div
+              key="pending"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              {filteredPending.length === 0 ? (
+                <EmptyState
+                  message="대기중인 신청이 없어요"
+                  subMessage="조인에 신청하면 여기에 표시됩니다"
+                />
+              ) : (
+                filteredPending.map((app, index) => (
+                  <ApplicationCard
+                    key={app.id}
+                    app={app}
+                    index={index}
+                    onClick={() => handleJoinClick(app.joinId)}
+                    onCancel={() => cancelJoinApplication(app.id)}
+                    variant="pending"
+                  />
+                ))
+              )}
+            </motion.div>
+          )}
+
           {/* 내가 올린 조인 */}
           {activeTab === 'my' && (
             <motion.div
@@ -625,6 +704,70 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0 }
                     : '모집중'}
           </span>
         </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// 신청 카드 (참여중 / 신청중)
+function ApplicationCard({ app, index, onClick, onCancel, variant }) {
+  const isAccepted = variant === 'accepted'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      onClick={onClick}
+      className="bg-gp-card rounded-2xl overflow-hidden cursor-pointer hover:bg-gp-border/50 transition-colors"
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <img
+            src={app.hostPhoto || 'https://via.placeholder.com/100'}
+            alt={app.hostName}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold truncate">{app.joinTitle}</h3>
+            <p className="text-gp-text-secondary text-sm">{app.hostName} 주최</p>
+          </div>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+            isAccepted
+              ? 'bg-gp-green/20 text-gp-green'
+              : 'bg-yellow-500/20 text-yellow-400'
+          }`}>
+            {isAccepted ? '승인됨' : '대기중'}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-4 text-sm text-gp-text-secondary">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            <span>{formatJoinDate(app.joinDate)} {app.joinTime}</span>
+          </div>
+          {app.joinRegion && (
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              <span>{app.joinRegion}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 신청중일 때만 취소 버튼 */}
+        {!isAccepted && onCancel && (
+          <div className="mt-3 pt-3 border-t border-gp-border">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('신청을 취소하시겠습니까?')) onCancel()
+              }}
+              className="text-sm text-red-400 hover:text-red-300"
+            >
+              신청 취소
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   )
