@@ -181,31 +181,38 @@ export default function Saved() {
     // 이미 로드된 채팅방에서 해당 조인의 채팅방 찾기
     let joinRoom = chatRooms.find(room => room.joinId === joinId)
 
-    // 못 찾으면 채팅방 목록 새로고침 후 다시 시도
-    if (!joinRoom) {
-      await loadChatRooms()
-      // loadChatRooms 후 chatRooms가 업데이트되지만 현재 스코프에서는 이전 값
-      // Supabase에서 직접 조회
-      try {
-        const { default: supabase } = await import('../lib/supabase')
-        const { data } = await supabase
-          .from('chat_rooms')
-          .select('id')
-          .eq('join_id', joinId)
-          .single()
-
-        if (data?.id) {
-          navigate(`/chat/${data.id}`)
-          return
-        }
-      } catch (e) {
-        console.error('조인 채팅방 조회 에러:', e)
-      }
-      showToast.error('채팅방을 찾을 수 없습니다')
+    if (joinRoom) {
+      navigate(`/chat/${joinRoom.id}`)
       return
     }
 
-    navigate(`/chat/${joinRoom.id}`)
+    // 채팅방 목록에 없으면 DB에서 직접 찾기 (나간 채팅방일 수 있음)
+    try {
+      const { default: supabase } = await import('../lib/supabase')
+      const { data: room } = await supabase
+        .from('chat_rooms')
+        .select('id')
+        .eq('join_id', joinId)
+        .single()
+
+      if (room?.id) {
+        // 채팅방은 있지만 나간 상태 → 다시 참가
+        await supabase
+          .from('chat_participants')
+          .upsert(
+            { room_id: room.id, user_id: user.id },
+            { onConflict: 'room_id,user_id' }
+          )
+
+        await loadChatRooms()
+        navigate(`/chat/${room.id}`)
+        return
+      }
+    } catch (e) {
+      console.error('조인 채팅방 조회 에러:', e)
+    }
+
+    showToast.error('채팅방을 찾을 수 없습니다')
   }
   
   const [activeTab, setActiveTab] = useState('saved')

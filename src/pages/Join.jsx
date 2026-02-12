@@ -49,7 +49,7 @@ const TABS = [
 
 export default function Join() {
   const navigate = useNavigate()
-  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests, joinApplications, cancelJoinApplication } = useApp()
+  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests, joinApplications, cancelJoinApplication, currentUser } = useApp()
   const { balance, spendMarkers } = useMarker()
 
   // 전화번호 인증 훅
@@ -108,6 +108,12 @@ export default function Join() {
   const handleProfileClick = (userId) => {
     // 전화번호 미인증 시 인증 모달 표시
     if (!phoneVerify.checkVerification()) return
+
+    // 자기 자신이면 마이페이지로 무료 이동
+    if (currentUser && String(userId) === String(currentUser.id)) {
+      navigate('/profile')
+      return
+    }
 
     // 이미 본 프로필인지 확인
     const viewedProfiles = getItem(STORAGE_KEYS.VIEWED_PROFILES, [])
