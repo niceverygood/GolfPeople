@@ -301,8 +301,8 @@ export default function ChatRoom() {
 
           <button
             onClick={() => {
-              if (chat?.type === 'join') {
-                handleShowMembers()
+              if (chat?.type === 'join' && chat?.joinId) {
+                navigate(`/join/${chat.joinId}`)
               } else if (chat?.partnerId) {
                 navigate(`/user/${chat.partnerId}`)
               }
@@ -323,7 +323,7 @@ export default function ChatRoom() {
             <div className="text-left">
               <h2 className="font-semibold">{chat?.type === 'join' ? (chat?.joinTitle || '그룹 채팅') : (chat?.partnerName || '채팅')}</h2>
               {chat?.type === 'join' && (
-                <p className="text-xs text-gp-text-secondary">멤버 보기</p>
+                <p className="text-xs text-gp-text-secondary">조인 상세 보기</p>
               )}
             </div>
           </button>
