@@ -47,7 +47,7 @@ export const getJoins = async (filters = {}) => {
           )
         )
       `)
-      .eq('status', 'open')
+      .in('status', ['open', 'confirmed'])
       .gte('date', new Date().toISOString().split('T')[0])
       .order('date', { ascending: true })
 
@@ -202,7 +202,8 @@ export const getSentJoinApplications = async (userId) => {
 
     const today = new Date().toISOString().split('T')[0]
     const applications = (data || []).map(app => {
-      const joinExpired = !app.join?.date || app.join.date < today || app.join.status !== 'open'
+      const joinActive = ['open', 'confirmed', 'in_progress'].includes(app.join?.status)
+      const joinExpired = !app.join?.date || app.join.date < today || !joinActive
       const effectiveStatus = (app.status === 'pending' && joinExpired) ? 'expired' : app.status
       return {
         id: app.id,
@@ -278,7 +279,8 @@ export const getReceivedJoinApplications = async (userId) => {
 
     const today = new Date().toISOString().split('T')[0]
     const applications = (data || []).map(app => {
-      const joinExpired = !app.join?.date || app.join.date < today || app.join.status !== 'open'
+      const joinActive = ['open', 'confirmed', 'in_progress'].includes(app.join?.status)
+      const joinExpired = !app.join?.date || app.join.date < today || !joinActive
       const effectiveStatus = (app.status === 'pending' && joinExpired) ? 'expired' : app.status
       return {
         id: app.id,
@@ -677,7 +679,57 @@ export const getJoinDetail = async (joinId) => {
 }
 
 /**
- * 지난 조인 자동 완료 (open → completed)
+ * 조인 확정 (open → confirmed)
+ * 호스트만 가능, 2명 이상 참가자 필요
+ */
+export const confirmJoin = async (joinId, userId) => {
+  if (!isConnected() || !joinId || !userId) {
+    return { success: false, error: 'invalid_params' }
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('confirm_join', {
+      p_join_id: joinId,
+      p_user_id: userId,
+    })
+    if (error) throw error
+    if (!data?.success) {
+      return { success: false, error: data?.error || 'unknown' }
+    }
+    return { success: true }
+  } catch (e) {
+    console.error('조인 확정 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
+ * 라운딩 시작 (confirmed → in_progress)
+ * 참가자만 가능, 당일만 가능
+ */
+export const startRounding = async (joinId, userId) => {
+  if (!isConnected() || !joinId || !userId) {
+    return { success: false, error: 'invalid_params' }
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('start_rounding', {
+      p_join_id: joinId,
+      p_user_id: userId,
+    })
+    if (error) throw error
+    if (!data?.success) {
+      return { success: false, error: data?.error || 'unknown' }
+    }
+    return { success: true }
+  } catch (e) {
+    console.error('라운딩 시작 에러:', e)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
+ * 지난 조인 자동 완료 (open/confirmed → completed, in_progress 6시간 후 → completed)
  * 앱 로드 시 1회 호출
  */
 export const completePastJoins = async () => {
@@ -813,17 +865,23 @@ export const getMyJoinHistory = async (userId) => {
   }
 
   try {
-    const { data: participations, error: pError } = await supabase
-      .from('join_participants')
-      .select('join_id')
-      .eq('user_id', userId)
+    // 참가한 조인 + 호스트로 만든 조인 모두 조회
+    const [partResult, hostResult] = await Promise.allSettled([
+      supabase.from('join_participants').select('join_id').eq('user_id', userId),
+      supabase.from('joins').select('id').eq('host_id', userId),
+    ])
 
-    if (pError) throw pError
-    if (!participations || participations.length === 0) {
+    const participations = partResult.status === 'fulfilled' ? partResult.value.data || [] : []
+    const hostedJoins = hostResult.status === 'fulfilled' ? hostResult.value.data || [] : []
+
+    const joinIds = [...new Set([
+      ...participations.map(p => p.join_id),
+      ...hostedJoins.map(j => j.id),
+    ])]
+
+    if (joinIds.length === 0) {
       return { success: true, joins: [] }
     }
-
-    const joinIds = participations.map(p => p.join_id)
 
     const { data, error } = await supabase
       .from('joins')
@@ -880,6 +938,8 @@ export default {
   updateJoin,
   deleteJoin,
   getJoinDetail,
+  confirmJoin,
+  startRounding,
   completePastJoins,
   getCompletedRoundings,
   getCompletedRoundingCount,

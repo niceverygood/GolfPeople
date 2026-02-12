@@ -198,7 +198,7 @@ export const db = {
       const { data, error } = await supabase
         .from('joins')
         .select(`*, host:profiles!joins_host_id_fkey(id, name, photos), participants:join_participants(user:profiles(id, name, photos))`)
-        .eq('status', 'open')
+        .in('status', ['open', 'confirmed'])
         .gte('date', today)
         .order('date', { ascending: true })
       return { data, error }

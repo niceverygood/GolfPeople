@@ -54,7 +54,9 @@ export default function Join() {
   const phoneVerify = usePhoneVerification()
 
   const [selectedRegion, setSelectedRegion] = useState('전체')
-  const [activeTab, setActiveTab] = useState('all')
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('join_active_tab') || 'all'
+  })
   const [showAllRegions, setShowAllRegions] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId }
@@ -161,7 +163,7 @@ export default function Join() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); sessionStorage.setItem('join_active_tab', tab.id) }}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-gp-gold text-gp-black'
@@ -602,11 +604,25 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0 }
             신청 대기중: <span className="text-gp-gold font-semibold">{pendingCount}명</span>
           </span>
           <span className={`text-xs px-2 py-1 rounded-full ${
-            join.spotsFilled >= join.spotsTotal
-              ? 'bg-gp-text-secondary/20 text-gp-text-secondary'
-              : 'bg-gp-green/20 text-gp-green'
+            join.status === 'in_progress'
+              ? 'bg-gp-green/20 text-gp-green'
+              : join.status === 'confirmed'
+                ? 'bg-gp-blue/20 text-gp-blue'
+                : join.status === 'completed'
+                  ? 'bg-gp-gold/20 text-gp-gold'
+                  : join.spotsFilled >= join.spotsTotal
+                    ? 'bg-gp-text-secondary/20 text-gp-text-secondary'
+                    : 'bg-gp-green/20 text-gp-green'
           }`}>
-            {join.spotsFilled >= join.spotsTotal ? '마감' : '모집중'}
+            {join.status === 'in_progress'
+              ? '라운딩중'
+              : join.status === 'confirmed'
+                ? '확정'
+                : join.status === 'completed'
+                  ? '완료'
+                  : join.spotsFilled >= join.spotsTotal
+                    ? '마감'
+                    : '모집중'}
           </span>
         </div>
       </div>
