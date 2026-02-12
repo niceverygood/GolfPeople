@@ -191,18 +191,34 @@ export default function ChatRoom() {
     setEditText('')
   }
 
-  // 메시지 삭제
-  const handleDeleteMessage = async () => {
+  // 나에게서 삭제 (로컬 숨김)
+  const handleDeleteForMe = () => {
+    if (!selectedMessage) return
+    const hidden = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
+    if (!hidden.includes(selectedMessage.id)) {
+      hidden.push(selectedMessage.id)
+      localStorage.setItem('gp_hidden_messages', JSON.stringify(hidden))
+    }
+    setSelectedMessage(null)
+    showToast.success('나에게서 삭제되었습니다')
+  }
+
+  // 모두에게서 삭제 (DB 삭제)
+  const handleDeleteForAll = async () => {
     if (!selectedMessage) return
 
     const result = await deleteMessage(selectedMessage.id)
     if (result.success) {
-      showToast.success('메시지가 삭제되었습니다')
+      showToast.success('모두에게서 삭제되었습니다')
     } else {
       showToast.error('메시지 삭제에 실패했습니다')
     }
     setSelectedMessage(null)
   }
+
+  // 숨긴 메시지 필터링
+  const hiddenMessages = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
+  const visibleMessages = messages.filter(m => !hiddenMessages.includes(m.id))
 
   // 로딩 중
   if (loading && messages.length === 0) {
@@ -257,7 +273,7 @@ export default function ChatRoom() {
   }
 
   // 메시지를 날짜별로 그룹화
-  const groupedMessages = messages.reduce((groups, msg) => {
+  const groupedMessages = visibleMessages.reduce((groups, msg) => {
     const date = getDateGroupLabel(msg.timestamp)
     if (!groups[date]) {
       groups[date] = []
@@ -392,7 +408,7 @@ export default function ChatRoom() {
 
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gp-text-secondary text-sm">메시지를 보내 대화를 시작하세요</p>
           </div>
@@ -603,11 +619,18 @@ export default function ChatRoom() {
                 수정
               </button>
               <button
-                onClick={handleDeleteMessage}
+                onClick={handleDeleteForMe}
+                className="w-full px-4 py-3.5 text-left text-sm hover:bg-gp-card flex items-center gap-3 border-b border-gp-border"
+              >
+                <X className="w-4 h-4 text-gp-text-secondary" />
+                나에게서 삭제
+              </button>
+              <button
+                onClick={handleDeleteForAll}
                 className="w-full px-4 py-3.5 text-left text-sm hover:bg-gp-card flex items-center gap-3 text-red-400"
               >
                 <Trash2 className="w-4 h-4" />
-                삭제
+                모두에게서 삭제
               </button>
             </motion.div>
           </motion.div>
