@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { isIOS, appleSignIn } from '../lib/native'
 
@@ -45,6 +46,7 @@ const KakaoIcon = () => (
 
 export default function Login() {
   const { signInWithGoogle, signInWithKakao, signInWithApple, loading, error } = useAuth()
+  const navigate = useNavigate()
   const [loginError, setLoginError] = useState('')
   const showAppleLogin = isIOS() // iOS에서만 Apple 로그인 표시
 
@@ -177,8 +179,8 @@ export default function Login() {
         className="mt-12 text-center"
       >
         <p className="text-gp-text-secondary text-sm">
-          로그인하면 <span className="text-gp-gold">이용약관</span> 및{' '}
-          <span className="text-gp-gold">개인정보처리방침</span>에 동의하게 됩니다
+          로그인하면 <button onClick={() => navigate('/terms')} className="text-gp-gold underline">이용약관</button> 및{' '}
+          <button onClick={() => navigate('/privacy')} className="text-gp-gold underline">개인정보처리방침</button>에 동의하게 됩니다
         </p>
       </motion.div>
 

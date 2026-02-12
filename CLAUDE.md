@@ -46,6 +46,51 @@ src/
 
 ---
 
+## iOS App Store 심사 리젝 수정 체크리스트 (2026-02-12)
+
+### 코드 수정 (자동 — 이미 완료)
+- [x] **1.1.6** "Apple Pay" 표기 → "App Store 인앱 결제" 수정 (Store.jsx, commit ce0888a)
+- [x] **2.1 PassKit** App.entitlements에서 `com.apple.developer.in-app-payments` 제거
+- [x] **4.0** 설정 모달 스크롤 개선 — `pb-40` + `safe-area-inset-bottom` 적용 (Profile.jsx)
+- [x] **2.1 카메라 크래시** Info.plist에 NSCameraUsageDescription 등 4개 키 추가 (commit b36fdf0)
+- [x] **1.5** Login.jsx에서 이용약관/개인정보 링크 클릭 가능하게 수정
+
+### Supabase 설정 (수동)
+- [ ] **2.1 Sign in with Apple** Supabase Dashboard → Authentication → Providers → Apple 활성화
+  - Apple Developer Console에서 Service ID 생성 필요
+  - Bundle ID: `com.bottle.golfpeople`
+  - Service ID, Key ID, Team ID 설정
+
+### Xcode / 앱 빌드 (수동)
+- [ ] **2.3.8** 앱 아이콘 교체 — Xcode → Assets → AppIcon에 실제 아이콘 등록 (현재 Capacitor 기본 파란 X)
+- [ ] **2.1 카메라** 직접 테스트: 프로필 사진 촬영 시 카메라 권한 요청 정상 동작 확인
+- [ ] 빌드 후 실기기 테스트 (`vite build && cap sync ios && Xcode Cmd+R`)
+
+### App Store Connect (수동)
+- [ ] **2.3.3** iPad 스크린샷 — 실제 iPad에서 촬영한 스크린샷으로 교체 (또는 iPad 시뮬레이터)
+- [ ] **2.1 데모 계정** 심사 정보에 테스트 계정 추가 (아래 메모 참고)
+- [ ] **1.5** 지원 URL을 `https://golf-people.vercel.app/support` 로 변경
+- [ ] 앱 버전/빌드 번호 올리기
+
+### App Store Connect 심사 메모 (Review Notes) — 복사해서 붙여넣기
+
+```
+This app uses social login only (Apple / Google / Kakao).
+The demo account credentials provided above are for Google Sign-In.
+
+How to sign in:
+1. Tap "Google로 시작하기" (Sign in with Google) button.
+2. Enter the demo Google account credentials provided in the review information above.
+
+After sign-in:
+- The phone verification (SMS) step can be skipped by tapping "나중에 하기" (Skip for now).
+- The home screen shows recommended golf profiles and available join listings.
+- In-app purchases (markers) use App Store In-App Purchase.
+- You can browse join listings, chat rooms, and profile features without purchasing.
+```
+
+---
+
 ## 2026-02-12 (목) 작업일지
 
 ### 카카오 알림톡 연동 완료 (알리고 API + DB 직접 발송)
