@@ -56,38 +56,72 @@ src/
 - [x] **1.5** Login.jsx에서 이용약관/개인정보 링크 클릭 가능하게 수정
 
 ### Supabase 설정 (수동)
-- [ ] **2.1 Sign in with Apple** Supabase Dashboard → Authentication → Providers → Apple 활성화
-  - Apple Developer Console에서 Service ID 생성 필요
-  - Bundle ID: `com.bottle.golfpeople`
-  - Service ID, Key ID, Team ID 설정
+- [x] **2.1 Sign in with Apple** Supabase Dashboard → Authentication → Providers → Apple 활성화 ✅
 
 ### Xcode / 앱 빌드 (수동)
-- [ ] **2.3.8** 앱 아이콘 교체 — Xcode → Assets → AppIcon에 실제 아이콘 등록 (현재 Capacitor 기본 파란 X)
+- [x] **2.3.8** 앱 아이콘 교체 — SVG → cairosvg/qlmanage 1024x1024 PNG 생성, GP 텍스트 포함 ✅
+- [x] **2.3.3** iPad 지원 해제 — `TARGETED_DEVICE_FAMILY = 1` (iPhone 전용) → iPad 스크린샷 불필요 ✅
+- [x] 빌드 번호 3 → 5, cap sync + archive 빌드 ✅
+- [x] Xcode Organizer → App Store Connect 업로드 완료 (1.0.2 빌드 5) ✅
 - [ ] **2.1 카메라** 직접 테스트: 프로필 사진 촬영 시 카메라 권한 요청 정상 동작 확인
-- [ ] 빌드 후 실기기 테스트 (`vite build && cap sync ios && Xcode Cmd+R`)
 
 ### App Store Connect (수동)
-- [ ] **2.3.3** iPad 스크린샷 — 실제 iPad에서 촬영한 스크린샷으로 교체 (또는 iPad 시뮬레이터)
-- [ ] **2.1 데모 계정** 심사 정보에 테스트 계정 추가 (아래 메모 참고)
-- [ ] **1.5** 지원 URL을 `https://golf-people.vercel.app/support` 로 변경
-- [ ] 앱 버전/빌드 번호 올리기
+- [x] **2.1 데모 계정** 심사 메모에 테스트 계정 추가 ✅
+- [x] **1.5** 지원 URL 변경 완료 ✅
+- [x] 앱 버전/빌드 번호 올리기 (1.0.2 빌드 5) ✅
+- [ ] 빌드 5 처리 완료 후 심사 제출
 
 ### App Store Connect 심사 메모 (Review Notes) — 복사해서 붙여넣기
 
 ```
-This app uses social login only (Apple / Google / Kakao).
-The demo account credentials provided above are for Google Sign-In.
+본 앱은 소셜 로그인(Apple/Google/Kakao)만 지원합니다.
+위에 입력된 계정 정보는 Google 로그인용입니다.
 
-How to sign in:
-1. Tap "Google로 시작하기" (Sign in with Google) button.
-2. Enter the demo Google account credentials provided in the review information above.
+로그인 방법:
+1. "Google로 시작하기" 버튼을 탭합니다.
+2. 위 심사 정보에 입력된 Google 계정으로 로그인합니다.
 
-After sign-in:
-- The phone verification (SMS) step can be skipped by tapping "나중에 하기" (Skip for now).
-- The home screen shows recommended golf profiles and available join listings.
-- In-app purchases (markers) use App Store In-App Purchase.
-- You can browse join listings, chat rooms, and profile features without purchasing.
+로그인 후 안내:
+- 전화번호 인증(SMS)은 "나중에 하기" 버튼으로 건너뛸 수 있습니다.
+- 홈 화면에서 추천 프로필과 조인 목록을 확인하실 수 있습니다.
+- 인앱 결제(마커 구매)는 App Store 인앱 결제를 통해 이루어집니다.
+- 결제 없이도 조인 목록, 채팅, 프로필 기능을 이용하실 수 있습니다.
 ```
+
+---
+
+## 2026-02-13 (금) 작업일지
+
+### iOS App Store 심사 재제출 준비 완료
+
+#### 앱 아이콘 교체
+- SVG → 1024x1024 PNG 변환 (`qlmanage -t -s 1024`)
+- GP 텍스트 + 골프공 + 깃발 + 다크 배경 정상 렌더링
+- `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` 교체 완료
+- `sips`는 SVG 텍스트 미지원 → `qlmanage` (Quick Look) 사용으로 해결
+
+#### iPad 지원 해제 (iPhone 전용)
+- `TARGETED_DEVICE_FAMILY = "1,2"` → `1` (iPhone only)
+- iPad 스크린샷 불필요 → 리젝 사유 "2.3.3 iPad 스크린샷" 해결
+- 기존 iPad 스크린샷 (`~/Downloads/appstore_screenshots/ipad/`) 5장은 사용 안 함
+
+#### 빌드 및 업로드
+- 빌드 번호: 3 → 5 (4는 iPad 포함 버전으로 이미 업로드)
+- `npx cap sync ios` → `xcodebuild archive` → Xcode Organizer 업로드
+- App Store Connect에서 빌드 5 처리 중
+
+#### App Store Connect 수동 작업 (완료)
+- 심사 메모 (Review Notes): 테스트 계정 정보 추가 ✅
+- 지원 URL 변경 ✅
+
+#### Android 빌드 및 심사 제출
+- versionCode 3 → 4, versionName 1.0.2 → 1.0.3
+- `npx cap sync android` → `./gradlew bundleRelease` (JAVA_HOME: Android Studio 내장 JDK 21)
+- `app-release.aab` (6.8MB) Google Play Console 업로드 → 심사 제출 완료
+
+#### 심사 현황
+- **iOS**: 1.0.2 (빌드 5) — 심사 중
+- **Android**: 1.0.3 (versionCode 4) — 심사 중
 
 ---
 
@@ -174,11 +208,13 @@ After sign-in:
 ### 남은 작업
 | 우선순위 | 항목 | 상태 |
 |---------|------|------|
-| 🔴 | iOS/Android 심사 리젝 수정 후 재제출 | 수정 중 |
+| 🟡 | iOS 1.0.2 (빌드 5) 심사 중 | 02-13 제출 완료 |
+| 🟡 | Android 1.0.3 (versionCode 4) 심사 중 | 02-13 제출 완료 |
 | ✅ | 카카오 알림톡 연동 (알리고 + DB 직접 발송) | 완료 |
 | ✅ | 채팅 기능 대폭 개선 (멤버/나가기/수정/삭제/재입장) | 완료 |
 | ✅ | 조인 UX 정비 (4탭/매칭/자동거절) | 완료 |
-| 🟡 | 나머지 알림톡 템플릿 검수 신청 (UF_2418~2423) | 미신청 |
+| ✅ | 앱 아이콘 교체 + iPad 전용 해제 + 빌드 업로드 | 완료 (02-13) |
+| ✅ | 카카오 알림톡 템플릿 전체 검수 완료 (UF_2416~2423) | 완료 |
 | 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
 | 🟢 | 시드 데이터 정리 (실 서비스 전 삭제) | 나중에 |
 
@@ -267,22 +303,21 @@ After sign-in:
 | Android | v1.0.2 | ⚠️ 심사 리젝 → 수정 중 |
 | Web | 최신 | Vercel 자동 배포 완료 |
 
-### 카카오 알림톡 검수 현황 (4차 반려)
-- **템플릿**: 친구 요청 알림 (UF_2416)
-- **반려 이력**:
-  - 1차 (02-02): 수신 대상 불명확 → 수신자 액션 기반 고정값 필요
-  - 2차 (02-03): 동일 사유 → 메시지 내 액션 근거 추가 필요
-  - 3차 (02-06): 다발성 메시지 → 수신자 동의/고지 문구 필요
-  - 4차 (02-09): 다발성 문구 부족 → **"고객님께서 요청하신" 형태의 명확한 고정값 필요**
-- **핵심 반려 사유**: 수신자가 직접 동의/요청했음을 확인할 수 있는 **고정 문구**가 메시지 본문에 포함되어야 함
-- **5차 재신청 (02-11)**: 동의 문구 강화 — `[마이페이지 > 설정 > 알림 설정]에서 직접 설정(ON)` + 다발성 고지 + 해제 방법 안내
+### 카카오 알림톡 검수 현황 (전체 완료 ✅)
+- **템플릿 6종 전체 검수 승인 완료**
+  - UF_2416 친구 요청 ✅
+  - UF_2418 친구 수락 ✅
+  - UF_2419 조인 신청 ✅
+  - UF_2420 조인 수락 ✅
+  - UF_2421 조인 거절 ✅
+  - UF_2423 기타 ✅
 - Edge Function 템플릿 동기화 배포 완료 (`supabase functions deploy send-kakao`)
 
 ### 남은 작업
 | 우선순위 | 항목 | 상태 |
 |---------|------|------|
 | 🔴 | iOS/Android 심사 리젝 수정 후 재제출 | 수정 중 |
-| 🟡 | 카카오 알림톡 5차 검수 결과 대기 | 재신청 완료 (02-11) |
+| ✅ | 카카오 알림톡 템플릿 전체 검수 완료 (UF_2416~2423) | 완료 |
 | ✅ | 사용자 플로우 정비 (라운딩 완료→리뷰→스코어) | 완료 |
 | ✅ | 번들 최적화 | 완료 (342KB, 커밋 92017c0) |
 | 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
