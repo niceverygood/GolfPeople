@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      maxWidth: {
+        'app': 'var(--app-max-width)',
+      },
       colors: {
         // 프리미엄 골프 테마 - 다크 베이스 + 골드 액센트
         'gp': {

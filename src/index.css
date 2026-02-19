@@ -49,9 +49,22 @@ body {
   scrollbar-width: none;
 }
 
-/* 앱 컨테이너 */
+/* 앱 컨테이너 — 반응형 max-width */
+:root {
+  --app-max-width: 100%;
+}
+@media (min-width: 640px) {
+  :root { --app-max-width: 540px; }
+}
+@media (min-width: 768px) {
+  :root { --app-max-width: 640px; }
+}
+@media (min-width: 1024px) {
+  :root { --app-max-width: 680px; }
+}
+
 .app-container {
-  max-width: 430px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   height: 100%;
   position: relative;

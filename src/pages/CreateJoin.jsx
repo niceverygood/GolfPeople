@@ -825,7 +825,7 @@ export default function CreateJoin() {
 
       {/* 하단 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 glass safe-bottom">
-        <div className="max-w-[430px] mx-auto">
+        <div className="max-w-app mx-auto">
           <button
             onClick={handleNext}
             disabled={!canProceed() || loading}

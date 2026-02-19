@@ -648,7 +648,7 @@ function FriendRequestModal({ user, onClose, onSend }) {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[430px] bg-gp-black rounded-t-3xl p-6 safe-bottom"
+        className="w-full max-w-app bg-gp-black rounded-t-3xl p-6 safe-bottom"
       >
         <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
 
@@ -719,7 +719,7 @@ function ReportModal({ userName, onSubmit, onClose }) {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[430px] bg-gp-black rounded-t-3xl p-6 safe-bottom"
+        className="w-full max-w-app bg-gp-black rounded-t-3xl p-6 safe-bottom"
       >
         <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
         <h2 className="text-lg font-bold mb-1">{userName}님 신고하기</h2>

@@ -372,7 +372,7 @@ export default function JoinDetail() {
 
       {/* 하단 상태별 액션바 */}
       <div className="fixed bottom-0 left-0 right-0 p-6 glass safe-bottom">
-        <div className="max-w-[430px] mx-auto">
+        <div className="max-w-app mx-auto">
           {/* completed: 리뷰/스코어 버튼 (멤버) 또는 안내 (방문자) */}
           {joinStatus === 'completed' && isMember && (
             <div className="flex gap-3">
@@ -537,7 +537,7 @@ function ApplyModal({ join, onClose }) {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[430px] bg-gp-dark rounded-t-3xl p-6 safe-bottom"
+        className="w-full max-w-app bg-gp-dark rounded-t-3xl p-6 safe-bottom"
       >
         <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
 
@@ -685,7 +685,7 @@ function ShareModal({ join, onClose }) {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[430px] bg-gp-dark rounded-t-3xl p-6 safe-bottom"
+        className="w-full max-w-app bg-gp-dark rounded-t-3xl p-6 safe-bottom"
       >
         <div className="w-12 h-1 bg-gp-border rounded-full mx-auto mb-6" />
 
