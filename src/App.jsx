@@ -81,6 +81,7 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
+  const [profileTimeout, setProfileTimeout] = useState(false)
 
   useEffect(() => {
     // 저장된 테마 복원
@@ -177,6 +178,17 @@ function AppContent() {
     }
   }, [profile, isOnboarded])
   
+  // 프로필 로딩 타임아웃 — 5초 이상 대기하면 온보딩으로 진행
+  useEffect(() => {
+    if (isAuthenticated && !profile && !isOnboarded) {
+      const timer = setTimeout(() => {
+        console.log('Profile load timeout — proceeding to onboarding')
+        setProfileTimeout(true)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [isAuthenticated, profile, isOnboarded])
+
   // 로그인 후 푸시 및 인앱결제 사용자 식별자 설정
   useEffect(() => {
     if (isAuthenticated && user?.id) {
@@ -200,8 +212,8 @@ function AppContent() {
     return <Splash /> // 로딩 중에도 스플래시 표시
   }
 
-  // 2.5. 로그인됐지만 프로필 아직 로딩 중 — 온보딩 판단 전 대기
-  if (isAuthenticated && !profile && !isOnboarded) {
+  // 2.5. 로그인됐지만 프로필 아직 로딩 중 — 온보딩 판단 전 대기 (최대 5초)
+  if (isAuthenticated && !profile && !isOnboarded && !profileTimeout) {
     return <Splash />
   }
 
