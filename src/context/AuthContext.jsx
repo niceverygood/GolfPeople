@@ -269,11 +269,18 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      // nonce를 한 번만 생성하여 Apple과 Supabase 양쪽에 동일하게 사용
+      // nonce를 한 번만 생성
       const rawNonce = crypto.randomUUID()
 
-      // 네이티브 Apple Sign In 실행 (동일한 nonce 전달)
-      const result = await appleSignIn.signIn(rawNonce)
+      // Apple에는 SHA-256 해시된 nonce를 전달해야 함
+      const encoder = new TextEncoder()
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(rawNonce))
+      const hashedNonce = Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+
+      // 네이티브 Apple Sign In 실행 (해시된 nonce 전달)
+      const result = await appleSignIn.signIn(hashedNonce)
 
       if (!result.success) {
         throw new Error(result.error || 'Apple 로그인에 실패했습니다')
