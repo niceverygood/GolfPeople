@@ -210,16 +210,20 @@ export default function PhoneVerification() {
     >
       {/* Header */}
       <div className="px-6 pt-12 pb-8">
-        {/* 뒤로가기 버튼 (번호 변경 모드일 때만) */}
-        {isChangeMode && (
-          <button
-            onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)}
-            className="mb-4 flex items-center gap-1 text-gp-text-secondary hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>돌아가기</span>
-          </button>
-        )}
+        {/* 뒤로가기 버튼 */}
+        <button
+          onClick={() => {
+            if (location.key === 'default') {
+              navigate(isChangeMode ? '/profile' : '/', { replace: true })
+            } else {
+              navigate(-1)
+            }
+          }}
+          className="mb-4 flex items-center gap-1 text-gp-text-secondary hover:text-white transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span>돌아가기</span>
+        </button>
         
         <motion.div
           initial={{ y: -20, opacity: 0 }}
