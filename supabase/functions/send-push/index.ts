@@ -31,6 +31,29 @@ serve(async (req) => {
   }
 
   try {
+    // ★ 보안: JWT 인증 체크
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization header required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey)
+    const { data: { user: caller }, error: authError } = await supabaseAuth.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    )
+
+    if (authError || !caller) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { recipientId, title, body, data } = await req.json() as PushRequest
 
     if (!recipientId || !title) {
@@ -40,8 +63,7 @@ serve(async (req) => {
       )
     }
 
-    // Supabase 클라이언트 생성
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    // Supabase 서비스 클라이언트 생성 (푸시 토큰 조회용)
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -75,7 +97,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('푸시 발송 에러:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
