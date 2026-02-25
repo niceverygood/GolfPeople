@@ -269,7 +269,7 @@ export default function PhoneVerification() {
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   placeholder="010-0000-0000"
-                  className="w-full px-4 py-4 bg-gp-surface rounded-xl text-lg tracking-wider
+                  className="w-full px-4 py-4 bg-gp-surface text-white rounded-xl text-lg tracking-wider
                     border border-gp-border focus:border-gp-gold focus:ring-1 focus:ring-gp-gold
                     transition-all outline-none placeholder:text-gp-text-secondary/50"
                   autoFocus
@@ -339,7 +339,7 @@ export default function PhoneVerification() {
                     value={digit}
                     onChange={(e) => handleCodeChange(index, e.target.value)}
                     onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                    className="w-12 h-14 text-center text-2xl font-bold
+                    className="w-12 h-14 text-center text-2xl font-bold text-white
                       bg-gp-surface rounded-xl border border-gp-border
                       focus:border-gp-gold focus:ring-1 focus:ring-gp-gold
                       transition-all outline-none"
