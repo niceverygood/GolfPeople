@@ -10,21 +10,23 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('로그인 중...')
 
   useEffect(() => {
+    const timers = []
+
     if (!isConnected()) {
       setStatus('error')
       setMessage('Supabase 연결이 필요합니다')
-      setTimeout(() => navigate('/login', { replace: true }), 3000)
-      return
+      timers.push(setTimeout(() => navigate('/login', { replace: true }), 3000))
+      return () => timers.forEach(t => clearTimeout(t))
     }
 
     // Supabase 인증 상태 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event, session)
-      
+
       if (event === 'SIGNED_IN' && session) {
         setStatus('success')
         setMessage('로그인 성공!')
-        
+
         try {
           // 프로필 확인 및 생성
           // 참고: handle_new_user() 트리거가 auth.users 생성 시 자동으로 프로필 생성
@@ -56,21 +58,21 @@ export default function AuthCallback() {
         }
 
         // 홈으로 이동
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           window.location.href = '/'
-        }, 1500)
+        }, 1500))
       }
     })
 
     // 5초 후에도 로그인 안되면 홈으로 강제 이동
-    const timeout = setTimeout(() => {
+    timers.push(setTimeout(() => {
       console.log('Auth timeout - redirecting to home')
       window.location.href = '/'
-    }, 5000)
+    }, 5000))
 
     return () => {
       subscription.unsubscribe()
-      clearTimeout(timeout)
+      timers.forEach(t => clearTimeout(t))
     }
   }, [navigate])
 

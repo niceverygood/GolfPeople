@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 import * as friendService from '../lib/friendService'
 import VerificationBadges from '../components/VerificationBadges'
+import { showToast } from '../utils/errorHandler'
 
 export default function Friends() {
   const navigate = useNavigate()
@@ -27,11 +28,17 @@ export default function Friends() {
     if (!user?.id) return
 
     setLoading(true)
-    const result = await friendService.getFriends(user.id)
-    if (result.success) {
-      setFriends(result.friends)
+    try {
+      const result = await friendService.getFriends(user.id)
+      if (result.success) {
+        setFriends(result.friends)
+      }
+    } catch (e) {
+      console.error('친구 목록 로드 에러:', e)
+      showToast.error('친구 목록을 불러오지 못했습니다')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [user?.id])
 
   useEffect(() => {
@@ -43,6 +50,8 @@ export default function Friends() {
     const result = await startDirectChat(friendId)
     if (result.success) {
       navigate(`/chat/${result.roomId}`)
+    } else {
+      showToast.error('채팅을 시작하지 못했습니다')
     }
   }
 
@@ -54,6 +63,8 @@ export default function Friends() {
     if (result.success) {
       setFriends(prev => prev.filter(f => f.id !== friendId))
       setShowRemoveModal(null)
+    } else {
+      showToast.error('친구 삭제에 실패했습니다')
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ChevronLeft, 
@@ -146,6 +146,14 @@ export default function Store() {
   const [showHistory, setShowHistory] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
   const [purchaseResult, setPurchaseResult] = useState(null)
+  const resultTimerRef = useRef(null)
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     refreshTransactions()
@@ -219,7 +227,7 @@ export default function Store() {
         } else {
           await haptic.error()
           setPurchaseResult({ success: false, error: result.error || '결제에 실패했습니다' })
-          setTimeout(() => setPurchaseResult(null), 3000)
+          resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         }
         return
       }
@@ -253,12 +261,12 @@ export default function Store() {
           setPurchaseResult({ success: true, amount: verifyResult.credited || (selectedProduct.marker_amount + selectedProduct.bonus_amount) })
         } else {
           setPurchaseResult({ success: false, error: verifyResult.error || '결제 검증에 실패했습니다' })
-          setTimeout(() => setPurchaseResult(null), 3000)
+          resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         }
       } else {
         if (paymentResult.error) {
           setPurchaseResult({ success: false, error: paymentResult.error })
-          setTimeout(() => setPurchaseResult(null), 3000)
+          resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         } else {
           setShowPayment(false)
           setSelectedProduct(null)
@@ -268,7 +276,7 @@ export default function Store() {
       console.error('결제 처리 중 오류:', error)
       setPurchasing(false)
       setPurchaseResult({ success: false, error: error.message || '결제 중 오류가 발생했습니다.' })
-      setTimeout(() => setPurchaseResult(null), 3000)
+      resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
     }
   }
 

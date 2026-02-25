@@ -7,17 +7,7 @@ import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 import { showToast } from '../utils/errorHandler'
-
-const formatJoinDate = (dateStr) => {
-  if (!dateStr) return ''
-  if (dateStr.includes('월')) return dateStr
-  const d = new Date(dateStr + 'T00:00:00')
-  if (isNaN(d.getTime())) return dateStr
-  const month = d.getMonth() + 1
-  const day = d.getDate()
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
-  return `${month}월 ${day}일 (${dayOfWeek})`
-}
+import { formatJoinDate } from '../utils/formatTime'
 
 // 메인 탭 정의
 const TABS = [

@@ -24,7 +24,7 @@ export default function ChatList() {
   // 컴포넌트 마운트 시 채팅방 목록 새로고침
   useEffect(() => {
     loadChatRooms()
-  }, [])
+  }, [loadChatRooms])
 
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState('all') // 'all' | 'friend' | 'join'

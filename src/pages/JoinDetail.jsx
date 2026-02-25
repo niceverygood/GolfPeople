@@ -13,17 +13,7 @@ import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 import { shareJoinToKakao } from '../lib/kakao'
 import { getJoinDetail, confirmJoin, startRounding } from '../lib/joinService'
-
-const formatJoinDate = (dateStr) => {
-  if (!dateStr) return ''
-  if (dateStr.includes('월')) return dateStr
-  const d = new Date(dateStr + 'T00:00:00')
-  if (isNaN(d.getTime())) return dateStr
-  const month = d.getMonth() + 1
-  const day = d.getDate()
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
-  return `${month}월 ${day}일 (${dayOfWeek})`
-}
+import { formatJoinDate } from '../utils/formatTime'
 
 export default function JoinDetail() {
   const { id } = useParams()
@@ -42,14 +32,16 @@ export default function JoinDetail() {
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // userId
   const [isProcessing, setIsProcessing] = useState(false)
   const [fetchedJoin, setFetchedJoin] = useState(null)
+  const [loadingJoin, setLoadingJoin] = useState(false)
 
   // joins 상태에 없으면 DB에서 직접 조회 (완료된 조인 등)
   const stateJoin = joins.find(j => String(j.id) === String(id))
   useEffect(() => {
     if (!stateJoin && id) {
+      setLoadingJoin(true)
       getJoinDetail(id).then(result => {
         if (result.success) setFetchedJoin(result.join)
-      })
+      }).finally(() => setLoadingJoin(false))
     }
   }, [stateJoin, id])
 
@@ -191,7 +183,11 @@ export default function JoinDetail() {
   if (!join) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gp-text-secondary">조인을 찾을 수 없습니다</p>
+        {loadingJoin ? (
+          <div className="animate-spin w-8 h-8 border-2 border-gp-gold border-t-transparent rounded-full" />
+        ) : (
+          <p className="text-gp-text-secondary">조인을 찾을 수 없습니다</p>
+        )}
       </div>
     )
   }

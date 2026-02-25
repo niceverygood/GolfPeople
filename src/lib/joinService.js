@@ -81,12 +81,12 @@ export const getJoins = async (filters = {}) => {
       createdAt: j.created_at,
       hostId: j.host?.id,
       hostName: j.host?.name || '알 수 없음',
-      hostPhoto: j.host?.photos?.[0] || 'https://via.placeholder.com/100',
+      hostPhoto: j.host?.photos?.[0] || '/default-profile.png',
       hostHandicap: j.host?.handicap || '',
       participants: (j.participants || []).map(p => ({
         id: p.user?.id,
         name: p.user?.name || '',
-        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+        photo: p.user?.photos?.[0] || '/default-profile.png',
       })).filter(p => p.id),
     }))
 
@@ -156,7 +156,7 @@ export const getMyJoins = async (userId) => {
       participants: (j.participants || []).map(p => ({
         id: p.user?.id,
         name: p.user?.name || '',
-        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+        photo: p.user?.photos?.[0] || '/default-profile.png',
       })).filter(p => p.id),
     }))
 
@@ -217,7 +217,7 @@ export const getSentJoinApplications = async (userId) => {
         joinRegion: app.join?.region,
         hostId: app.join?.host?.id,
         hostName: app.join?.host?.name || '알 수 없음',
-        hostPhoto: app.join?.host?.photos?.[0] || 'https://via.placeholder.com/100',
+        hostPhoto: app.join?.host?.photos?.[0] || '/default-profile.png',
         message: app.message,
         status: effectiveStatus,
         createdAt: app.created_at,
@@ -294,7 +294,7 @@ export const getReceivedJoinApplications = async (userId) => {
         joinRegion: app.join?.region,
         userId: app.applicant?.id,
         userName: app.applicant?.name || '알 수 없음',
-        userPhoto: app.applicant?.photos?.[0] || 'https://via.placeholder.com/100',
+        userPhoto: app.applicant?.photos?.[0] || '/default-profile.png',
         userRegion: app.applicant?.regions?.[0] || '',
         userHandicap: app.applicant?.handicap || '',
         message: app.message,
@@ -818,11 +818,11 @@ export const getCompletedRoundings = async (userId) => {
       status: j.status,
       hostId: j.host?.id,
       hostName: j.host?.name || '알 수 없음',
-      hostPhoto: j.host?.photos?.[0] || 'https://via.placeholder.com/100',
+      hostPhoto: j.host?.photos?.[0] || '/default-profile.png',
       participants: (j.participants || []).map(p => ({
         id: p.user?.id,
         name: p.user?.name || '',
-        photo: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+        photo: p.user?.photos?.[0] || '/default-profile.png',
       })).filter(p => p.id),
     }))
 

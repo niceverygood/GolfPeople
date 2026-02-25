@@ -78,9 +78,26 @@ export const formatDate = (dateInput) => {
   return `${year}.${month}.${day}`
 }
 
+/**
+ * 조인 날짜 포맷 (M월 D일 (요일))
+ * @param {string} dateStr - YYYY-MM-DD 형식 날짜 문자열
+ * @returns {string} 포맷된 날짜 문자열
+ */
+export const formatJoinDate = (dateStr) => {
+  if (!dateStr) return ''
+  if (dateStr.includes('월')) return dateStr
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return dateStr
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+  return `${month}월 ${day}일 (${dayOfWeek})`
+}
+
 export default {
   getTimeAgo,
   getSimpleTimeAgo,
   formatChatTime,
   formatDate,
+  formatJoinDate,
 }

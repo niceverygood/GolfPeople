@@ -41,6 +41,8 @@ export default function VerificationBadges({ user, scoreStats, rating, compact =
             key={badge.key}
             className={`w-5 h-5 rounded-full ${badge.bg} flex items-center justify-center`}
             title={badge.label}
+            role="img"
+            aria-label={badge.label}
           >
             <Icon className={`w-3 h-3 ${badge.text}`} />
           </div>

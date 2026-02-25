@@ -131,9 +131,11 @@ export default function ChatRoom() {
         })
         if (error) throw error
       }
-      const saved = localStorage.getItem('gp_blocked_users')
-      const blockedList = saved ? JSON.parse(saved) : []
+      let blockedList = []
+      try { blockedList = JSON.parse(localStorage.getItem('gp_blocked_users') || '[]') } catch { blockedList = [] }
       blockedList.push({ id: chat.partnerId, name: chat.partnerName, photo: chat.partnerPhoto })
+      // localStorage 무한 증가 방지: 최근 200명만 유지
+      if (blockedList.length > 200) blockedList = blockedList.slice(-200)
       localStorage.setItem('gp_blocked_users', JSON.stringify(blockedList))
 
       showToast.success('차단되었습니다.')
@@ -195,9 +197,12 @@ export default function ChatRoom() {
   // 나에게서 삭제 (로컬 숨김)
   const handleDeleteForMe = () => {
     if (!selectedMessage) return
-    const hidden = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
+    let hidden = []
+    try { hidden = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]') } catch { hidden = [] }
     if (!hidden.includes(selectedMessage.id)) {
       hidden.push(selectedMessage.id)
+      // localStorage 무한 증가 방지: 최근 500건만 유지
+      if (hidden.length > 500) hidden = hidden.slice(-500)
       localStorage.setItem('gp_hidden_messages', JSON.stringify(hidden))
     }
     setSelectedMessage(null)
@@ -323,7 +328,7 @@ export default function ChatRoom() {
               </div>
             ) : (
               <img
-                src={chat?.partnerPhoto || 'https://via.placeholder.com/100'}
+                src={chat?.partnerPhoto || '/default-profile.png'}
                 alt={chat?.partnerName || ''}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -464,7 +469,7 @@ export default function ChatRoom() {
                       <div className="w-8 mr-2">
                         {showAvatar ? (
                           <img
-                            src={msg.senderPhoto || 'https://via.placeholder.com/100'}
+                            src={msg.senderPhoto || '/default-profile.png'}
                             alt=""
                             className="w-8 h-8 rounded-full object-cover mt-1 cursor-pointer"
                             onClick={() => msg.senderId && navigate(`/user/${msg.senderId}`)}
@@ -513,7 +518,7 @@ export default function ChatRoom() {
               ref={inputRef}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="메시지를 입력하세요..."
               rows={1}
               className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none max-h-32"
@@ -580,7 +585,7 @@ export default function ChatRoom() {
                     className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-gp-card transition-colors"
                   >
                     <img
-                      src={member.photo || 'https://via.placeholder.com/100'}
+                      src={member.photo || '/default-profile.png'}
                       alt={member.name}
                       className="w-10 h-10 rounded-full object-cover"
                     />
@@ -666,7 +671,7 @@ export default function ChatRoom() {
                 <textarea
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
                       handleEditConfirm()
