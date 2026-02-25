@@ -39,95 +39,112 @@ export const getChatRooms = async (userId) => {
       return { success: true, rooms: [] }
     }
 
-    // 각 채팅방의 상세 정보 조회 (개별 실패 허용)
-    const results = await Promise.allSettled(
-      participants.map(async (p) => {
+    const validParticipants = participants.filter(p => p.chat_rooms)
+    const roomIds = validParticipants.map(p => p.chat_rooms.id)
+
+    if (roomIds.length === 0) {
+      return { success: true, rooms: [] }
+    }
+
+    // 배치 쿼리: 모든 채팅방의 참가자를 한번에 조회
+    const [participantsResult, joinsResult] = await Promise.allSettled([
+      supabase
+        .from('chat_participants')
+        .select('room_id, user_id, profiles (id, name, photos)')
+        .in('room_id', roomIds)
+        .neq('user_id', userId),
+      supabase
+        .from('joins')
+        .select('id, title, date, time, location')
+        .in('id', validParticipants.map(p => p.chat_rooms.join_id).filter(Boolean))
+    ])
+
+    // 참가자 맵 생성 (room_id → partners[])
+    const partnersMap = new Map()
+    if (participantsResult.status === 'fulfilled' && participantsResult.value.data) {
+      for (const p of participantsResult.value.data) {
+        if (!partnersMap.has(p.room_id)) partnersMap.set(p.room_id, [])
+        if (p.profiles) partnersMap.get(p.room_id).push(p.profiles)
+      }
+    }
+
+    // 조인 정보 맵 생성 (join_id → joinInfo)
+    const joinsMap = new Map()
+    if (joinsResult.status === 'fulfilled' && joinsResult.value.data) {
+      for (const join of joinsResult.value.data) {
+        joinsMap.set(join.id, {
+          title: join.title,
+          date: new Date(join.date).toLocaleDateString('ko-KR', {
+            month: 'long', day: 'numeric', weekday: 'short'
+          }),
+          location: join.location
+        })
+      }
+    }
+
+    // 각 채팅방의 마지막 메시지 + 읽지 않은 수 (개별 쿼리, 병렬 실행)
+    const messageResults = await Promise.allSettled(
+      validParticipants.map(async (p) => {
         const room = p.chat_rooms
-        if (!room) return null
-
-        // 채팅방의 다른 참가자 조회
-        const { data: otherParticipants } = await supabase
-          .from('chat_participants')
-          .select(`
-            user_id,
-            profiles (
-              id,
-              name,
-              photos
-            )
-          `)
-          .eq('room_id', room.id)
-          .neq('user_id', userId)
-
-        const allPartners = (otherParticipants || []).map(p => p.profiles).filter(Boolean)
-        const partner = allPartners[0]
-
-        // 마지막 메시지 조회
-        const { data: lastMessages } = await supabase
-          .from('messages')
-          .select('content, created_at, sender_id')
-          .eq('room_id', room.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-
-        const lastMessage = lastMessages?.[0]
-
-        // 읽지 않은 메시지 수
-        const { count: unreadCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('room_id', room.id)
-          .gt('created_at', p.last_read_at || '1970-01-01')
-          .neq('sender_id', userId)
-
-        // 조인 정보 조회 (조인 채팅방인 경우)
-        let joinInfo = null
-        if (room.join_id) {
-          const { data: join } = await supabase
-            .from('joins')
-            .select('title, date, time, location')
-            .eq('id', room.join_id)
-            .single()
-
-          if (join) {
-            joinInfo = {
-              title: join.title,
-              date: new Date(join.date).toLocaleDateString('ko-KR', {
-                month: 'long',
-                day: 'numeric',
-                weekday: 'short'
-              }),
-              location: join.location
-            }
-          }
-        }
-
+        const [lastMsgResult, unreadResult] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('content, created_at, sender_id')
+            .eq('room_id', room.id)
+            .order('created_at', { ascending: false })
+            .limit(1),
+          supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('room_id', room.id)
+            .gt('created_at', p.last_read_at || '1970-01-01')
+            .neq('sender_id', userId)
+        ])
         return {
-          id: room.id,
-          type: room.type === 'direct' ? 'friend' : 'join',
-          partnerId: partner?.id,
-          partnerName: room.type === 'group'
-            ? allPartners.map(p => p.name).join(', ') || '그룹 채팅'
-            : (partner?.name || '알 수 없음'),
-          partnerPhoto: partner?.photos?.[0] || 'https://via.placeholder.com/100',
-          memberCount: (allPartners?.length || 0) + 1,
-          joinId: room.join_id,
-          joinTitle: joinInfo?.title || room.name,
-          joinInfo: joinInfo,
-          lastMessage: lastMessage?.content || '',
-          lastMessageTime: lastMessage?.created_at,
-          unreadCount: unreadCount || 0
+          roomId: room.id,
+          lastMessage: lastMsgResult.data?.[0] || null,
+          unreadCount: unreadResult.count || 0
         }
       })
     )
 
-    const rooms = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value)
+    // 메시지 맵 생성
+    const messagesMap = new Map()
+    for (const r of messageResults) {
+      if (r.status === 'fulfilled' && r.value) {
+        messagesMap.set(r.value.roomId, r.value)
+      }
+    }
+
+    // 최종 조립
+    const rooms = validParticipants.map(p => {
+      const room = p.chat_rooms
+      const allPartners = partnersMap.get(room.id) || []
+      const partner = allPartners[0]
+      const msgInfo = messagesMap.get(room.id) || {}
+      const joinInfo = room.join_id ? joinsMap.get(room.join_id) || null : null
+
+      return {
+        id: room.id,
+        type: room.type === 'direct' ? 'friend' : 'join',
+        partnerId: partner?.id,
+        partnerName: room.type === 'group'
+          ? allPartners.map(p => p.name).join(', ') || '그룹 채팅'
+          : (partner?.name || '알 수 없음'),
+        partnerPhoto: partner?.photos?.[0] || 'https://via.placeholder.com/100',
+        memberCount: allPartners.length + 1,
+        joinId: room.join_id,
+        joinTitle: joinInfo?.title || room.name,
+        joinInfo: joinInfo,
+        lastMessage: msgInfo.lastMessage?.content || '',
+        lastMessageTime: msgInfo.lastMessage?.created_at,
+        unreadCount: msgInfo.unreadCount || 0
+      }
+    })
 
     return {
       success: true,
-      rooms: rooms.filter(r => r !== null).sort((a, b) =>
+      rooms: rooms.sort((a, b) =>
         new Date(b.lastMessageTime || 0) - new Date(a.lastMessageTime || 0)
       )
     }
@@ -313,13 +330,24 @@ export const subscribeToRoom = (roomId, userId, onNewMessage) => {
 
 /**
  * 전체 채팅방 새 메시지 구독 (채팅 목록용)
+ * 디바운스 적용: 연속 메시지 수신 시 마지막 메시지 후 300ms 대기 후 1회만 갱신
  */
+let debounceTimer = null
+
 export const subscribeToAllRooms = (userId, onUpdate) => {
   if (!userId) return () => {}
 
   // 기존 구독 해제
   if (activeSubscription) {
     activeSubscription.unsubscribe()
+  }
+
+  const debouncedUpdate = () => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      onUpdate()
+      debounceTimer = null
+    }, 300)
   }
 
   const channel = supabase
@@ -331,9 +359,8 @@ export const subscribeToAllRooms = (userId, onUpdate) => {
         schema: 'public',
         table: 'messages'
       },
-      async () => {
-        // 새 메시지가 오면 채팅방 목록 갱신
-        onUpdate()
+      () => {
+        debouncedUpdate()
       }
     )
     .subscribe()
@@ -341,6 +368,10 @@ export const subscribeToAllRooms = (userId, onUpdate) => {
   activeSubscription = channel
 
   return () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+      debounceTimer = null
+    }
     channel.unsubscribe()
     activeSubscription = null
   }
