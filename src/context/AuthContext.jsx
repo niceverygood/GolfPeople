@@ -367,17 +367,26 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const { error } = await auth.signOut()
-      
+
       if (error) {
         throw error
       }
-      
+
+      // 세션 관련 localStorage 정리 (로그인 시 이전 데이터 안 보이도록)
+      const keysToRemove = [
+        'gp_past_cards', 'gp_recommendation_history',
+        'gp_revealed_cards', 'gp_revealed_date',
+        'gp_hidden_messages', 'gp_blocked_users',
+        'gp_marker_balance', 'gp_marker_transactions',
+      ]
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+
       setUser(null)
       setProfile(null)
-      
+
       return { error: null }
     } catch (err) {
       setError(err.message)

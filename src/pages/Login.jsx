@@ -93,9 +93,11 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-12"
       >
-        <div className="w-28 h-28 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-gp-gold via-gp-gold/80 to-gp-green shadow-2xl shadow-gp-gold/20 flex items-center justify-center">
-          <span className="text-5xl">⛳</span>
-        </div>
+        <img
+          src="/android-chrome-512.png"
+          alt="골프피플"
+          className="w-28 h-28 mx-auto mb-6 rounded-3xl shadow-2xl shadow-gp-gold/20"
+        />
         <h1 className="text-3xl font-bold mb-3">골프피플</h1>
         <p className="text-gp-text-secondary text-lg">
           함께 라운딩할 파트너를 찾아보세요

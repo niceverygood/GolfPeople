@@ -50,10 +50,18 @@ export const sendVerificationCode = async (phoneNumber) => {
       const result = await FirebaseAuthentication.signInWithPhoneNumber({
         phoneNumber: formattedPhone,
       })
+      if (!result?.verificationId) {
+        console.error('verificationId가 반환되지 않음:', result)
+        return { success: false, error: '전화번호 인증 서비스를 사용할 수 없습니다. 앱을 업데이트해주세요.' }
+      }
       window.nativeVerificationId = result.verificationId
       return { success: true }
     } catch (error) {
       console.error('네이티브 SMS 발송 오류:', error)
+      // 플러그인 미설치 또는 Firebase 미설정 시 친절한 에러
+      if (error.message?.includes('not implemented') || error.message?.includes('not available')) {
+        return { success: false, error: '전화번호 인증 기능이 이 기기에서 지원되지 않습니다.' }
+      }
       return { success: false, error: error.message }
     }
   }

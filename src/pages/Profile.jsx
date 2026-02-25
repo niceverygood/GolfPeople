@@ -198,15 +198,13 @@ export default function Profile() {
   ]
   
   const handleLogout = async () => {
-    // Supabase 로그아웃
+    // Supabase 로그아웃 (signOut 내부에서 세션 데이터 정리됨)
     if (isAuthenticated) {
       await signOut()
     }
-    // 로컬 데이터 정리
-    localStorage.removeItem('gp_onboarded')
+    // gp_onboarded는 유지 (재로그인 시 온보딩 다시 안 뜨도록)
     localStorage.removeItem('gp_profile')
-    localStorage.removeItem('gp_revealed_cards')
-    window.location.reload()
+    window.location.href = '/'
   }
   
   const handleProfileUpdate = async (updatedProfile) => {
