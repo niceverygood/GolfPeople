@@ -52,29 +52,11 @@ export const MarkerProvider = ({ children }) => {
     }
   })
 
-  // 잔액 저장 (로컬 우선 + 서버 동기화 재시도)
-  const saveBalance = useCallback((newBalance) => {
+  // 잔액 저장 (로컬 캐시만 — 서버 동기화는 RPC 결과로만)
+  const saveBalanceLocal = useCallback((newBalance) => {
     setBalance(newBalance)
     localStorage.setItem('gp_marker_balance', newBalance.toString())
-
-    // Supabase 동기화 (실패 시 1회 재시도)
-    if (isConnected() && user) {
-      const syncToServer = (retryCount = 0) => {
-        supabase
-          .from('marker_wallets')
-          .upsert({ user_id: user.id, balance: newBalance }, { onConflict: 'user_id' })
-          .then(() => {})
-          .catch(err => {
-            if (retryCount < 1) {
-              setTimeout(() => syncToServer(retryCount + 1), 3000)
-            } else {
-              console.error('마커 잔액 동기화 실패 (재시도 소진):', err.message)
-            }
-          })
-      }
-      syncToServer()
-    }
-  }, [user])
+  }, [])
 
   // 거래 내역 저장 (로컬 우선)
   const saveTransaction = useCallback((tx) => {
@@ -111,94 +93,71 @@ export const MarkerProvider = ({ children }) => {
     }
   }, [user])
 
-  // 마커 사용 (서버 검증 포함)
+  // 마커 사용 (서버 검증 필수 — 로컬 fallback 제거)
   const spendMarkers = useCallback(async (actionType) => {
     const cost = prices[actionType]
     if (!cost) {
       return { success: false, error: 'Invalid action type' }
     }
 
-    // 클라이언트 사전 검증 (UX용)
+    // 클라이언트 사전 검증 (UX용 — 실제 검증은 서버)
     if (balance < cost) {
       return { success: false, error: 'insufficient_balance', message: '마커가 부족합니다' }
     }
 
-    // 서버 검증 (Supabase RPC 호출)
-    if (isConnected() && user) {
-      try {
-        const { data, error } = await supabase.rpc('spend_markers', {
-          p_user_id: user.id,
-          p_action_type: actionType,
-          p_cost: cost
+    // 서버 검증 필수 (Supabase RPC 호출)
+    if (!isConnected() || !user) {
+      return { success: false, error: 'network_error', message: '네트워크 연결을 확인해주세요' }
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('spend_markers', {
+        p_user_id: user.id,
+        p_action_type: actionType,
+        p_cost: cost  // 하위 호환성 유지, 서버에서는 무시하고 marker_prices에서 조회
+      })
+
+      if (error) {
+        console.error('서버 마커 검증 실패:', error)
+        return { success: false, error: 'server_error', message: '서버 오류가 발생했습니다. 다시 시도해주세요.' }
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'insufficient_balance', message: data.message || '마커가 부족합니다' }
+      }
+
+      if (data && data.success) {
+        // 서버 잔액으로 동기화
+        const serverBalance = typeof data.new_balance === 'number' ? data.new_balance : balance - cost
+        saveBalanceLocal(serverBalance)
+
+        saveTransaction({
+          amount: -(data.cost || cost),
+          type: actionType,
+          description: actionType === 'friend_request' ? '친구 요청' :
+                       actionType === 'join_application' ? '조인 신청' :
+                       actionType === 'profile_view' ? '프로필 열람' : actionType
         })
 
-        if (error) {
-          console.error('서버 마커 검증 실패:', error)
-          // 서버 에러 시에도 로컬에서 처리 (오프라인 지원)
-        } else if (data && !data.success) {
-          // 서버에서 잔액 부족 판정
-          return { success: false, error: 'insufficient_balance', message: data.message || '마커가 부족합니다' }
-        } else if (data && data.success) {
-          // 서버 검증 성공 - 서버 잔액으로 동기화
-          const serverBalance = typeof data.new_balance === 'number' ? data.new_balance : balance - cost
-          setBalance(serverBalance)
-          localStorage.setItem('gp_marker_balance', serverBalance.toString())
-
-          const actionDescriptions = {
-            friend_request: '친구 요청',
-            join_application: '조인 신청',
-            profile_view: '프로필 열람'
-          }
-
-          saveTransaction({
-            amount: -cost,
-            type: actionType,
-            description: actionDescriptions[actionType] || actionType
-          })
-
-          return { success: true, cost, newBalance: serverBalance }
-        }
-      } catch (e) {
-        console.error('서버 마커 검증 예외:', e)
-        // 네트워크 오류 시 로컬에서 처리
+        return { success: true, cost: data.cost || cost, newBalance: serverBalance }
       }
+
+      return { success: false, error: 'unknown_error', message: '알 수 없는 오류가 발생했습니다' }
+    } catch (e) {
+      console.error('서버 마커 검증 예외:', e)
+      return { success: false, error: 'network_error', message: '네트워크 오류가 발생했습니다. 다시 시도해주세요.' }
     }
+  }, [balance, prices, saveBalanceLocal, saveTransaction, user])
 
-    // 로컬 처리 (오프라인 또는 서버 연결 안됨)
-    const actionDescriptions = {
-      friend_request: '친구 요청',
-      join_application: '조인 신청',
-      profile_view: '프로필 열람'
-    }
-    const newBalance = balance - cost
-    saveBalance(newBalance)
+  // 마커 충전 (결제 검증 후 서버에서 호출 — 직접 호출 금지)
+  const addMarkers = useCallback(async (amount, type = 'purchase', description = '마커 충전') => {
+    console.warn('⚠️ addMarkers 호출됨 — 결제 검증 완료 후에만 사용')
 
-    saveTransaction({
-      amount: -cost,
-      type: actionType,
-      description: actionDescriptions[actionType] || actionType
-    })
+    // 서버에서 잔액 새로고침 (직접 잔액 조작 대신)
+    await refreshWalletFromServer()
 
-    return { success: true, cost, newBalance }
-  }, [balance, prices, saveBalance, saveTransaction, user])
-
-  // 마커 충전 (로컬 폴백 — 서버 검증 우선 사용 권장)
-  const addMarkers = useCallback((amount, type = 'purchase', description = '마커 충전') => {
-    console.warn('⚠️ addMarkers 직접 호출 (서버 검증 경로 사용 권장)')
-    console.log('💰 마커 충전:', { amount, type, description })
-    
-    const newBalance = balance + amount
-    saveBalance(newBalance)
-    
-    saveTransaction({
-      amount: amount,
-      type: type,
-      description: description
-    })
-    
-    console.log('✅ 마커 충전 완료! 새 잔액:', newBalance)
-    return { success: true, newBalance }
-  }, [balance, saveBalance, saveTransaction])
+    return { success: true, newBalance: balance }
+  }, [balance, refreshWalletFromServer])
 
   // 잔액 충분한지 확인
   const hasEnoughMarkers = useCallback((actionType) => {
@@ -236,9 +195,11 @@ export const MarkerProvider = ({ children }) => {
     }
   }, [user])
 
-  // 앱 시작 시 미완료 결제 복구
+  // 앱 시작 시 서버 잔액 동기화 + 미완료 결제 복구
   useEffect(() => {
     if (!isAuthenticated || !user) return
+    // ★ 보안: 항상 서버 잔액으로 동기화 (localStorage 조작 방지)
+    refreshWalletFromServer()
     recoverPendingPurchase().then(({ recovered }) => {
       if (recovered) {
         console.log('미완료 결제 복구 완료 → 서버 잔액 동기화')
