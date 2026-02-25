@@ -138,12 +138,14 @@ export default function ProfileDetail() {
     setShowRequestModal(true)
   }
 
-  const handleSendRequest = (message) => {
+  const handleSendRequest = async (message) => {
     if (user) {
-      const success = sendFriendRequest(user, message)
+      const success = await sendFriendRequest(user, message)
       if (success) {
         setFriendRequested(true)
         showToast.success('친구 요청을 보냈습니다!')
+      } else {
+        showToast.error('친구 요청에 실패했습니다')
       }
     }
     setShowRequestModal(false)
