@@ -185,10 +185,11 @@ export default function ProfileDetail() {
     try {
       const { supabase, isConnected } = await import('../lib/supabase')
       if (isConnected() && supabase && currentUser) {
-        await supabase.from('blocks').insert({
+        const { error } = await supabase.from('blocks').insert({
           user_id: currentUser.id,
           blocked_user_id: user.id
         })
+        if (error) throw error
       }
       // 로컬 차단 목록에도 추가
       const saved = localStorage.getItem('gp_blocked_users')

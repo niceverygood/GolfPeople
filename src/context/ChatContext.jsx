@@ -2,8 +2,9 @@
  * 채팅 Context - Supabase Realtime 연동
  */
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useAuth } from './AuthContext'
+import { showToast } from '../utils/errorHandler'
 import {
   getChatRooms,
   getMessages,
@@ -37,14 +38,21 @@ export function ChatProvider({ children }) {
     if (!user?.id) return
 
     setLoading(true)
-    const result = await getChatRooms(user.id)
-
-    if (result.success) {
-      setChatRooms(result.rooms)
-    } else {
-      setError(result.error)
+    try {
+      const result = await getChatRooms(user.id)
+      if (result.success) {
+        setChatRooms(result.rooms)
+      } else {
+        setError(result.error)
+        showToast.error('채팅방 목록을 불러오지 못했습니다')
+      }
+    } catch (e) {
+      console.error('loadChatRooms 에러:', e)
+      setError(e.message)
+      showToast.error('채팅방 목록을 불러오지 못했습니다')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [user?.id])
 
   // 채팅방 입장
@@ -86,8 +94,11 @@ export function ChatProvider({ children }) {
         )
       )
 
-      // 실시간 구독
+      // 실시간 구독 (stale-room guard: 다른 방으로 전환된 경우 무시)
+      const expectedRoomId = roomId
       roomUnsubscribeRef.current = subscribeToRoom(roomId, user.id, (newMessage) => {
+        if (enterRoomIdRef.current !== expectedRoomId) return
+
         // UPDATE 이벤트
         if (newMessage._event === 'UPDATE') {
           setMessages(prev =>
