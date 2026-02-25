@@ -121,7 +121,11 @@ export default function Profile() {
     } else {
       const savedProfile = localStorage.getItem('gp_profile')
       if (savedProfile) {
-        setProfile(JSON.parse(savedProfile))
+        try {
+          setProfile(JSON.parse(savedProfile))
+        } catch {
+          localStorage.removeItem('gp_profile')
+        }
       }
     }
   }, [authProfile])

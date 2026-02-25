@@ -332,8 +332,6 @@ export const subscribeToRoom = (roomId, userId, onNewMessage) => {
  * 전체 채팅방 새 메시지 구독 (채팅 목록용)
  * 디바운스 적용: 연속 메시지 수신 시 마지막 메시지 후 300ms 대기 후 1회만 갱신
  */
-let debounceTimer = null
-
 export const subscribeToAllRooms = (userId, onUpdate) => {
   if (!userId) return () => {}
 
@@ -342,11 +340,14 @@ export const subscribeToAllRooms = (userId, onUpdate) => {
     activeSubscription.unsubscribe()
   }
 
+  let timer = null
+  let cancelled = false
+
   const debouncedUpdate = () => {
-    if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-      onUpdate()
-      debounceTimer = null
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      if (!cancelled) onUpdate()
+      timer = null
     }, 300)
   }
 
@@ -368,9 +369,10 @@ export const subscribeToAllRooms = (userId, onUpdate) => {
   activeSubscription = channel
 
   return () => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-      debounceTimer = null
+    cancelled = true
+    if (timer) {
+      clearTimeout(timer)
+      timer = null
     }
     channel.unsubscribe()
     activeSubscription = null

@@ -6,6 +6,9 @@
 import { supabase, isConnected } from './supabase'
 import { createNotification, NOTIFICATION_TYPES } from './notificationService'
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isValidUUID = (id) => typeof id === 'string' && UUID_REGEX.test(id)
+
 /**
  * 조인 목록 가져오기
  */
@@ -311,7 +314,7 @@ export const getReceivedJoinApplications = async (userId) => {
  * 조인 신청하기
  */
 export const applyToJoin = async (userId, joinId, message = '') => {
-  if (!isConnected() || !userId || !joinId) {
+  if (!isConnected() || !isValidUUID(userId) || !isValidUUID(joinId)) {
     return { success: false, error: 'invalid_params' }
   }
 
@@ -415,7 +418,7 @@ export const applyToJoin = async (userId, joinId, message = '') => {
  * - 알림 생성
  */
 export const acceptJoinApplication = async (applicationId) => {
-  if (!isConnected() || !applicationId) {
+  if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
@@ -460,7 +463,7 @@ export const acceptJoinApplication = async (applicationId) => {
  * 조인 신청 거절
  */
 export const rejectJoinApplication = async (applicationId) => {
-  if (!isConnected() || !applicationId) {
+  if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
@@ -510,7 +513,7 @@ export const rejectJoinApplication = async (applicationId) => {
  * 조인 신청 취소
  */
 export const cancelJoinApplication = async (applicationId) => {
-  if (!isConnected() || !applicationId) {
+  if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
@@ -533,7 +536,7 @@ export const cancelJoinApplication = async (applicationId) => {
  * 조인 생성
  */
 export const createJoin = async (userId, joinData) => {
-  if (!isConnected() || !userId) {
+  if (!isConnected() || !isValidUUID(userId)) {
     return { success: false }
   }
 
@@ -581,7 +584,7 @@ export const createJoin = async (userId, joinData) => {
  * 조인 수정
  */
 export const updateJoin = async (joinId, userId, updates) => {
-  if (!isConnected() || !joinId || !userId) {
+  if (!isConnected() || !isValidUUID(joinId) || !isValidUUID(userId)) {
     return { success: false }
   }
 
@@ -619,7 +622,7 @@ export const updateJoin = async (joinId, userId, updates) => {
  * 조인 삭제 (취소)
  */
 export const deleteJoin = async (joinId, userId) => {
-  if (!isConnected() || !joinId || !userId) {
+  if (!isConnected() || !isValidUUID(joinId) || !isValidUUID(userId)) {
     return { success: false }
   }
 
@@ -643,7 +646,7 @@ export const deleteJoin = async (joinId, userId) => {
  * 조인 상세 정보
  */
 export const getJoinDetail = async (joinId) => {
-  if (!isConnected() || !joinId) {
+  if (!isConnected() || !isValidUUID(joinId)) {
     return { success: false }
   }
 
@@ -686,7 +689,7 @@ export const getJoinDetail = async (joinId) => {
  * 호스트만 가능, 2명 이상 참가자 필요
  */
 export const confirmJoin = async (joinId, userId) => {
-  if (!isConnected() || !joinId || !userId) {
+  if (!isConnected() || !isValidUUID(joinId) || !isValidUUID(userId)) {
     return { success: false, error: 'invalid_params' }
   }
 
@@ -711,7 +714,7 @@ export const confirmJoin = async (joinId, userId) => {
  * 참가자만 가능, 당일만 가능
  */
 export const startRounding = async (joinId, userId) => {
-  if (!isConnected() || !joinId || !userId) {
+  if (!isConnected() || !isValidUUID(joinId) || !isValidUUID(userId)) {
     return { success: false, error: 'invalid_params' }
   }
 

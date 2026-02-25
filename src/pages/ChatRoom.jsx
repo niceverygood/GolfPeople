@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2, Users, Pencil, X, Check } from 'lucide-react'
@@ -125,10 +125,11 @@ export default function ChatRoom() {
     try {
       const { default: supabase, isConnected } = await import('../lib/supabase')
       if (isConnected() && supabase) {
-        await supabase.from('blocks').insert({
+        const { error } = await supabase.from('blocks').insert({
           user_id: user.id,
           blocked_user_id: chat.partnerId
         })
+        if (error) throw error
       }
       const saved = localStorage.getItem('gp_blocked_users')
       const blockedList = saved ? JSON.parse(saved) : []
@@ -216,8 +217,15 @@ export default function ChatRoom() {
     setSelectedMessage(null)
   }
 
-  // 숨긴 메시지 필터링
-  const hiddenMessages = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
+  // 숨긴 메시지 필터링 (memoized + error guard)
+  const hiddenMessages = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
+    } catch {
+      localStorage.removeItem('gp_hidden_messages')
+      return []
+    }
+  }, [messages, selectedMessage])
   const visibleMessages = messages.filter(m => !hiddenMessages.includes(m.id))
 
   // 로딩 중

@@ -39,12 +39,22 @@ export function AppProvider({ children }) {
 
   // === 로컬 전용 (localStorage) ===
   const [pastCards, setPastCards] = useState(() => {
-    const saved = localStorage.getItem('gp_past_cards')
-    return saved ? JSON.parse(saved) : []
+    try {
+      const saved = localStorage.getItem('gp_past_cards')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      localStorage.removeItem('gp_past_cards')
+      return []
+    }
   })
   const [recommendationHistory, setRecommendationHistory] = useState(() => {
-    const saved = localStorage.getItem('gp_recommendation_history')
-    return saved ? JSON.parse(saved) : {}
+    try {
+      const saved = localStorage.getItem('gp_recommendation_history')
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      localStorage.removeItem('gp_recommendation_history')
+      return {}
+    }
   })
 
   // === currentUser (하위 호환) ===
@@ -184,8 +194,9 @@ export function AppProvider({ children }) {
       }
     } catch (e) {
       console.error('AppContext 데이터 로드 에러:', e)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [userId])
 
   useEffect(() => {
@@ -198,19 +209,31 @@ export function AppProvider({ children }) {
 
   const refreshUsers = useCallback(async () => {
     if (!userId) return
-    const { data } = await db.profiles.getAll()
-    if (data) setUsers(data.filter(p => p.id !== userId).map(p => mapProfileToUser(p)))
+    try {
+      const { data } = await db.profiles.getAll()
+      if (data) setUsers(data.filter(p => p.id !== userId).map(p => mapProfileToUser(p)))
+    } catch (e) {
+      console.error('refreshUsers 에러:', e)
+    }
   }, [userId])
 
   const refreshJoins = useCallback(async () => {
-    const result = await getJoins()
-    if (result.success) setJoins(result.joins || [])
+    try {
+      const result = await getJoins()
+      if (result.success) setJoins(result.joins || [])
+    } catch (e) {
+      console.error('refreshJoins 에러:', e)
+    }
   }, [])
 
   const refreshMyJoins = useCallback(async () => {
     if (!userId) return
-    const result = await getMyJoins(userId)
-    if (result.success) setMyJoins(result.joins || [])
+    try {
+      const result = await getMyJoins(userId)
+      if (result.success) setMyJoins(result.joins || [])
+    } catch (e) {
+      console.error('refreshMyJoins 에러:', e)
+    }
   }, [userId])
 
   const refreshFriendRequests = useCallback(async () => {
@@ -388,9 +411,14 @@ export function AppProvider({ children }) {
   }, [userId, joinApplications, refreshJoinApplications])
 
   const cancelJoinApplication = useCallback(async (applicationId) => {
-    await cancelJoinApplicationApi(applicationId)
+    const prevApps = joinApplications
     setJoinApplications(prev => prev.filter(a => a.id !== applicationId))
-  }, [])
+    const result = await cancelJoinApplicationApi(applicationId)
+    if (!result.success) {
+      setJoinApplications(prevApps)
+      showToast.error('신청 취소에 실패했습니다')
+    }
+  }, [joinApplications])
 
   const acceptJoinRequest = useCallback(async (requestId) => {
     const result = await acceptJoinApplication(requestId)
