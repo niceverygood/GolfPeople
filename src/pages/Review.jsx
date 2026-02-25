@@ -39,15 +39,21 @@ export default function Review() {
 
   const loadReviews = async () => {
     setLoading(true)
-    const [pendingResult, receivedResult, sentResult] = await Promise.all([
-      getPendingReviews(user.id),
-      getReceivedReviews(user.id),
-      getSentReviews(user.id),
-    ])
-    setPendingReviews(pendingResult.pendingReviews || [])
-    setReceivedReviews(receivedResult.reviews || [])
-    setSentReviews(sentResult.reviews || [])
-    setLoading(false)
+    try {
+      const [pendingResult, receivedResult, sentResult] = await Promise.all([
+        getPendingReviews(user.id),
+        getReceivedReviews(user.id),
+        getSentReviews(user.id),
+      ])
+      setPendingReviews(pendingResult.pendingReviews || [])
+      setReceivedReviews(receivedResult.reviews || [])
+      setSentReviews(sentResult.reviews || [])
+    } catch (e) {
+      console.error('리뷰 로드 에러:', e)
+      showToast.error('리뷰를 불러오지 못했습니다')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleWriteReview = (target) => {

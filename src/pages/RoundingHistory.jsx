@@ -5,16 +5,7 @@ import { ChevronLeft, MapPin, Calendar, Users, Star, Target, Clock } from 'lucid
 import { useAuth } from '../context/AuthContext'
 import { getMyJoinHistory } from '../lib/joinService'
 import { db } from '../lib/supabase'
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const d = new Date(dateStr + 'T00:00:00')
-  if (isNaN(d.getTime())) return dateStr
-  const month = d.getMonth() + 1
-  const day = d.getDate()
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
-  return `${month}월 ${day}일 (${dayOfWeek})`
-}
+import { formatJoinDate as formatDate } from '../utils/formatTime'
 
 const STATUS_LABELS = {
   open: { text: '모집중', color: 'bg-gp-green/20 text-gp-green' },

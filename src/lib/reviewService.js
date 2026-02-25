@@ -127,7 +127,7 @@ export const getReceivedReviews = async (userId) => {
       createdAt: r.created_at,
       reviewerId: r.reviewer?.id,
       reviewerName: r.reviewer?.name || '익명',
-      reviewerPhoto: r.reviewer?.photos?.[0] || 'https://via.placeholder.com/100',
+      reviewerPhoto: r.reviewer?.photos?.[0] || '/default-profile.png',
       joinId: r.join?.id,
       joinTitle: r.join?.title,
       joinDate: r.join?.date,
@@ -185,7 +185,7 @@ export const getSentReviews = async (userId) => {
       createdAt: r.created_at,
       reviewedId: r.reviewed?.id,
       reviewedName: r.reviewed?.name || '알 수 없음',
-      reviewedPhoto: r.reviewed?.photos?.[0] || 'https://via.placeholder.com/100',
+      reviewedPhoto: r.reviewed?.photos?.[0] || '/default-profile.png',
       joinId: r.join?.id,
       joinTitle: r.join?.title,
       joinDate: r.join?.date,
@@ -315,7 +315,7 @@ export const getPendingReviews = async (userId) => {
               courseName: join.course_name,
               userId: participantId,
               userName: p.user?.name || '알 수 없음',
-              userPhoto: p.user?.photos?.[0] || 'https://via.placeholder.com/100',
+              userPhoto: p.user?.photos?.[0] || '/default-profile.png',
             })
           }
         }

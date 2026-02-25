@@ -489,7 +489,7 @@ function PastRecommendations({ history, users, navigate }) {
                   className="aspect-[3/4] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-transform"
                 >
                   <img
-                    src={user.photos?.[0] || 'https://via.placeholder.com/300x400?text=Golf'}
+                    src={user.photos?.[0] || '/default-profile.png'}
                     alt={user.name}
                     className="w-full h-full object-cover"
                   />
@@ -641,7 +641,7 @@ function FlipCard({ card, isUnlocked, onClick }) {
           {card.user && (
             <>
               <img
-                src={card.user.photos?.[0] || 'https://via.placeholder.com/300x400?text=Golf'}
+                src={card.user.photos?.[0] || '/default-profile.png'}
                 alt={card.user.name}
                 className="w-full h-full object-cover"
               />

@@ -225,7 +225,9 @@ export default function ScoreRecord() {
   }
 
   const formatDate = (dateStr) => {
+    if (!dateStr) return ''
     const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return dateStr
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })
   }
 

@@ -8,23 +8,10 @@ import PhoneVerifyModal from '../components/PhoneVerifyModal'
 import MarkerConfirmModal from '../components/MarkerConfirmModal'
 import MarkerIcon from '../components/icons/MarkerIcon'
 import { usePhoneVerification } from '../hooks/usePhoneVerification'
-import { getSimpleTimeAgo } from '../utils/formatTime'
+import { getSimpleTimeAgo, formatJoinDate } from '../utils/formatTime'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 import golfCourses from '../data/golfCourses.json'
-
-// ISO 날짜 → "2월 14일 (금)" 형식으로 변환
-const formatJoinDate = (dateStr) => {
-  if (!dateStr) return ''
-  // 이미 한글 형식이면 그대로 반환
-  if (dateStr.includes('월')) return dateStr
-  const d = new Date(dateStr + 'T00:00:00')
-  if (isNaN(d.getTime())) return dateStr
-  const month = d.getMonth() + 1
-  const day = d.getDate()
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
-  return `${month}월 ${day}일 (${dayOfWeek})`
-}
 
 // 골프장 데이터에서 지역 자동 추출
 const ALL_REGIONS = (() => {
@@ -730,7 +717,7 @@ function ApplicationCard({ app, index, onClick, onCancel, variant }) {
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           <img
-            src={app.hostPhoto || 'https://via.placeholder.com/100'}
+            src={app.hostPhoto || '/default-profile.png'}
             alt={app.hostName}
             className="w-10 h-10 rounded-full object-cover"
           />

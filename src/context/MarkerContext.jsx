@@ -156,8 +156,8 @@ export const MarkerProvider = ({ children }) => {
     // 서버에서 잔액 새로고침 (직접 잔액 조작 대신)
     await refreshWalletFromServer()
 
-    return { success: true, newBalance: balance }
-  }, [balance, refreshWalletFromServer])
+    return { success: true }
+  }, [refreshWalletFromServer])
 
   // 잔액 충분한지 확인
   const hasEnoughMarkers = useCallback((actionType) => {

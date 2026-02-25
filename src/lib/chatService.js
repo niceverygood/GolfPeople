@@ -131,7 +131,7 @@ export const getChatRooms = async (userId) => {
         partnerName: room.type === 'group'
           ? allPartners.map(p => p.name).join(', ') || '그룹 채팅'
           : (partner?.name || '알 수 없음'),
-        partnerPhoto: partner?.photos?.[0] || 'https://via.placeholder.com/100',
+        partnerPhoto: partner?.photos?.[0] || '/default-profile.png',
         memberCount: allPartners.length + 1,
         joinId: room.join_id,
         joinTitle: joinInfo?.title || room.name,

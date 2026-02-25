@@ -5,6 +5,7 @@ import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as 
 import { getJoins, getMyJoins, getSentJoinApplications, getReceivedJoinApplications, applyToJoin as applyToJoinApi, acceptJoinApplication, rejectJoinApplication, cancelJoinApplication as cancelJoinApplicationApi, createJoin as createJoinApi, deleteJoin as deleteJoinApi, completePastJoins, confirmJoin as confirmJoinApi, startRounding as startRoundingApi } from '../lib/joinService'
 import { getNotifications, markNotificationAsRead as markNotificationAsReadApi, markAllNotificationsAsRead as markAllNotificationsAsReadApi, deleteAllNotifications as deleteAllNotificationsApi } from '../lib/notificationService'
 import { mapProfileToUser, mapNotification } from '../utils/profileMapper'
+import { showToast } from '../utils/errorHandler'
 
 const AppContext = createContext()
 
@@ -129,7 +130,7 @@ export function AppProvider({ children }) {
           id: r.id,
           userId: r.to_user_id,
           userName: r.to_user?.name || '',
-          userPhoto: r.to_user?.photos?.[0] || 'https://via.placeholder.com/100',
+          userPhoto: r.to_user?.photos?.[0] || '/default-profile.png',
           userRegion: r.to_user?.regions?.[0] || '',
           userHandicap: r.to_user?.handicap || '',
           message: r.message || '',
@@ -143,7 +144,7 @@ export function AppProvider({ children }) {
           id: r.id,
           userId: r.from_user_id,
           userName: r.from_user?.name || '',
-          userPhoto: r.from_user?.photos?.[0] || 'https://via.placeholder.com/100',
+          userPhoto: r.from_user?.photos?.[0] || '/default-profile.png',
           userRegion: r.from_user?.regions?.[0] || '',
           userHandicap: r.from_user?.handicap || '',
           message: r.message || '',
@@ -164,7 +165,7 @@ export function AppProvider({ children }) {
           joinRegion: a.joinRegion || '',
           hostId: a.hostId,
           hostName: a.hostName || '',
-          hostPhoto: a.hostPhoto || 'https://via.placeholder.com/100',
+          hostPhoto: a.hostPhoto || '/default-profile.png',
           message: a.message || '',
           status: a.status,
           createdAt: a.createdAt,
@@ -176,7 +177,7 @@ export function AppProvider({ children }) {
           id: a.id,
           userId: a.userId,
           userName: a.userName || '',
-          userPhoto: a.userPhoto || 'https://via.placeholder.com/100',
+          userPhoto: a.userPhoto || '/default-profile.png',
           userRegion: a.userRegion || '',
           userHandicap: a.userHandicap || '',
           joinId: a.joinId,
@@ -238,57 +239,69 @@ export function AppProvider({ children }) {
 
   const refreshFriendRequests = useCallback(async () => {
     if (!userId) return
-    const [sent, received] = await Promise.all([
-      getSentFriendRequests(userId),
-      getReceivedFriendRequests(userId),
-    ])
-    if (sent.requests) {
-      setFriendRequests(sent.requests.map(r => ({
-        id: r.id, userId: r.to_user_id,
-        userName: r.to_user?.name || '', userPhoto: r.to_user?.photos?.[0] || '',
-        userRegion: r.to_user?.regions?.[0] || '', userHandicap: r.to_user?.handicap || '',
-        message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
-      })))
-    }
-    if (received.requests) {
-      setReceivedFriendRequests(received.requests.map(r => ({
-        id: r.id, userId: r.from_user_id,
-        userName: r.from_user?.name || '', userPhoto: r.from_user?.photos?.[0] || '',
-        userRegion: r.from_user?.regions?.[0] || '', userHandicap: r.from_user?.handicap || '',
-        message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
-      })))
+    try {
+      const [sent, received] = await Promise.all([
+        getSentFriendRequests(userId),
+        getReceivedFriendRequests(userId),
+      ])
+      if (sent.requests) {
+        setFriendRequests(sent.requests.map(r => ({
+          id: r.id, userId: r.to_user_id,
+          userName: r.to_user?.name || '', userPhoto: r.to_user?.photos?.[0] || '',
+          userRegion: r.to_user?.regions?.[0] || '', userHandicap: r.to_user?.handicap || '',
+          message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+        })))
+      }
+      if (received.requests) {
+        setReceivedFriendRequests(received.requests.map(r => ({
+          id: r.id, userId: r.from_user_id,
+          userName: r.from_user?.name || '', userPhoto: r.from_user?.photos?.[0] || '',
+          userRegion: r.from_user?.regions?.[0] || '', userHandicap: r.from_user?.handicap || '',
+          message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+        })))
+      }
+    } catch (e) {
+      console.error('refreshFriendRequests 에러:', e)
     }
   }, [userId])
 
   const refreshJoinApplications = useCallback(async () => {
     if (!userId) return
-    const [sent, received] = await Promise.all([
-      getSentJoinApplications(userId),
-      getReceivedJoinApplications(userId),
-    ])
-    if (sent.applications) {
-      setJoinApplications(sent.applications.map(a => ({
-        id: a.id, joinId: a.joinId, joinTitle: a.joinTitle || '',
-        joinDate: a.joinDate || '', joinTime: a.joinTime || '', joinRegion: a.joinRegion || '',
-        hostId: a.hostId, hostName: a.hostName || '', hostPhoto: a.hostPhoto || 'https://via.placeholder.com/100',
-        message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
-      })))
-    }
-    if (received.applications) {
-      setReceivedJoinRequests(received.applications.map(a => ({
-        id: a.id, userId: a.userId,
-        userName: a.userName || '', userPhoto: a.userPhoto || 'https://via.placeholder.com/100',
-        userRegion: a.userRegion || '', userHandicap: a.userHandicap || '',
-        joinId: a.joinId, joinTitle: a.joinTitle || '',
-        message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
-      })))
+    try {
+      const [sent, received] = await Promise.all([
+        getSentJoinApplications(userId),
+        getReceivedJoinApplications(userId),
+      ])
+      if (sent.applications) {
+        setJoinApplications(sent.applications.map(a => ({
+          id: a.id, joinId: a.joinId, joinTitle: a.joinTitle || '',
+          joinDate: a.joinDate || '', joinTime: a.joinTime || '', joinRegion: a.joinRegion || '',
+          hostId: a.hostId, hostName: a.hostName || '', hostPhoto: a.hostPhoto || '',
+          message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
+        })))
+      }
+      if (received.applications) {
+        setReceivedJoinRequests(received.applications.map(a => ({
+          id: a.id, userId: a.userId,
+          userName: a.userName || '', userPhoto: a.userPhoto || '',
+          userRegion: a.userRegion || '', userHandicap: a.userHandicap || '',
+          joinId: a.joinId, joinTitle: a.joinTitle || '',
+          message: a.message || '', status: a.status, createdAt: a.createdAt, isDbRequest: true,
+        })))
+      }
+    } catch (e) {
+      console.error('refreshJoinApplications 에러:', e)
     }
   }, [userId])
 
   const refreshNotifications = useCallback(async () => {
     if (!userId) return
-    const result = await getNotifications(userId)
-    if (result.success) setNotifications((result.notifications || []).map(mapNotification))
+    try {
+      const result = await getNotifications(userId)
+      if (result.success) setNotifications((result.notifications || []).map(mapNotification))
+    } catch (e) {
+      console.error('refreshNotifications 에러:', e)
+    }
   }, [userId])
 
   // === 실시간 알림 구독 ===
