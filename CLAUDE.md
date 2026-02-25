@@ -90,6 +90,76 @@ src/
 
 ---
 
+## 2026-02-25 (수) 작업일지
+
+### iOS 1.0.2 App Store 배포 완료 + 1.0.3 심사 제출
+
+#### iOS 1.0.2 배포
+- App Store 심사 통과 (2026-02-25 09:58 승인)
+- App Store Connect에서 배포 완료
+- 가격 및 사용 가능 여부: 대한민국 설정 완료 (무료)
+- App Store 검색 정상 노출 확인 (GP 아이콘 정상)
+
+#### iOS 1.0.3 (빌드 7) 심사 제출
+- 버전: 1.0.2 → 1.0.3, 빌드: 6 → 7
+- `npm run build` + `npx cap sync ios` + Xcode Archive + 업로드
+- 변경 내용: 네이티브 스플래시 골프피플 브랜딩 교체 (검정 배경 + 골드 로고)
+- 심사 제출 완료
+
+#### Android 1.0.4 배포 완료
+- Google Play 배포 완료 확인 (2026-02-25)
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.2 | App Store 배포 완료 |
+| iOS | 1.0.3 (빌드 7) | 심사 중 (스플래시 브랜딩) |
+| Android | 1.0.4 (versionCode 5) | Google Play 배포 완료 |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+---
+
+## 2026-02-23 (월) 작업일지
+
+### iOS App Store 심사 리젝 대응 (2차) + 심사 재제출
+
+#### 리젝 사유 분석 (Submission ID: 33a61b67)
+- **Guideline 2.1**: Apple Sign In → "Nonces mismatch" 에러 메시지 표시
+- **Guideline 2.1**: Google 로그인 후 앱 무한 로딩
+- **Guideline 2.1 Information Needed**: 인증 코드 없이 앱 콘텐츠 접근 불가 (Google 계정 2FA + 의심스러운 로그인 감지)
+
+#### 코드 수정
+
+**1. Apple Sign In nonce 수정 (`src/context/AuthContext.jsx`)**
+- 기존: `rawNonce`를 Apple에 그대로 전달 → Apple 토큰에 raw 값 포함 → Supabase가 SHA-256 해시해서 비교 → 불일치
+- 수정: `crypto.subtle.digest('SHA-256', rawNonce)` 해시 후 Apple에 전달, Supabase에는 rawNonce 전달 → 일치
+
+**2. Google 로그인 후 무한 로딩 수정 (`src/App.jsx`)**
+- 기존: `isAuthenticated && !profile && !isOnboarded` → 프로필 로드 실패 시 Splash 무한 표시
+- 수정: `profileTimeout` 상태 추가, 5초 타임아웃 후 온보딩으로 진행
+
+#### 심사 메모 변경
+- Google 로그인 안내 → **Apple Sign In을 주 로그인 경로로 안내**
+- Google 계정은 새 기기에서 의심스러운 로그인 감지 가능성 명시
+
+#### 빌드 및 제출
+- 빌드 번호: 5 → **6**
+- `npx cap sync ios` → Xcode Archive → App Store Connect 업로드
+- 심사 재제출 완료 (1.0.2 빌드 6)
+- Git 커밋 `a97951f`, push 완료, Vercel 웹 자동 배포
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.2 (빌드 6) | 심사 중 (2차 재제출) |
+| Android | 1.0.4 (versionCode 5) | Google Play 심사 제출 (02-24) |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+#### 다음 iOS 빌드에 포함할 변경사항
+- **네이티브 스플래시 이미지 교체**: Capacitor 기본 파란색 X → 골프피플 브랜딩 — Android 반영 완료, iOS는 다음 빌드 시 반영
+
+---
+
 ## 2026-02-13 (금) 작업일지
 
 ### iOS App Store 심사 재제출 준비 완료
@@ -208,8 +278,9 @@ src/
 ### 남은 작업
 | 우선순위 | 항목 | 상태 |
 |---------|------|------|
-| 🟡 | iOS 1.0.2 (빌드 5) 심사 중 | 02-13 제출 완료 |
-| 🟡 | Android 1.0.3 (versionCode 4) 심사 중 | 02-13 제출 완료 |
+| ✅ | iOS 1.0.2 App Store 배포 완료 | 02-25 배포 |
+| ✅ | Android 1.0.4 Google Play 배포 완료 | 02-25 배포 |
+| 🟡 | iOS 1.0.3 (빌드 7) 심사 중 — 스플래시 브랜딩 교체 | 02-25 제출 |
 | ✅ | 카카오 알림톡 연동 (알리고 + DB 직접 발송) | 완료 |
 | ✅ | 채팅 기능 대폭 개선 (멤버/나가기/수정/삭제/재입장) | 완료 |
 | ✅ | 조인 UX 정비 (4탭/매칭/자동거절) | 완료 |
