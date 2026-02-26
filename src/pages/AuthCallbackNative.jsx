@@ -32,7 +32,15 @@ export default function AuthCallbackNative() {
       // 앱으로 리다이렉트할 URL 생성 (Android/iOS 모두 kr.golfpeople.app 스킴 사용)
       const url = `kr.golfpeople.app://auth/callback?access_token=${encodeURIComponent(accessToken)}${refreshToken ? `&refresh_token=${encodeURIComponent(refreshToken)}` : ''}`
       setAppUrl(url)
-      setStatus('ready')
+
+      // 자동 리다이렉트 시도 → 실패하면 버튼 표시
+      try {
+        window.location.href = url
+      } catch (_) {
+        // ignore
+      }
+      // 1.5초 후에도 페이지에 남아있으면 수동 버튼 표시
+      setTimeout(() => setStatus('ready'), 1500)
     } else {
       // 토큰이 없으면 에러
       setStatus('error')
