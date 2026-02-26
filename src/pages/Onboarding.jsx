@@ -55,13 +55,18 @@ export default function Onboarding({ onComplete }) {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
-      setPhotoFile(file) // 원본 파일 저장 (나중에 업로드)
       try {
         const { resizeImage } = await import('../utils/imageResize')
         const resized = await resizeImage(file)
         setPhoto(resized)
+        // 리사이즈된 base64를 Blob으로 변환하여 업로드용으로 저장
+        const res = await fetch(resized)
+        const blob = await res.blob()
+        const resizedFile = new File([blob], file.name, { type: blob.type || 'image/jpeg' })
+        setPhotoFile(resizedFile)
       } catch (err) {
         console.error('이미지 리사이즈 에러:', err)
+        setPhotoFile(file) // 리사이즈 실패 시 원본 사용
         const reader = new FileReader()
         reader.onloadend = () => setPhoto(reader.result)
         reader.readAsDataURL(file)

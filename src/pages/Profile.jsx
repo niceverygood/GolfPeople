@@ -29,13 +29,13 @@ const REGION_DATA = {
   '광주': ['광산', '서구', '북구', '남구', '동구'],
   '울산': ['남구', '중구', '동구', '북구', '울주'],
   '세종': ['세종시'],
-  '강원': ['춘천', '원주', '강릉', '속초', '홍천', '평창', '인제'],
-  '충북': ['청주', '충주', '제천'],
-  '충남': ['천안', '아산', '서산', '당진'],
-  '전북': ['전주', '익산', '군산'],
-  '전남': ['목포', '여수', '순천', '나주'],
-  '경북': ['포항', '경주', '구미', '안동'],
-  '경남': ['창원', '김해', '진주', '양산', '거제'],
+  '강원': ['춘천', '원주', '강릉', '동해', '태백', '속초', '삼척', '홍천', '횡성', '영월', '평창', '정선', '철원', '화천', '양구', '인제', '고성', '양양'],
+  '충북': ['청주', '충주', '제천', '보은', '옥천', '영동', '증평', '진천', '괴산', '음성', '단양'],
+  '충남': ['천안', '아산', '서산', '논산', '계룡', '당진', '공주', '보령', '홍성', '예산', '태안', '청양', '부여', '서천', '금산'],
+  '전북': ['전주', '익산', '군산', '정읍', '남원', '김제', '완주', '진안', '무주', '장수', '임실', '순창', '고창', '부안'],
+  '전남': ['목포', '여수', '순천', '나주', '광양', '담양', '곡성', '구례', '고흥', '보성', '화순', '장흥', '강진', '해남', '영암', '무안', '함평', '영광', '장성', '완도', '진도', '신안'],
+  '경북': ['포항', '경주', '김천', '안동', '구미', '영주', '영천', '상주', '문경', '경산', '군위', '의성', '청송', '영양', '영덕', '청도', '고령', '성주', '칠곡', '예천', '봉화', '울진', '울릉'],
+  '경남': ['창원', '김해', '진주', '양산', '거제', '통영', '사천', '밀양', '함안', '거창', '합천', '창녕', '고성', '남해', '하동', '산청', '함양', '의령'],
   '제주': ['제주시', '서귀포시']
 }
 
@@ -311,7 +311,7 @@ export default function Profile() {
               <div className="flex items-center gap-4 text-gp-text-secondary text-sm">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{profile.region}</span>
+                  <span>{profile.regions?.join(', ') || '미설정'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Trophy className="w-4 h-4" />
@@ -374,10 +374,10 @@ export default function Profile() {
           )}
 
           {/* 가능 시간 */}
-          {profile?.time && (
+          {profile?.times?.length > 0 && (
             <div className="flex items-center justify-center gap-1 text-gp-text-secondary text-sm">
               <Clock className="w-4 h-4" />
-              <span>{profile.time}</span>
+              <span>{profile.times.join(', ')}</span>
             </div>
           )}
         </motion.div>
@@ -569,13 +569,13 @@ export default function Profile() {
 // 프로필 수정 모달
 function EditProfileModal({ profile, onClose, onSave, isSaving }) {
   const [editedProfile, setEditedProfile] = useState(() => {
-    const base = profile || {
+    const base = profile ? { ...profile } : {
       photos: [],
       regions: [],
       handicap: '',
       styles: [],
       times: [],
-      brands: [], // 좋아하는 브랜드
+      brands: [],
     }
     // 기존 photo를 photos 배열로 변환
     if (base.photo && !base.photos?.length) {
@@ -1149,17 +1149,24 @@ function SettingsModal({ onClose }) {
     loadSettings()
   }, [user?.id])
 
-  // 알림 설정 토글
+  // 알림 설정 토글 (서버 실패 시 롤백)
   const handleNotifToggle = async (key) => {
+    const prevSettings = { ...notifSettings }
     const newSettings = { ...notifSettings, [key]: !notifSettings[key] }
     setNotifSettings(newSettings)
 
     // 서버 저장
     if (user?.id) {
-      await updateNotificationSettings(user.id, newSettings)
+      try {
+        await updateNotificationSettings(user.id, newSettings)
+        localStorage.setItem('gp_notif_settings', JSON.stringify(newSettings))
+      } catch {
+        setNotifSettings(prevSettings)
+        showToast.error('설정 저장에 실패했습니다')
+      }
+    } else {
+      localStorage.setItem('gp_notif_settings', JSON.stringify(newSettings))
     }
-    // 로컬 폴백 저장
-    localStorage.setItem('gp_notif_settings', JSON.stringify(newSettings))
   }
 
   // 로컬 설정 토글

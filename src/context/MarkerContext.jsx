@@ -182,11 +182,28 @@ export const MarkerProvider = ({ children }) => {
     }
   }, [user])
 
-  // 마커 충전 (결제 검증 후 서버에서 호출 — 직접 호출 금지)
+  // 마커 충전 (결제 검증 후 서버 잔액 동기화 — 웹훅 처리 대기 포함)
   const addMarkers = useCallback(async (amount, type = 'purchase', description = '마커 충전') => {
+    if (!user) return { success: false }
+    const prevBalance = balance
+    // 웹훅 처리 시간을 고려해 최대 3회 재시도 (1초 간격)
+    for (let i = 0; i < 3; i++) {
+      const { data } = await supabase
+        .from('marker_wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (data && data.balance > prevBalance) {
+        setBalance(data.balance)
+        localStorage.setItem('gp_marker_balance', data.balance.toString())
+        return { success: true }
+      }
+      if (i < 2) await new Promise(r => setTimeout(r, 1000))
+    }
+    // 3회 시도 후에도 잔액 미반영이면 마지막 서버 값으로 동기화
     await refreshWalletFromServer()
     return { success: true }
-  }, [refreshWalletFromServer])
+  }, [refreshWalletFromServer, balance, user])
 
   // 앱 시작 시 서버 잔액 동기화 + 미완료 결제 복구
   useEffect(() => {

@@ -82,6 +82,7 @@ function AppContent() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [profileTimeout, setProfileTimeout] = useState(false)
 
+  // 네이티브 초기화 + 스플래시 + 뒤로가기 (1회만 실행)
   useEffect(() => {
     // 저장된 테마 복원
     const theme = localStorage.getItem('gp_theme') || 'dark'
@@ -91,20 +92,18 @@ function AppContent() {
     initializeNative()
     // 인앱 결제 초기화 (게스트 모드로 우선 초기화)
     initializeIAP()
-    
+
     // 스플래시 화면 2초 후 종료
     const timer = setTimeout(() => setShowSplash(false), 2000)
-    
+
     // 온보딩 여부 체크 (로컬스토리지)
     const onboarded = localStorage.getItem('gp_onboarded')
     if (onboarded) setIsOnboarded(true)
-    
-    // 전화번호 인증 여부 체크 (Supabase 또는 로컬스토리지)
+
+    // 전화번호 인증 여부 체크 (로컬스토리지)
     const phoneVerified = localStorage.getItem('gp_phone_verified')
-    if (phoneVerified || profile?.phone_verified) {
-      setIsPhoneVerified(true)
-    }
-    
+    if (phoneVerified) setIsPhoneVerified(true)
+
     // Android 뒤로가기 버튼 처리
     const unsubscribeBackButton = app.onBackButton(({ canGoBack }) => {
       if (canGoBack) {
@@ -112,13 +111,18 @@ function AppContent() {
       }
     })
 
-    // 딥링크는 AuthContext에서 처리 (중복 방지)
-
     return () => {
       clearTimeout(timer)
       if (typeof unsubscribeBackButton === 'function') {
         unsubscribeBackButton()
       }
+    }
+  }, [])
+
+  // 프로필 로드 시 전화번호 인증 상태 동기화
+  useEffect(() => {
+    if (profile?.phone_verified) {
+      setIsPhoneVerified(true)
     }
   }, [profile])
 

@@ -12,6 +12,12 @@ import { getTimeAgo } from '../utils/formatTime'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 import VerificationBadges from '../components/VerificationBadges'
 
+// 로컬 날짜 (한국 시간 기준 YYYY-MM-DD)
+const getLocalToday = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
 // 추천 시간대
 const RECOMMENDATION_TIMES = [
   { id: 'noon', hour: 12, label: '정오', icon: '☀️' },
@@ -69,7 +75,7 @@ export default function Home() {
     // localStorage에서 뒤집힌 카드 상태 복원 (날짜가 같을 때만)
     const saved = getItem(STORAGE_KEYS.REVEALED_CARDS, [])
     const savedDate = getItem(STORAGE_KEYS.REVEALED_DATE, '')
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalToday()
 
     if (saved.length > 0 && savedDate === today) {
       return new Set(saved)
@@ -79,7 +85,7 @@ export default function Home() {
 
   // 뒤집힌 카드 상태가 바뀔 때마다 날짜와 함께 저장
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalToday()
     setItem(STORAGE_KEYS.REVEALED_CARDS, [...revealedCards])
     setItem(STORAGE_KEYS.REVEALED_DATE, today)
   }, [revealedCards])
@@ -107,13 +113,25 @@ export default function Home() {
   // 활성화된 필터 개수
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0)
   
-  // 차단 사용자 목록
-  const blockedUserIds = useMemo(() => {
+  // 차단 사용자 목록 (storage 이벤트 및 visibility 변경 시 갱신)
+  const [blockedUserIds, setBlockedUserIds] = useState(() => {
     const saved = localStorage.getItem('gp_blocked_users')
     if (!saved) return []
-    try {
-      return JSON.parse(saved).map(u => u.id)
-    } catch { return [] }
+    try { return JSON.parse(saved).map(u => u.id) } catch { return [] }
+  })
+  useEffect(() => {
+    const reload = () => {
+      const saved = localStorage.getItem('gp_blocked_users')
+      if (!saved) { setBlockedUserIds([]); return }
+      try { setBlockedUserIds(JSON.parse(saved).map(u => u.id)) } catch { setBlockedUserIds([]) }
+    }
+    const handleVisibility = () => { if (!document.hidden) reload() }
+    window.addEventListener('storage', reload)
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      window.removeEventListener('storage', reload)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
   // 필터링된 유저 목록
@@ -140,7 +158,7 @@ export default function Home() {
       
       // 타수(핸디캡) 필터
       if (filters.handicaps.length > 0) {
-        const handicap = user.handicap
+        const handicap = user.handicap || ''
         let handicapRange = '중수(90~100)'
         if (handicap.includes('100') || handicap.includes('초보') || handicap.includes('초반')) handicapRange = '초보(100+)'
         else if (handicap.includes('90') && !handicap.includes('100')) handicapRange = '고수(~90)'
@@ -150,18 +168,18 @@ export default function Home() {
       
       // 지역 필터
       if (filters.regions.length > 0) {
-        const userRegion = user.region
+        const userRegion = user.region || ''
         const matchesRegion = filters.regions.some(region => userRegion.includes(region))
         if (!matchesRegion) return false
       }
       
       return true
     })
-  }, [users, filters])
+  }, [users, filters, blockedUserIds])
   
   // 시간대별 추천 카드 생성 (필터링된 유저 기반)
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalToday()
 
     // 유저가 아직 로드되지 않았으면 대기
     if (users.length === 0) {
@@ -265,12 +283,16 @@ export default function Home() {
         return newSet
       })
       
-      // 추천 상태도 업데이트
-      setRecommendations(prev => {
-        const newRecs = { ...prev }
-        newRecs[timeId].cards[cardIndex].state = 'revealed'
-        return newRecs
-      })
+      // 추천 상태도 업데이트 (immutable)
+      setRecommendations(prev => ({
+        ...prev,
+        [timeId]: {
+          ...prev[timeId],
+          cards: prev[timeId].cards.map((c, i) =>
+            i === cardIndex ? { ...c, state: 'revealed' } : c
+          )
+        }
+      }))
     } else {
       // 이미 공개된 카드면 프로필 상세 페이지로 이동
       navigate(`/user/${card.user.id}`)
@@ -419,7 +441,7 @@ export default function Home() {
 
 // 지나간 추천 카드 컴포넌트
 function PastRecommendations({ history, users, navigate }) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalToday()
   
   // 오늘을 제외한 과거 14일간의 날짜 정렬
   const pastDates = Object.keys(history)
@@ -466,9 +488,9 @@ function PastRecommendations({ history, users, navigate }) {
         const allUserIds = [...new Set(Object.values(dailyRecs).flat())]
         const assignedUsers = allUserIds.map(id => users.find(u => u.id === id)).filter(Boolean)
 
-        // D-Day 계산 (YYYY-MM-DD 파싱)
-        const dateObj = new Date(date)
-        const todayObj = new Date(today)
+        // D-Day 계산 (로컬 타임존 파싱)
+        const dateObj = new Date(date + 'T00:00:00')
+        const todayObj = new Date(today + 'T00:00:00')
         const diffTime = todayObj.getTime() - dateObj.getTime()
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
         const remainingDays = 14 - diffDays

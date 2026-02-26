@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, MoreVertical, Calendar, MapPin, Flag, Ban, Trash2, Loader2, Users, Pencil, X, Check } from 'lucide-react'
@@ -198,17 +198,17 @@ export default function ChatRoom() {
     setEditText('')
   }
 
-  // 나에게서 삭제 (로컬 숨김)
+  // 나에게서 삭제 (로컬 숨김 — state 즉시 반영)
   const handleDeleteForMe = () => {
     if (!selectedMessage) return
-    let hidden = []
-    try { hidden = JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]') } catch { hidden = [] }
-    if (!hidden.includes(selectedMessage.id)) {
-      hidden.push(selectedMessage.id)
+    setHiddenMessages(prev => {
+      if (prev.includes(selectedMessage.id)) return prev
+      const updated = [...prev, selectedMessage.id]
       // localStorage 무한 증가 방지: 최근 500건만 유지
-      if (hidden.length > 500) hidden = hidden.slice(-500)
-      localStorage.setItem('gp_hidden_messages', JSON.stringify(hidden))
-    }
+      const trimmed = updated.length > 500 ? updated.slice(-500) : updated
+      localStorage.setItem('gp_hidden_messages', JSON.stringify(trimmed))
+      return trimmed
+    })
     setSelectedMessage(null)
     showToast.success('나에게서 삭제되었습니다')
   }
@@ -226,15 +226,15 @@ export default function ChatRoom() {
     setSelectedMessage(null)
   }
 
-  // 숨긴 메시지 필터링 (memoized + error guard)
-  const hiddenMessages = useMemo(() => {
+  // 숨긴 메시지 (state로 관리하여 즉시 반영)
+  const [hiddenMessages, setHiddenMessages] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('gp_hidden_messages') || '[]')
     } catch {
       localStorage.removeItem('gp_hidden_messages')
       return []
     }
-  }, [messages])
+  })
   const visibleMessages = messages.filter(m => !hiddenMessages.includes(m.id))
 
   // 로딩 중

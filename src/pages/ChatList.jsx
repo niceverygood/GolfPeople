@@ -37,7 +37,7 @@ export default function ChatList() {
       return true
     })
     .filter(chat => 
-      chat.partnerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (chat.partnerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime))

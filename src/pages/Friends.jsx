@@ -197,8 +197,6 @@ export default function Friends() {
 
 // 친구 카드 컴포넌트
 function FriendCard({ friend, onProfileClick, onChatClick, onRemoveClick }) {
-  const [showMenu, setShowMenu] = useState(false)
-
   return (
     <motion.div
       layout

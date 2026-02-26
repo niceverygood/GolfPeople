@@ -124,32 +124,18 @@ export function AppProvider({ children }) {
       if (likesRes?.data) setLikedUsers(likesRes.data.map(l => l.liked_user_id))
       if (savedJoinsRes?.data) setSavedJoins(savedJoinsRes.data.map(s => s.join_id))
 
-      // 친구 요청
+      // 친구 요청 (friendService에서 이미 camelCase로 매핑됨)
       if (sentFriendsRes?.requests) {
         setFriendRequests(sentFriendsRes.requests.map(r => ({
-          id: r.id,
-          userId: r.to_user_id,
-          userName: r.to_user?.name || '',
-          userPhoto: r.to_user?.photos?.[0] || '/default-profile.png',
-          userRegion: r.to_user?.regions?.[0] || '',
-          userHandicap: r.to_user?.handicap || '',
-          message: r.message || '',
-          status: r.status,
-          createdAt: r.created_at,
+          ...r,
+          userPhoto: r.userPhoto || '/default-profile.png',
           isDbRequest: true,
         })))
       }
       if (receivedFriendsRes?.requests) {
         setReceivedFriendRequests(receivedFriendsRes.requests.map(r => ({
-          id: r.id,
-          userId: r.from_user_id,
-          userName: r.from_user?.name || '',
-          userPhoto: r.from_user?.photos?.[0] || '/default-profile.png',
-          userRegion: r.from_user?.regions?.[0] || '',
-          userHandicap: r.from_user?.handicap || '',
-          message: r.message || '',
-          status: r.status,
-          createdAt: r.created_at,
+          ...r,
+          userPhoto: r.userPhoto || '/default-profile.png',
           isDbRequest: true,
         })))
       }
@@ -246,18 +232,12 @@ export function AppProvider({ children }) {
       ])
       if (sent.requests) {
         setFriendRequests(sent.requests.map(r => ({
-          id: r.id, userId: r.to_user_id,
-          userName: r.to_user?.name || '', userPhoto: r.to_user?.photos?.[0] || '',
-          userRegion: r.to_user?.regions?.[0] || '', userHandicap: r.to_user?.handicap || '',
-          message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+          ...r, userPhoto: r.userPhoto || '', isDbRequest: true,
         })))
       }
       if (received.requests) {
         setReceivedFriendRequests(received.requests.map(r => ({
-          id: r.id, userId: r.from_user_id,
-          userName: r.from_user?.name || '', userPhoto: r.from_user?.photos?.[0] || '',
-          userRegion: r.from_user?.regions?.[0] || '', userHandicap: r.from_user?.handicap || '',
-          message: r.message || '', status: r.status, createdAt: r.created_at, isDbRequest: true,
+          ...r, userPhoto: r.userPhoto || '', isDbRequest: true,
         })))
       }
     } catch (e) {
@@ -330,51 +310,47 @@ export function AppProvider({ children }) {
   // 액션 함수들 (Supabase 연동)
   // ==============================
 
-  // 좋아요
+  // 좋아요 (functional updater로 stale closure 방지 + 불필요한 리렌더링 제거)
   const likeUser = useCallback(async (targetUserId) => {
     if (!userId) return
-    const prevLiked = likedUsers
     setLikedUsers(prev => [...prev, targetUserId])
     try {
       await db.likes.add(userId, targetUserId)
     } catch {
-      setLikedUsers(prevLiked)
+      setLikedUsers(prev => prev.filter(id => id !== targetUserId))
     }
-  }, [userId, likedUsers])
+  }, [userId])
 
   const unlikeUser = useCallback(async (targetUserId) => {
     if (!userId) return
-    const prevLiked = likedUsers
     setLikedUsers(prev => prev.filter(id => id !== targetUserId))
     try {
       await db.likes.remove(userId, targetUserId)
     } catch {
-      setLikedUsers(prevLiked)
+      setLikedUsers(prev => [...prev, targetUserId])
     }
-  }, [userId, likedUsers])
+  }, [userId])
 
   // 조인 저장
   const saveJoin = useCallback(async (joinId) => {
     if (!userId) return
-    const prevSaved = savedJoins
     setSavedJoins(prev => [...prev, joinId])
     try {
       await db.savedJoins.add(userId, joinId)
     } catch {
-      setSavedJoins(prevSaved)
+      setSavedJoins(prev => prev.filter(id => id !== joinId))
     }
-  }, [userId, savedJoins])
+  }, [userId])
 
   const unsaveJoin = useCallback(async (joinId) => {
     if (!userId) return
-    const prevSaved = savedJoins
     setSavedJoins(prev => prev.filter(id => id !== joinId))
     try {
       await db.savedJoins.remove(userId, joinId)
     } catch {
-      setSavedJoins(prevSaved)
+      setSavedJoins(prev => [...prev, joinId])
     }
-  }, [userId, savedJoins])
+  }, [userId])
 
   // 친구 요청
   const sendFriendRequest = useCallback(async (targetUser, message = '') => {

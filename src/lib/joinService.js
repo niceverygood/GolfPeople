@@ -536,14 +536,14 @@ export const cancelJoinApplication = async (applicationId, currentUserId) => {
 
   try {
     // 본인 신청인지 검증 후 삭제
-    const query = supabase
+    let query = supabase
       .from('join_applications')
       .delete()
       .eq('id', applicationId)
 
     // currentUserId가 전달되면 본인 신청만 삭제 가능
     if (currentUserId) {
-      query.eq('user_id', currentUserId)
+      query = query.eq('user_id', currentUserId)
     }
 
     const { error } = await query
@@ -702,7 +702,36 @@ export const getJoinDetail = async (joinId) => {
 
     if (error) throw error
 
-    return { success: true, join: data }
+    // raw DB 데이터를 앱에서 사용하는 camelCase 형식으로 매핑
+    const mapped = {
+      id: data.id,
+      title: data.title,
+      date: data.date,
+      time: data.time,
+      location: data.location,
+      region: data.region,
+      courseName: data.course_name,
+      spotsTotal: data.spots_total,
+      spotsFilled: data.spots_filled,
+      handicapRange: data.handicap_range,
+      styles: data.styles || [],
+      style: data.styles || [],
+      description: data.description,
+      meetingType: data.meeting_type,
+      status: data.status,
+      createdAt: data.created_at,
+      hostId: data.host?.id,
+      hostName: data.host?.name || '알 수 없음',
+      hostPhoto: data.host?.photos?.[0] || '/default-profile.png',
+      hostHandicap: data.host?.handicap || '',
+      participants: (data.participants || []).map(p => ({
+        id: p.user?.id,
+        name: p.user?.name || '',
+        photo: p.user?.photos?.[0] || '/default-profile.png',
+      })).filter(p => p.id),
+    }
+
+    return { success: true, join: mapped }
   } catch (e) {
     console.error('조인 상세 조회 에러:', e)
     return { success: false, error: e.message }
