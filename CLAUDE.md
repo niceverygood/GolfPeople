@@ -90,6 +90,52 @@ src/
 
 ---
 
+## 2026-02-26 (목) 작업일지
+
+### iOS 1.0.4 + Android 1.0.5 빌드 + CRITICAL/HIGH 7건 수정 + 알림톡 디버깅
+
+#### CRITICAL/HIGH 코드 수정 (7건) — 커밋 `92ebcf5`
+- `App.jsx`: 중복 딥링크 핸들러 제거 (AuthContext와 충돌 방지)
+- `AuthContext.jsx`: context value useMemo 최적화 + 로그아웃 시 `gp_*` localStorage 동적 정리
+- `ProfileDetail.jsx`: 신고/차단 오프라인 체크 + DB 에러 처리 + 친구요청 더블클릭 방지
+- `Onboarding.jsx`: `isSaving` 더블클릭 방지 + 프로필 저장 실패 시 onComplete 차단 + 에러 토스트
+- `JoinDetail.jsx`: 조인 신청 ApplyModal `submitting` 더블클릭 방지
+- `joinService.js`: 수락/거절/취소에 `currentUserId` 파라미터 추가 (호스트 본인 검증)
+- `Splash.jsx`: GP 로고 + 골드 스피너 (이중 로고 방지)
+
+#### OAuth 콜백 자동 리다이렉트 — 커밋 `195686b`
+- **문제**: 로그아웃 → Google 재로그인 시 흰색 화면에서 "완료" 버튼 눌러야 앱 복귀
+- **수정**: `AuthCallbackNative.jsx`에서 `window.location.href = url` 자동 리다이렉트 시도, 1.5초 후 실패 시에만 버튼 표시
+
+#### 카카오 알림톡 디버깅 + 수정
+- **문제**: `send_kakao_alimtalk` RPC 호출 시 `{"error": "unauthorized"}` 반환
+- **원인**: DB 함수 내부에 `auth.uid() IS NULL` 체크 → service_role 호출 시 auth.uid()가 NULL
+- **수정** (마이그레이션 105): `auth.uid() IS NULL AND current_setting('role') != 'service_role'` 조건으로 변경
+- Supabase DB outbound IP 확인: `52.76.56.94` (변경 없음)
+- 알림톡 발송 테스트 성공 (010-4944-1503, UF_2416 친구 요청 템플릿)
+
+#### 알리고 IP 대역 분석
+- Supabase Singapore(ap-southeast-1) outbound IP: `52.76.56.94`
+- AWS IP 대역: `52.76.0.0/17` (52.76.0.0 ~ 52.76.127.255)
+- 알리고 발송 서버 IP 대역 등록 지원: 마지막 옥텟만 공란 가능 (예: `52.76.56.` → 0~255)
+
+#### 빌드 및 배포
+- iOS: 1.0.4 (빌드 8) — Xcode Archive 완료, App Store Connect 업로드 대기
+- Android: 1.0.5 (versionCode 6) — AAB 빌드 완료 (6.8MB), Google Play Console 업로드 대기
+- Git 커밋 2건 (`92ebcf5`, `195686b`), push 완료
+- Vercel 웹 자동 배포
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.2 | App Store 배포 완료 |
+| iOS | 1.0.4 (빌드 8) | 업로드 대기 |
+| Android | 1.0.4 | Google Play 배포 완료 |
+| Android | 1.0.5 (versionCode 6) | 업로드 대기 |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+---
+
 ## 2026-02-25 (수) 작업일지
 
 ### iOS 1.0.2 배포 완료 + 1.0.3 심사 제출 + 스플래시 이중 로고 수정
@@ -293,16 +339,16 @@ src/
 |---------|------|------|
 | ✅ | iOS 1.0.2 App Store 배포 완료 | 02-25 배포 |
 | ✅ | Android 1.0.4 Google Play 배포 완료 | 02-25 배포 |
-| 🟡 | iOS 1.0.3 (빌드 7) 심사 중 — 스플래시 브랜딩 교체 | 02-25 제출 |
-| ✅ | 코드 리뷰 49건 수정 (CRITICAL 7 + HIGH 10 + MEDIUM 16) | 완료 (02-25) |
-| 🔴 | iOS 심사 통과 후 → 시드 데이터 삭제 (테스트 프로필 15명 + 조인 5개 + 채팅 12건) | iOS 심사 대기 |
-| 🔴 | 시드 데이터 삭제 후 → Android 1.0.5 빌드 + 제출 (코드 리뷰 수정 반영) | 시드 삭제 후 |
-| 🔴 | 시드 데이터 삭제 후 → iOS 1.0.4 빌드 + 제출 (코드 리뷰 수정 반영) | 시드 삭제 후 |
+| 🟡 | iOS 1.0.4 (빌드 8) App Store Connect 업로드 + 심사 제출 | 02-26 빌드 완료 |
+| 🟡 | Android 1.0.5 (versionCode 6) Google Play 업로드 | 02-26 빌드 완료 |
+| ✅ | CRITICAL/HIGH 7건 수정 (더블클릭 방지, 호스트 검증, 오프라인 체크) | 완료 (02-26) |
+| ✅ | OAuth 콜백 자동 리다이렉트 개선 | 완료 (02-26) |
+| ✅ | 알림톡 service_role 호출 수정 | 완료 (02-26) |
+| 🔴 | 시드 데이터 삭제 (테스트 프로필 15명 + 조인 5개 + 채팅 12건) | 심사 통과 후 |
 | ✅ | 카카오 알림톡 연동 (알리고 + DB 직접 발송) | 완료 |
 | ✅ | 채팅 기능 대폭 개선 (멤버/나가기/수정/삭제/재입장) | 완료 |
 | ✅ | 조인 UX 정비 (4탭/매칭/자동거절) | 완료 |
-| ✅ | 앱 아이콘 교체 + iPad 전용 해제 + 빌드 업로드 | 완료 (02-13) |
-| ✅ | 카카오 알림톡 템플릿 전체 검수 완료 (UF_2416~2423) | 완료 |
+| 🟡 | 알리고 IP 대역 등록 (`52.76.56.` 공란) | 대기 |
 | 🟢 | Web Service Worker (백그라운드 푸시) | 나중에 |
 
 ---
