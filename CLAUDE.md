@@ -119,10 +119,31 @@ src/
 - AWS IP 대역: `52.76.0.0/17` (52.76.0.0 ~ 52.76.127.255)
 - 알리고 발송 서버 IP 대역 등록 지원: 마지막 옥텟만 공란 가능 (예: `52.76.56.` → 0~255)
 
+#### iOS Firebase 전화번호 인증 완전 수정 (4회 반복 디버깅 끝에 성공)
+- `capacitor.config.json`: `FirebaseAuthentication.providers: ["phone"]` 설정 추가 — **핵심 원인**: 빈 배열이라 phoneAuthProviderHandler가 nil
+- `GoogleService-Info.plist`: 잘못된 CLIENT_ID/REVERSED_CLIENT_ID 제거 (다른 GCP 프로젝트 번호였음)
+- `Info.plist`: Firebase reCAPTCHA URL scheme `app-1-356155765246-ios-920d3953de51f1470dd0af` 추가
+- `AuthContext.jsx`: Firebase reCAPTCHA 딥링크를 Supabase OAuth 핸들러가 가로채는 문제 수정 (URL 필터 추가)
+- `AppDelegate.swift`: FirebaseApp.configure() + APNs 토큰/푸시 포워딩 추가
+- `firebase.js`: 이벤트 기반 API로 재작성 (phoneCodeSent/phoneVerificationFailed 리스너)
+
+#### 프로필 수정 ↔ 온보딩 데이터 형식 통일
+- **원인**: 온보딩은 `"서울 강남"` 형식으로 저장하지만, 프로필 수정은 `"서울"` flat 버튼 → 데이터 불일치
+- 지역: flat 버튼 → 시/도 탭 → 구/군 선택 피커 (REGION_DATA, 최대 5개)
+- 스타일: STYLE_CATEGORIES 그룹 → STYLES flat 배열
+- 시간: TIME_OPTIONS 그룹 → TIMES flat 배열
+- 핸디캡: Onboarding 옵션과 동일하게 통일
+
+#### 전체 11개 화면 safe-area-inset-top 적용 (iOS 노치/상태바 헤더 잘림 방지)
+- Profile.jsx: 설정 모달, 프로필 수정 모달, 차단 관리 모달 (3개)
+- ChatList, Store, ScoreRecord, ScoreStats, RoundingHistory (5개)
+- Terms, Privacy, Support (3개)
+
+#### 온보딩 프로필 이미지 base64 fallback 추가
+- Storage 업로드 실패 시 base64 데이터로 fallback 저장 (사진 유실 방지)
+
 #### 빌드 및 배포
-- iOS: 1.0.4 (빌드 8) — Xcode Archive 완료, App Store Connect 업로드 대기
-- Android: 1.0.5 (versionCode 6) — AAB 빌드 완료 (6.8MB), Google Play Console 업로드 대기
-- Git 커밋 2건 (`92ebcf5`, `195686b`), push 완료
+- Git 커밋 5건 (`92ebcf5`~`168d255`), push 완료
 - Vercel 웹 자동 배포
 
 #### 배포 현황
