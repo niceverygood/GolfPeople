@@ -59,9 +59,7 @@ export const MarkerProvider = ({ children }) => {
   }, [])
 
   // 거래 내역 저장 (로컬 우선)
-  const saveTransaction = useCallback((tx) => {
-    console.log('📝 거래 내역 저장:', tx)
-    
+  const saveTransaction = useCallback(async (tx) => {
     const newTx = { 
       id: `local_${Date.now()}`, 
       ...tx, 
@@ -74,22 +72,22 @@ export const MarkerProvider = ({ children }) => {
       const saved = localStorage.getItem('gp_marker_transactions')
       currentTransactions = saved ? JSON.parse(saved) : []
     } catch (e) {
-      console.log('거래 내역 파싱 오류:', e)
+      // 거래 내역 파싱 오류
     }
     
     const updated = [newTx, ...currentTransactions].slice(0, 50)
     localStorage.setItem('gp_marker_transactions', JSON.stringify(updated))
     setTransactions(updated)
     
-    console.log('✅ 거래 내역 저장 완료:', updated.length, '건')
-    
-    // Supabase 동기화 (비동기, 에러 무시)
+    // Supabase 동기화
     if (isConnected() && user) {
-      supabase
-        .from('marker_transactions')
-        .insert({ user_id: user.id, ...tx })
-        .then(() => console.log('Supabase 거래내역 동기화 완료'))
-        .catch(err => console.log('Supabase 동기화 실패 (무시됨):', err.message))
+      try {
+        await supabase
+          .from('marker_transactions')
+          .insert({ user_id: user.id, ...tx })
+      } catch (err) {
+        console.error('Supabase 거래 동기화 실패:', err.message)
+      }
     }
   }, [user])
 
@@ -149,16 +147,6 @@ export const MarkerProvider = ({ children }) => {
     }
   }, [balance, prices, saveBalanceLocal, saveTransaction, user])
 
-  // 마커 충전 (결제 검증 후 서버에서 호출 — 직접 호출 금지)
-  const addMarkers = useCallback(async (amount, type = 'purchase', description = '마커 충전') => {
-    console.warn('⚠️ addMarkers 호출됨 — 결제 검증 완료 후에만 사용')
-
-    // 서버에서 잔액 새로고침 (직접 잔액 조작 대신)
-    await refreshWalletFromServer()
-
-    return { success: true }
-  }, [refreshWalletFromServer])
-
   // 잔액 충분한지 확인
   const hasEnoughMarkers = useCallback((actionType) => {
     const cost = prices[actionType] || 0
@@ -173,10 +161,9 @@ export const MarkerProvider = ({ children }) => {
   // 거래 내역 새로고침
   const refreshTransactions = useCallback(() => {
     // 로컬 데이터 사용 (이미 state에 있음)
-    console.log('거래 내역:', transactions.length, '건')
   }, [transactions])
 
-  // 서버에서 실제 잔액 동기화
+  // 서버에서 실제 잔액 동기화 (addMarkers보다 먼저 선언해야 TDZ 방지)
   const refreshWalletFromServer = useCallback(async () => {
     if (!isConnected() || !user) return
     try {
@@ -188,12 +175,18 @@ export const MarkerProvider = ({ children }) => {
       if (!error && data) {
         setBalance(data.balance)
         localStorage.setItem('gp_marker_balance', data.balance.toString())
-        console.log('서버 잔액 동기화:', data.balance)
+        // 서버 잔액 동기화 완료
       }
     } catch (e) {
       console.error('서버 잔액 조회 실패:', e)
     }
   }, [user])
+
+  // 마커 충전 (결제 검증 후 서버에서 호출 — 직접 호출 금지)
+  const addMarkers = useCallback(async (amount, type = 'purchase', description = '마커 충전') => {
+    await refreshWalletFromServer()
+    return { success: true }
+  }, [refreshWalletFromServer])
 
   // 앱 시작 시 서버 잔액 동기화 + 미완료 결제 복구
   useEffect(() => {
@@ -202,7 +195,7 @@ export const MarkerProvider = ({ children }) => {
     refreshWalletFromServer()
     recoverPendingPurchase().then(({ recovered }) => {
       if (recovered) {
-        console.log('미완료 결제 복구 완료 → 서버 잔액 동기화')
+        // 미완료 결제 복구 완료
         refreshWalletFromServer()
       }
     })
@@ -210,7 +203,7 @@ export const MarkerProvider = ({ children }) => {
 
   // 지갑 새로고침
   const refreshWallet = useCallback(() => {
-    console.log('현재 잔액:', balance)
+    // 현재 잔액 조회
   }, [balance])
 
   const value = {

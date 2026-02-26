@@ -31,7 +31,7 @@ export const splash = {
     try {
       await SplashScreen.hide()
     } catch (e) {
-      console.log('SplashScreen hide error:', e)
+      // SplashScreen hide not available
     }
   },
   show: async () => {
@@ -43,7 +43,7 @@ export const splash = {
         fadeOutDuration: 300
       })
     } catch (e) {
-      console.log('SplashScreen show error:', e)
+      // SplashScreen show not available
     }
   }
 }
@@ -60,7 +60,7 @@ export const statusBar = {
         await StatusBar.setBackgroundColor({ color: '#0D0D0D' })
       }
     } catch (e) {
-      console.log('StatusBar error:', e)
+      // StatusBar not available
     }
   },
   setLight: async () => {
@@ -68,7 +68,7 @@ export const statusBar = {
     try {
       await StatusBar.setStyle({ style: Style.Light })
     } catch (e) {
-      console.log('StatusBar error:', e)
+      // StatusBar not available
     }
   },
   hide: async () => {
@@ -76,7 +76,7 @@ export const statusBar = {
     try {
       await StatusBar.hide()
     } catch (e) {
-      console.log('StatusBar error:', e)
+      // StatusBar not available
     }
   },
   show: async () => {
@@ -84,7 +84,7 @@ export const statusBar = {
     try {
       await StatusBar.show()
     } catch (e) {
-      console.log('StatusBar error:', e)
+      // StatusBar not available
     }
   }
 }
@@ -99,7 +99,7 @@ export const haptic = {
     try {
       await Haptics.impact({ style: ImpactStyle.Light })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 중간 터치 (선택)
@@ -108,7 +108,7 @@ export const haptic = {
     try {
       await Haptics.impact({ style: ImpactStyle.Medium })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 강한 터치 (확인, 완료)
@@ -117,7 +117,7 @@ export const haptic = {
     try {
       await Haptics.impact({ style: ImpactStyle.Heavy })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 성공 알림
@@ -126,7 +126,7 @@ export const haptic = {
     try {
       await Haptics.notification({ type: NotificationType.Success })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 경고 알림
@@ -135,7 +135,7 @@ export const haptic = {
     try {
       await Haptics.notification({ type: NotificationType.Warning })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 에러 알림
@@ -144,7 +144,7 @@ export const haptic = {
     try {
       await Haptics.notification({ type: NotificationType.Error })
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   },
   // 선택 변경
@@ -153,7 +153,7 @@ export const haptic = {
     try {
       await Haptics.selectionChanged()
     } catch (e) {
-      console.log('Haptics error:', e)
+      // Haptics not available
     }
   }
 }
@@ -167,18 +167,20 @@ export const keyboard = {
     try {
       await Keyboard.hide()
     } catch (e) {
-      console.log('Keyboard error:', e)
+      // Keyboard not available
     }
   },
   onShow: (callback) => {
     if (!isNative()) return () => {}
-    const listener = Keyboard.addListener('keyboardWillShow', callback)
-    return () => listener.remove()
+    let handle = null
+    Keyboard.addListener('keyboardWillShow', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
   onHide: (callback) => {
     if (!isNative()) return () => {}
-    const listener = Keyboard.addListener('keyboardWillHide', callback)
-    return () => listener.remove()
+    let handle = null
+    Keyboard.addListener('keyboardWillHide', callback).then(h => { handle = h })
+    return () => handle?.remove()
   }
 }
 
@@ -189,26 +191,30 @@ export const app = {
   // 앱이 백그라운드로 갈 때
   onPause: (callback) => {
     if (!isNative()) return () => {}
-    const listener = App.addListener('pause', callback)
-    return () => listener.remove()
+    let handle = null
+    App.addListener('pause', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
   // 앱이 포그라운드로 올 때
   onResume: (callback) => {
     if (!isNative()) return () => {}
-    const listener = App.addListener('resume', callback)
-    return () => listener.remove()
+    let handle = null
+    App.addListener('resume', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
   // 뒤로가기 버튼 (Android)
   onBackButton: (callback) => {
     if (!isNative()) return () => {}
-    const listener = App.addListener('backButton', callback)
-    return () => listener.remove()
+    let handle = null
+    App.addListener('backButton', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
   // 앱 URL 스킴 처리 (딥링크)
   onAppUrlOpen: (callback) => {
     if (!isNative()) return () => {}
-    const listener = App.addListener('appUrlOpen', callback)
-    return () => listener.remove()
+    let handle = null
+    App.addListener('appUrlOpen', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
   // 앱 상태 가져오기
   getState: async () => {
@@ -216,7 +222,7 @@ export const app = {
     try {
       return await App.getState()
     } catch (e) {
-      console.log('App state error:', e)
+      // App state not available
       return { isActive: true }
     }
   },
@@ -241,7 +247,7 @@ export const pushNotifications = {
       const permission = await PushNotifications.requestPermissions()
       return { granted: permission.receive === 'granted' }
     } catch (e) {
-      console.log('Push permission error:', e)
+      // Push permission not available
       return { granted: false, error: e.message }
     }
   },
@@ -253,7 +259,7 @@ export const pushNotifications = {
       const permission = await PushNotifications.checkPermissions()
       return { granted: permission.receive === 'granted' }
     } catch (e) {
-      console.log('Push check error:', e)
+      // Push check not available
       return { granted: false }
     }
   },
@@ -264,38 +270,42 @@ export const pushNotifications = {
     try {
       await PushNotifications.register()
     } catch (e) {
-      console.log('Push register error:', e)
+      // Push register not available
     }
   },
 
   // 토큰 수신 리스너
   onRegistration: (callback) => {
     if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('registration', (token) => {
+    let handle = null
+    PushNotifications.addListener('registration', (token) => {
       callback(token.value)
-    })
-    return () => listener.remove()
+    }).then(h => { handle = h })
+    return () => handle?.remove()
   },
 
   // 푸시 알림 수신 리스너 (앱이 열려있을 때)
   onPushReceived: (callback) => {
     if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('pushNotificationReceived', callback)
-    return () => listener.remove()
+    let handle = null
+    PushNotifications.addListener('pushNotificationReceived', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
 
   // 푸시 알림 탭 리스너
   onPushActionPerformed: (callback) => {
     if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('pushNotificationActionPerformed', callback)
-    return () => listener.remove()
+    let handle = null
+    PushNotifications.addListener('pushNotificationActionPerformed', callback).then(h => { handle = h })
+    return () => handle?.remove()
   },
 
   // 에러 리스너
   onRegistrationError: (callback) => {
     if (!isNative()) return () => {}
-    const listener = PushNotifications.addListener('registrationError', callback)
-    return () => listener.remove()
+    let handle = null
+    PushNotifications.addListener('registrationError', callback).then(h => { handle = h })
+    return () => handle?.remove()
   }
 }
 
@@ -310,7 +320,7 @@ export const localNotifications = {
       const permission = await LocalNotifications.requestPermissions()
       return { granted: permission.display === 'granted' }
     } catch (e) {
-      console.log('Local notification permission error:', e)
+      // Local notification permission not available
       return { granted: false }
     }
   },
@@ -337,7 +347,7 @@ export const localNotifications = {
         }]
       })
     } catch (e) {
-      console.log('Local notification error:', e)
+      // Local notification not available
     }
   },
   
@@ -355,7 +365,7 @@ export const localNotifications = {
         }]
       })
     } catch (e) {
-      console.log('Local notification schedule error:', e)
+      // Local notification schedule not available
     }
   },
   
@@ -365,15 +375,16 @@ export const localNotifications = {
     try {
       await LocalNotifications.cancel({ notifications: ids.map(id => ({ id })) })
     } catch (e) {
-      console.log('Local notification cancel error:', e)
+      // Local notification cancel not available
     }
   },
   
   // 알림 탭 리스너
   onActionPerformed: (callback) => {
     if (!isNative()) return () => {}
-    const listener = LocalNotifications.addListener('localNotificationActionPerformed', callback)
-    return () => listener.remove()
+    let handle = null
+    LocalNotifications.addListener('localNotificationActionPerformed', callback).then(h => { handle = h })
+    return () => handle?.remove()
   }
 }
 
@@ -434,11 +445,8 @@ export const appleSignIn = {
 // ============================================
 export const initializeNative = async () => {
   if (!isNative()) {
-    console.log('Running on web, native features disabled')
     return
   }
-  
-  console.log('Initializing native features for:', getPlatform())
   
   // 상태바 설정
   await statusBar.setDark()

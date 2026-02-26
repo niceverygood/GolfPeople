@@ -154,7 +154,7 @@ export function ChatProvider({ children }) {
 
   // 메시지 전송
   const sendMessage = useCallback(async (content) => {
-    if (!user?.id || !currentRoom || !content.trim()) {
+    if (!user?.id || !currentRoom || !content?.trim()) {
       return { success: false }
     }
 

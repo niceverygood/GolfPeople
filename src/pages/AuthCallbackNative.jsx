@@ -22,9 +22,6 @@ export default function AuthCallbackNative() {
     const errorParam = hashParams.get('error') || queryParams.get('error')
     const errorDescription = hashParams.get('error_description') || queryParams.get('error_description')
 
-    console.log('AuthCallbackNative - hash:', window.location.hash)
-    console.log('AuthCallbackNative - accessToken:', accessToken ? 'exists' : 'none')
-
     if (errorParam) {
       setStatus('error')
       setError(errorDescription || errorParam)

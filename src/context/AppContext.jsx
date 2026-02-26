@@ -413,7 +413,7 @@ export function AppProvider({ children }) {
   // 조인 신청
   const applyToJoin = useCallback(async (join, message = '') => {
     if (!userId) return false
-    if (join.hostId === userId) return false
+    if ((join.hostId || join.host_id) === userId) return false
     if (joinApplications.some(app => app.joinId === join.id)) return false
     const result = await applyToJoinApi(userId, join.id, message)
     if (result.success) {
@@ -426,27 +426,27 @@ export function AppProvider({ children }) {
   const cancelJoinApplication = useCallback(async (applicationId) => {
     const prevApps = joinApplications
     setJoinApplications(prev => prev.filter(a => a.id !== applicationId))
-    const result = await cancelJoinApplicationApi(applicationId)
+    const result = await cancelJoinApplicationApi(applicationId, userId)
     if (!result.success) {
       setJoinApplications(prevApps)
       showToast.error('신청 취소에 실패했습니다')
     }
-  }, [joinApplications])
+  }, [joinApplications, userId])
 
   const acceptJoinRequest = useCallback(async (requestId) => {
-    const result = await acceptJoinApplication(requestId)
+    const result = await acceptJoinApplication(requestId, userId)
     if (result.success) {
       await refreshJoinApplications()
       await refreshJoins()
     }
-  }, [refreshJoinApplications, refreshJoins])
+  }, [refreshJoinApplications, refreshJoins, userId])
 
   const rejectJoinRequest = useCallback(async (requestId) => {
-    const result = await rejectJoinApplication(requestId)
+    const result = await rejectJoinApplication(requestId, userId)
     if (result.success) {
       await refreshJoinApplications()
     }
-  }, [refreshJoinApplications])
+  }, [refreshJoinApplications, userId])
 
   // 조인 생성/삭제
   const createJoin = useCallback(async (joinData) => {
@@ -503,7 +503,11 @@ export function AppProvider({ children }) {
 
   const deleteNotification = useCallback(async (notificationId) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId))
-    await db.notifications.delete(notificationId)
+    try {
+      await db.notifications.delete(notificationId)
+    } catch (e) {
+      console.error('알림 삭제 에러:', e)
+    }
   }, [])
 
   const deleteAllNotifications = useCallback(async () => {

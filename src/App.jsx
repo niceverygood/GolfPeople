@@ -43,7 +43,6 @@ import { ChatProvider } from './context/ChatContext'
 import { initializeNative, isNative, app, haptic } from './lib/native'
 import { initializePush } from './lib/pushService'
 import { initializeIAP, setUserId as setIAPUserId } from './lib/iap'
-import { supabase } from './lib/supabase'
 
 // 공개 페이지 (인증 없이 접근 가능)
 const PUBLIC_PATHS = ['/privacy', '/terms', '/support']
@@ -113,53 +112,12 @@ function AppContent() {
       }
     })
 
-    // 딥링크 처리 (OAuth 콜백)
-    const unsubscribeAppUrlOpen = app.onAppUrlOpen(async ({ url }) => {
-      console.log('Deep link received:', url)
-
-      // OAuth 콜백 URL인지 확인
-      if (url.includes('auth/callback')) {
-        try {
-          // 브라우저 닫기 (OAuth 완료)
-          try {
-            const { Browser } = await import('@capacitor/browser')
-            await Browser.close()
-          } catch (browserErr) {
-            console.log('Browser close skipped:', browserErr)
-          }
-
-          // URL에서 토큰 추출
-          const urlObj = new URL(url)
-          const params = new URLSearchParams(urlObj.search || urlObj.hash?.substring(1))
-          const accessToken = params.get('access_token')
-          const refreshToken = params.get('refresh_token')
-
-          if (accessToken && supabase) {
-            console.log('Setting session from deep link...')
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || ''
-            })
-
-            if (error) {
-              console.error('Failed to set session:', error)
-            } else {
-              console.log('Session set successfully from deep link')
-            }
-          }
-        } catch (e) {
-          console.error('Deep link handling error:', e)
-        }
-      }
-    })
+    // 딥링크는 AuthContext에서 처리 (중복 방지)
 
     return () => {
       clearTimeout(timer)
       if (typeof unsubscribeBackButton === 'function') {
         unsubscribeBackButton()
-      }
-      if (typeof unsubscribeAppUrlOpen === 'function') {
-        unsubscribeAppUrlOpen()
       }
     }
   }, [profile])
@@ -171,7 +129,6 @@ function AppContent() {
       const hasRegions = profile.regions && profile.regions.length > 0
       const hasHandicap = !!profile.handicap
       if (hasRegions && hasHandicap) {
-        console.log('프로필에 이미 정보가 있어 온보딩 건너뜀')
         localStorage.setItem('gp_onboarded', 'true')
         setIsOnboarded(true)
       }
@@ -182,7 +139,6 @@ function AppContent() {
   useEffect(() => {
     if (isAuthenticated && !profile && !isOnboarded) {
       const timer = setTimeout(() => {
-        console.log('Profile load timeout — proceeding to onboarding')
         setProfileTimeout(true)
       }, 5000)
       return () => clearTimeout(timer)

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { supabase, auth, db, isConnected } from '../lib/supabase'
 import { isNative, app, appleSignIn } from '../lib/native'
 
@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
 
   // OAuth 딥링크 URL에서 토큰 추출
   const handleOAuthDeepLink = async (url) => {
-    console.log('🔗 OAuth Deep Link received:', url)
     setLoading(true) // 세션 설정 중에는 로딩 표시
     
     try {
@@ -33,7 +32,6 @@ export const AuthProvider = ({ children }) => {
       }
       
       if (!tokenString) {
-        console.log('No token string found in URL')
         setLoading(false)
         return false
       }
@@ -48,7 +46,6 @@ export const AuthProvider = ({ children }) => {
       const refreshToken = params.get('refresh_token')
       
       if (accessToken && refreshToken) {
-        console.log('🔑 Setting session from deep link tokens...')
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken
@@ -60,12 +57,10 @@ export const AuthProvider = ({ children }) => {
           return false
         }
         
-        console.log('✅ Session set successfully for:', data.user?.email)
         // 세션 설정 후 onAuthStateChange가 호출되면서 user 상태가 업데이트됨
         return true
       }
       
-      console.log('Access token or refresh token missing')
       setLoading(false)
       return false
     } catch (err) {
@@ -79,7 +74,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Supabase 미연결 시 데모 모드로 바로 진입
     if (!isConnected()) {
-      console.log('Running in demo mode (Supabase not connected)')
       setLoading(false)
       return
     }
@@ -90,8 +84,6 @@ export const AuthProvider = ({ children }) => {
     // Auth 상태 변경 리스너 (먼저 설정)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth event:', event, session?.user?.email)
-        
         if (!mounted) return
         
         if (session?.user) {
@@ -103,7 +95,7 @@ export const AuthProvider = ({ children }) => {
             .then(({ data }) => {
               if (mounted && data) setProfile(data)
             })
-            .catch(err => console.log('Profile load failed:', err))
+            .catch(err => console.error('Profile load failed:', err))
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           setProfile(null)
@@ -119,7 +111,6 @@ export const AuthProvider = ({ children }) => {
     if (isNative()) {
       // 1. 이미 열려있는 상태에서 딥링크 수신
       deepLinkUnsubscribe = app.onAppUrlOpen(async (data) => {
-        console.log('📱 App URL opened (resume):', data.url)
         if (data.url.includes('callback') || data.url.includes('access_token')) {
           await handleOAuthDeepLink(data.url)
         }
@@ -129,7 +120,6 @@ export const AuthProvider = ({ children }) => {
       import('@capacitor/app').then(({ App }) => {
         App.getLaunchUrl().then(async (launchUrl) => {
           if (launchUrl?.url) {
-            console.log('🚀 App launched with URL:', launchUrl.url)
             if (launchUrl.url.includes('callback') || launchUrl.url.includes('access_token')) {
               await handleOAuthDeepLink(launchUrl.url)
             }
@@ -142,8 +132,6 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        console.log('Initial session:', session?.user?.email)
-        
         if (!mounted) return
         
         if (session?.user) {
@@ -155,7 +143,7 @@ export const AuthProvider = ({ children }) => {
             .then(({ data }) => {
               if (mounted && data) setProfile(data)
             })
-            .catch(err => console.log('Profile load failed:', err))
+            .catch(err => console.error('Profile load failed:', err))
         } else {
           setLoading(false)
         }
@@ -334,7 +322,7 @@ export const AuthProvider = ({ children }) => {
       
       if (deleteError) {
         // RPC 실패 시 직접 프로필 삭제 후 로그아웃 처리
-        console.warn('RPC 실패, 프로필 삭제 후 로그아웃:', deleteError)
+        console.error('RPC 실패, 프로필 삭제 후 로그아웃:', deleteError)
         await supabase.from('profiles').delete().eq('id', user.id)
       }
       
@@ -375,13 +363,14 @@ export const AuthProvider = ({ children }) => {
         throw error
       }
 
-      // 세션 관련 localStorage 정리 (로그인 시 이전 데이터 안 보이도록)
-      const keysToRemove = [
-        'gp_past_cards', 'gp_recommendation_history',
-        'gp_revealed_cards', 'gp_revealed_date',
-        'gp_hidden_messages', 'gp_blocked_users',
-        'gp_marker_balance', 'gp_marker_transactions',
-      ]
+      // 세션 관련 localStorage 정리 — gp_ 접두사 키 전체 삭제
+      const keysToRemove = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('gp_')) {
+          keysToRemove.push(key)
+        }
+      }
       keysToRemove.forEach(key => localStorage.removeItem(key))
 
       setUser(null)
@@ -474,7 +463,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     profile,
     loading,
@@ -491,7 +480,7 @@ export const AuthProvider = ({ children }) => {
     updatePassword,
     updateProfile,
     refreshProfile,
-  }
+  }), [user, profile, loading, error])
 
   return (
     <AuthContext.Provider value={value}>

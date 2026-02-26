@@ -508,14 +508,18 @@ export default function JoinDetail() {
 function ApplyModal({ join, onClose }) {
   const { applyToJoin } = useApp()
   const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
     const success = await applyToJoin(join, message)
     if (success) {
       showToast.success('신청이 완료되었습니다! 저장함에서 확인하세요.')
     } else {
       showToast.error(getErrorMessage('already_exists'))
     }
+    setSubmitting(false)
     onClose()
   }
 
@@ -551,9 +555,10 @@ function ApplyModal({ join, onClose }) {
 
         <button
           onClick={handleSubmit}
-          className="w-full py-4 rounded-2xl btn-gold font-semibold text-lg mt-4"
+          disabled={submitting}
+          className={`w-full py-4 rounded-2xl font-semibold text-lg mt-4 ${submitting ? 'bg-gp-border text-gp-text-secondary cursor-not-allowed' : 'btn-gold'}`}
         >
-          신청 보내기
+          {submitting ? '보내는 중...' : '신청 보내기'}
         </button>
       </motion.div>
     </motion.div>

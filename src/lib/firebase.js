@@ -29,10 +29,10 @@ export const setupRecaptcha = (containerId) => {
   window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
     size: 'invisible',
     callback: () => {
-      console.log('reCAPTCHA solved')
+      // reCAPTCHA solved
     },
     'expired-callback': () => {
-      console.log('reCAPTCHA expired')
+      // reCAPTCHA expired
     }
   })
 
