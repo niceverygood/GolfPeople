@@ -239,7 +239,7 @@ export default function ScoreRecord() {
       className="app-container bg-gp-black"
     >
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-sm border-b border-gp-gray/30">
+      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-sm border-b border-gp-gray/30 safe-top">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)} className="p-2 -ml-2">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

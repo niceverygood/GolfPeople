@@ -172,10 +172,17 @@ export const db = {
     
     update: async (userId, updates) => {
       if (!supabase) return notConnected()
+      // upsert: 프로필이 없으면 생성, 있으면 업데이트
+      const upsertData = { id: userId, ...updates }
+      // name이 NOT NULL이므로 신규 생성 시 기본값 필요
+      if (!upsertData.name) {
+        const { data: { user } } = await supabase.auth.getUser()
+        upsertData.name = user?.user_metadata?.name || user?.email?.split('@')[0] || '골프인'
+        if (user?.email) upsertData.email = user.email
+      }
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
-        .eq('id', userId)
+        .upsert(upsertData, { onConflict: 'id' })
         .select()
         .single()
       return { data, error }

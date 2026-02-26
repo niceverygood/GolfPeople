@@ -5,7 +5,7 @@ export default function Support() {
 
   return (
     <div className="h-screen flex flex-col bg-white text-gray-900 max-w-2xl mx-auto">
-      <div className="sticky top-0 bg-white border-b border-gray-200 flex items-center px-4 py-3 flex-shrink-0">
+      <div className="sticky top-0 bg-white border-b border-gray-200 flex items-center px-4 py-3 flex-shrink-0 safe-top">
         <button onClick={() => navigate('/profile?settings=open')} className="p-1 mr-3">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />

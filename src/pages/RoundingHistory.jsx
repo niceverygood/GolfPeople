@@ -66,7 +66,7 @@ export default function RoundingHistory() {
       className="app-container bg-gp-black"
     >
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-sm border-b border-gp-border">
+      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-sm border-b border-gp-border safe-top">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => location.key === 'default' ? navigate('/profile', { replace: true }) : navigate(-1)}

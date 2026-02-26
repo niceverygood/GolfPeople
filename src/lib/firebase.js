@@ -47,18 +47,42 @@ export const sendVerificationCode = async (phoneNumber) => {
   if (isNative()) {
     try {
       const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
-      const result = await FirebaseAuthentication.signInWithPhoneNumber({
+
+      // verificationId는 phoneCodeSent 이벤트로 수신됨
+      const verificationIdPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('인증 코드 발송 시간이 초과되었습니다. 다시 시도해주세요.'))
+        }, 30000)
+
+        FirebaseAuthentication.addListener('phoneCodeSent', (event) => {
+          clearTimeout(timeout)
+          resolve(event.verificationId)
+        })
+
+        FirebaseAuthentication.addListener('phoneVerificationFailed', (event) => {
+          clearTimeout(timeout)
+          reject(new Error(event.message || '전화번호 인증에 실패했습니다.'))
+        })
+      })
+
+      // 전화번호 인증 시작 (즉시 resolve, verificationId는 이벤트로 옴)
+      await FirebaseAuthentication.signInWithPhoneNumber({
         phoneNumber: formattedPhone,
       })
-      if (!result?.verificationId) {
-        console.error('verificationId가 반환되지 않음:', result)
-        return { success: false, error: '전화번호 인증 서비스를 사용할 수 없습니다. 앱을 업데이트해주세요.' }
+
+      // 이벤트에서 verificationId 수신 대기
+      const verificationId = await verificationIdPromise
+
+      // 리스너 정리
+      FirebaseAuthentication.removeAllListeners()
+
+      if (!verificationId) {
+        return { success: false, error: '인증 코드 발송에 실패했습니다. 전화번호를 확인 후 다시 시도해주세요.' }
       }
-      window.nativeVerificationId = result.verificationId
+      window.nativeVerificationId = verificationId
       return { success: true }
     } catch (error) {
       console.error('네이티브 SMS 발송 오류:', error)
-      // 플러그인 미설치 또는 Firebase 미설정 시 친절한 에러
       if (error.message?.includes('not implemented') || error.message?.includes('not available')) {
         return { success: false, error: '전화번호 인증 기능이 이 기기에서 지원되지 않습니다.' }
       }

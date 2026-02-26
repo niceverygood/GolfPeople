@@ -71,7 +71,7 @@ export default function ChatList() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden pb-20">
       {/* 헤더 */}
-      <div className="px-6 pt-6 pb-4 bg-gp-black/80 backdrop-blur-lg sticky top-0 z-10">
+      <div className="px-6 pt-6 pb-4 bg-gp-black/80 backdrop-blur-lg sticky top-0 z-10 safe-top">
         <h1 className="text-2xl font-bold text-white mb-4">채팅</h1>
 
         {/* 검색 */}
