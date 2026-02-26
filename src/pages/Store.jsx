@@ -188,8 +188,6 @@ export default function Store() {
     try {
       // 1. 네이티브 앱 환경 (Android 또는 iOS)
       if (isNative()) {
-        console.log('📱 네이티브 앱 결제 시작:', isAndroid() ? 'Google Play' : 'Apple App Store')
-        
         const nativeProductId = getNativeProductId(selectedProduct)
         if (!nativeProductId) {
           throw new Error('상품 정보를 찾을 수 없습니다 (IAP)')
@@ -233,7 +231,6 @@ export default function Store() {
       }
       
       // 2. 웹 브라우저 환경 (포트원 카드 결제)
-      console.log('🌐 웹 브라우저 결제 시작')
       const paymentId = generatePaymentId(user?.id || 'guest', selectedProduct.id)
       
       const paymentResult = await requestPayment({

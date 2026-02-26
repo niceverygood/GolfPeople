@@ -158,7 +158,7 @@ export const createNotification = async ({
   options = { push: true, kakao: false, inApp: true }
 }) => {
   if (!isConnected()) {
-    console.warn('알림 생성 실패: Supabase 연결 안됨')
+    console.error('알림 생성 실패: Supabase 연결 안됨')
     return { success: false, error: 'not_connected' }
   }
 

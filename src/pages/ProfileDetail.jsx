@@ -163,34 +163,41 @@ export default function ProfileDetail() {
     if (!user || !currentUser) return
 
     try {
-      const { supabase, isConnected } = await import('../lib/supabase')
-      if (isConnected() && supabase) {
-        await supabase.from('reports').insert({
-          reporter_id: currentUser.id,
-          reported_user_id: user.id,
-          reason: reason,
-          status: 'pending'
-        })
+      const { default: supabase, isConnected } = await import('../lib/supabase')
+      if (!isConnected() || !supabase) {
+        showToast.error('오프라인 상태에서는 신고할 수 없습니다.')
+        return
       }
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: currentUser.id,
+        reported_user_id: user.id,
+        reason: reason,
+        status: 'pending'
+      })
+      if (error) throw error
+      showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
     } catch (e) {
       console.error('신고 저장 에러:', e)
+      showToast.error('신고 접수에 실패했습니다. 다시 시도해주세요.')
     }
-    showToast.success('신고가 접수되었습니다. 검토 후 조치하겠습니다.')
   }
 
   const handleBlock = async () => {
     setShowMoreMenu(false)
-    if (!user) return
+    if (!user || !currentUser) return
 
     try {
-      const { supabase, isConnected } = await import('../lib/supabase')
-      if (isConnected() && supabase && currentUser) {
-        const { error } = await supabase.from('blocks').insert({
-          user_id: currentUser.id,
-          blocked_user_id: user.id
-        })
-        if (error) throw error
+      const { default: supabase, isConnected } = await import('../lib/supabase')
+      if (!isConnected() || !supabase) {
+        showToast.error('오프라인 상태에서는 차단할 수 없습니다.')
+        return
       }
+      const { error } = await supabase.from('blocks').insert({
+        user_id: currentUser.id,
+        blocked_user_id: user.id
+      })
+      if (error) throw error
+
       // 로컬 차단 목록에도 추가
       const saved = localStorage.getItem('gp_blocked_users')
       const blockedList = saved ? JSON.parse(saved) : []
@@ -318,7 +325,7 @@ export default function ProfileDetail() {
       {/* 큰 사진 */}
       <div className="relative h-96 flex-shrink-0">
         <img
-          src={user.photos[0]}
+          src={user.photos?.[0] || '/default-profile.png'}
           alt={user.name}
           className="w-full h-full object-cover"
         />
@@ -362,7 +369,7 @@ export default function ProfileDetail() {
         <div className="mb-6">
           <h3 className="text-sm text-gp-text-secondary mb-3">라운딩 스타일</h3>
           <div className="flex flex-wrap gap-2">
-            {user.style.map((tag) => (
+            {(user.style || []).map((tag) => (
               <span key={tag} className="tag">
                 {tag}
               </span>
@@ -632,9 +639,13 @@ export default function ProfileDetail() {
 // 친구 요청 모달
 function FriendRequestModal({ user, onClose, onSend }) {
   const [message, setMessage] = useState('')
-  
-  const handleSubmit = () => {
-    onSend(message)
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    await onSend(message)
+    setSubmitting(false)
   }
 
   return (
@@ -658,7 +669,7 @@ function FriendRequestModal({ user, onClose, onSend }) {
         {/* 상대방 정보 */}
         <div className="flex items-center gap-4 mb-6">
           <img
-            src={user.photos[0]}
+            src={user.photos?.[0] || '/default-profile.png'}
             alt={user.name}
             className="w-16 h-16 rounded-full object-cover"
           />
@@ -684,10 +695,11 @@ function FriendRequestModal({ user, onClose, onSend }) {
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 py-4 rounded-xl btn-gold font-semibold flex items-center justify-center gap-2"
+            disabled={submitting}
+            className={`flex-1 py-4 rounded-xl font-semibold flex items-center justify-center gap-2 ${submitting ? 'bg-gp-border text-gp-text-secondary cursor-not-allowed' : 'btn-gold'}`}
           >
             <UserPlus className="w-5 h-5" />
-            요청 보내기
+            {submitting ? '보내는 중...' : '요청 보내기'}
           </button>
         </div>
       </motion.div>

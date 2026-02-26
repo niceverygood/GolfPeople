@@ -32,6 +32,7 @@ export default function ChatRoom() {
   const [selectedMessage, setSelectedMessage] = useState(null)
   const [editingMessage, setEditingMessage] = useState(null)
   const [editText, setEditText] = useState('')
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -150,17 +151,20 @@ export default function ChatRoom() {
     }
   }
 
-  const handleLeave = async () => {
+  const handleLeave = () => {
     setShowMenu(false)
-    if (confirm('채팅방을 나가시겠습니까?\n나가면 대화 내용이 사라집니다.')) {
-      const result = await leaveChatRoom(chatId)
-      if (result.success) {
-        showToast.success('채팅방을 나갔습니다')
-      } else {
-        showToast.error('채팅방 나가기에 실패했습니다')
-      }
-      navigate('/chat', { replace: true })
+    setShowLeaveConfirm(true)
+  }
+
+  const confirmLeave = async () => {
+    setShowLeaveConfirm(false)
+    const result = await leaveChatRoom(chatId)
+    if (result.success) {
+      showToast.success('채팅방을 나갔습니다')
+    } else {
+      showToast.error('채팅방 나가기에 실패했습니다')
     }
+    navigate('/chat', { replace: true })
   }
 
   // 메시지 길게 누르기 (자기 메시지만)
@@ -230,7 +234,7 @@ export default function ChatRoom() {
       localStorage.removeItem('gp_hidden_messages')
       return []
     }
-  }, [messages, selectedMessage])
+  }, [messages])
   const visibleMessages = messages.filter(m => !hiddenMessages.includes(m.id))
 
   // 로딩 중
@@ -695,6 +699,46 @@ export default function ChatRoom() {
                 <Check className="w-5 h-5" />
               </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 채팅방 나가기 확인 모달 */}
+      <AnimatePresence>
+        {showLeaveConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setShowLeaveConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-[85%] max-w-sm bg-gp-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-bold mb-2">채팅방 나가기</h3>
+              <p className="text-sm text-gp-text-secondary mb-5">
+                나가면 대화 내용이 사라집니다. 정말 나가시겠습니까?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLeaveConfirm(false)}
+                  className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmLeave}
+                  className="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium"
+                >
+                  나가기
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

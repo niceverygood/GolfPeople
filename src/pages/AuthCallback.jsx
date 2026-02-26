@@ -21,8 +21,6 @@ export default function AuthCallback() {
 
     // Supabase 인증 상태 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session)
-
       if (event === 'SIGNED_IN' && session) {
         setStatus('success')
         setMessage('로그인 성공!')
@@ -66,7 +64,6 @@ export default function AuthCallback() {
 
     // 5초 후에도 로그인 안되면 홈으로 강제 이동
     timers.push(setTimeout(() => {
-      console.log('Auth timeout - redirecting to home')
       window.location.href = '/'
     }, 5000))
 

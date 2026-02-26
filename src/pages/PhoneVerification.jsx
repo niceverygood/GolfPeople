@@ -143,7 +143,7 @@ export default function PhoneVerification() {
               phone_verified: true
             })
           } catch (err) {
-            console.log('Profile update failed, continuing anyway:', err)
+            console.error('Profile update failed:', err)
           }
         }
         

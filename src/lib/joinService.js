@@ -417,12 +417,25 @@ export const applyToJoin = async (userId, joinId, message = '') => {
  * - spots_filled 증가
  * - 알림 생성
  */
-export const acceptJoinApplication = async (applicationId) => {
+export const acceptJoinApplication = async (applicationId, currentUserId) => {
   if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
   try {
+    // 신청 정보 조회 + 호스트 권한 검증
+    const { data: appData, error: appErr } = await supabase
+      .from('join_applications')
+      .select('id, user_id, join_id, join:join_id(host_id)')
+      .eq('id', applicationId)
+      .single()
+
+    if (appErr || !appData) return { success: false, error: 'not_found' }
+
+    if (currentUserId && appData.join?.host_id !== currentUserId) {
+      return { success: false, error: 'not_authorized' }
+    }
+
     const { data, error } = await supabase
       .from('join_applications')
       .update({ status: 'accepted' })
@@ -462,18 +475,24 @@ export const acceptJoinApplication = async (applicationId) => {
 /**
  * 조인 신청 거절
  */
-export const rejectJoinApplication = async (applicationId) => {
+export const rejectJoinApplication = async (applicationId, currentUserId) => {
   if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
   try {
-    // 먼저 신청 정보 가져오기
+    // 먼저 신청 정보 가져오기 + 호스트 권한 검증
     const { data: appData } = await supabase
       .from('join_applications')
-      .select('user_id, join_id')
+      .select('user_id, join_id, join:join_id(host_id)')
       .eq('id', applicationId)
       .single()
+
+    if (!appData) return { success: false, error: 'not_found' }
+
+    if (currentUserId && appData.join?.host_id !== currentUserId) {
+      return { success: false, error: 'not_authorized' }
+    }
 
     const { error } = await supabase
       .from('join_applications')
@@ -483,24 +502,22 @@ export const rejectJoinApplication = async (applicationId) => {
     if (error) throw error
 
     // 알림 발송 (신청자에게 거절 알림)
-    if (appData) {
-      const { data: joinData } = await supabase
-        .from('joins')
-        .select('title, host:host_id(photos)')
-        .eq('id', appData.join_id)
-        .single()
+    const { data: joinData } = await supabase
+      .from('joins')
+      .select('title, host:host_id(photos)')
+      .eq('id', appData.join_id)
+      .single()
 
-      await createNotification({
-        type: NOTIFICATION_TYPES.JOIN_REJECTED,
-        recipientId: appData.user_id,
-        data: {
-          joinTitle: joinData?.title || '',
-          joinId: appData.join_id,
-          userPhoto: joinData?.host?.photos?.[0] || null,
-        },
-        options: { push: true, kakao: true, inApp: true }
-      })
-    }
+    await createNotification({
+      type: NOTIFICATION_TYPES.JOIN_REJECTED,
+      recipientId: appData.user_id,
+      data: {
+        joinTitle: joinData?.title || '',
+        joinId: appData.join_id,
+        userPhoto: joinData?.host?.photos?.[0] || null,
+      },
+      options: { push: true, kakao: true, inApp: true }
+    })
 
     return { success: true }
   } catch (e) {
@@ -510,18 +527,26 @@ export const rejectJoinApplication = async (applicationId) => {
 }
 
 /**
- * 조인 신청 취소
+ * 조인 신청 취소 (신청자 본인만 가능)
  */
-export const cancelJoinApplication = async (applicationId) => {
+export const cancelJoinApplication = async (applicationId, currentUserId) => {
   if (!isConnected() || !isValidUUID(applicationId)) {
     return { success: false }
   }
 
   try {
-    const { error } = await supabase
+    // 본인 신청인지 검증 후 삭제
+    const query = supabase
       .from('join_applications')
       .delete()
       .eq('id', applicationId)
+
+    // currentUserId가 전달되면 본인 신청만 삭제 가능
+    if (currentUserId) {
+      query.eq('user_id', currentUserId)
+    }
+
+    const { error } = await query
 
     if (error) throw error
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, ChevronRight, MapPin, Trophy, Clock, Check, ChevronDown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { storage } from '../lib/supabase'
+import { showToast } from '../utils/errorHandler'
 
 // 전국 지역 데이터
 const REGION_DATA = {
@@ -89,6 +90,7 @@ export default function Onboarding({ onComplete }) {
     if (step < 2) {
       setStep(step + 1)
     } else {
+      if (isSaving) return // 더블클릭 방지
       setIsSaving(true)
       try {
         // Supabase DB에 프로필 저장
@@ -113,19 +115,21 @@ export default function Onboarding({ onComplete }) {
             }
           }
 
-          await updateProfile(profileUpdate)
-          console.log('프로필 DB 저장 완료')
+          const { error } = await updateProfile(profileUpdate)
+          if (error) throw error
         }
+
+        // 로컬스토리지에도 프로필 저장
+        const profileLocal = { photo, regions, handicap, styles, time }
+        localStorage.setItem('gp_profile', JSON.stringify(profileLocal))
+        setIsSaving(false)
+        onComplete()
       } catch (err) {
         console.error('프로필 저장 에러:', err)
-        // DB 저장 실패해도 로컬 진행
+        setIsSaving(false)
+        // 저장 실패 시 사용자에게 알림 (onComplete 호출 안 함)
+        showToast.error('프로필 저장에 실패했습니다. 다시 시도해주세요.')
       }
-
-      // 로컬스토리지에도 프로필 저장
-      const profileLocal = { photo, regions, handicap, styles, time }
-      localStorage.setItem('gp_profile', JSON.stringify(profileLocal))
-      setIsSaving(false)
-      onComplete()
     }
   }
 

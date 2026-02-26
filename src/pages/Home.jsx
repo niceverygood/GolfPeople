@@ -700,9 +700,7 @@ function FlipCard({ card, isUnlocked, onClick }) {
 // 필터 모달 컴포넌트
 function FilterModal({ filters, setFilters, onClose, matchCount }) {
   const [localFilters, setLocalFilters] = useState(filters)
-  const { balance, addMarkers } = useMarker()
-  const [isConfirming, setIsConfirming] = useState(false)
-  
+
   // 필터 토글
   const toggleFilter = (category, value) => {
     setLocalFilters(prev => {
@@ -714,23 +712,9 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
       }
     })
   }
-  
-  // 필터 적용 (마커 차감 확인)
+
+  // 필터 적용
   const handleApplyClick = () => {
-    // 변경된 사항이 있는지 확인 (필요시 구현)
-    setIsConfirming(true)
-  }
-
-  const confirmApply = async () => {
-    if (balance < 5) {
-      showToast.warning('마커가 부족합니다. 스토어에서 충전해 주세요.')
-      return
-    }
-
-    // 마커 5개 차감
-    await addMarkers(-5, 'spend', '추천 필터 변경')
-    
-    // 필터 적용
     setFilters(localFilters)
     onClose()
   }
@@ -903,35 +887,12 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         
         {/* 하단 버튼 */}
         <div className="px-6 py-4 border-t border-gp-border safe-bottom bg-gp-black">
-          {isConfirming ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-center gap-2 text-sm font-bold text-gp-gold animate-bounce">
-                <MarkerIcon className="w-4 h-4" />
-                <span>마커 5개가 사용됩니다</span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIsConfirming(false)}
-                  className="flex-1 py-4 bg-gp-border rounded-xl font-semibold"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmApply}
-                  className="flex-2 py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2 px-8"
-                >
-                  확인 및 결제
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={handleApplyClick}
-              className="w-full py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2"
-            >
-              <span>필터 수정하기 (마커 5개)</span>
-            </button>
-          )}
+          <button
+            onClick={handleApplyClick}
+            className="w-full py-4 btn-gold rounded-xl font-semibold flex items-center justify-center gap-2"
+          >
+            <span>필터 적용하기</span>
+          </button>
         </div>
       </motion.div>
     </motion.div>

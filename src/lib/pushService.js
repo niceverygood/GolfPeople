@@ -19,15 +19,12 @@ const PUSH_TOKEN_KEY = 'gp_push_token'
  * 푸시 알림 초기화
  */
 export const initializePush = async (userId) => {
-  console.log('📱 푸시 알림 초기화 시작')
-  
   if (isWeb()) {
     // 웹에서는 Web Push API 사용 (선택적)
     return initializeWebPush()
   }
   
   if (!isNative()) {
-    console.log('푸시 알림: 네이티브 환경이 아닙니다')
     return { success: false }
   }
   
@@ -36,29 +33,24 @@ export const initializePush = async (userId) => {
     const permission = await pushNotifications.requestPermission()
 
     if (!permission.granted) {
-      console.log('푸시 알림 권한이 거부되었습니다')
       return { success: false, reason: 'permission_denied' }
     }
 
     // 토큰 수신 리스너 설정 (register() 호출 전에 리스너 등록)
     const unsubscribeToken = pushNotifications.onRegistration(async (token) => {
-      console.log('📱 FCM 토큰 수신:', token)
       await savePushToken(token, userId)
     })
 
     // FCM 등록 (토큰 요청)
     await pushNotifications.register()
-    console.log('📱 FCM 등록 요청됨')
     
     // 푸시 알림 수신 리스너
     const unsubscribePush = pushNotifications.onPushReceived((notification) => {
-      console.log('📬 푸시 알림 수신:', notification)
       handlePushNotification(notification)
     })
     
     // 푸시 알림 탭 리스너
     const unsubscribeAction = pushNotifications.onPushActionPerformed((action) => {
-      console.log('👆 푸시 알림 탭:', action)
       handlePushAction(action)
     })
     
@@ -66,8 +58,6 @@ export const initializePush = async (userId) => {
     const unsubscribeError = pushNotifications.onRegistrationError((error) => {
       console.error('❌ 푸시 등록 에러:', error)
     })
-    
-    console.log('✅ 푸시 알림 초기화 완료')
     
     return {
       success: true,
@@ -89,7 +79,6 @@ export const initializePush = async (userId) => {
  */
 const initializeWebPush = async () => {
   if (!('Notification' in window)) {
-    console.log('이 브라우저는 알림을 지원하지 않습니다')
     return { success: false }
   }
   
@@ -97,11 +86,9 @@ const initializeWebPush = async () => {
     const permission = await Notification.requestPermission()
     
     if (permission !== 'granted') {
-      console.log('웹 알림 권한이 거부되었습니다')
       return { success: false, reason: 'permission_denied' }
     }
     
-    console.log('✅ 웹 알림 권한 승인됨')
     return { success: true }
   } catch (e) {
     console.error('웹 푸시 초기화 에러:', e)
@@ -132,8 +119,6 @@ const savePushToken = async (token, userId) => {
       
       if (error) {
         console.error('FCM 토큰 저장 에러:', error)
-      } else {
-        console.log('✅ FCM 토큰이 서버에 저장되었습니다')
       }
     } catch (e) {
       console.error('FCM 토큰 저장 에러:', e)
@@ -157,7 +142,6 @@ const handlePushNotification = (notification) => {
   // 데이터에 따른 추가 처리
   if (data) {
     // 예: 친구 요청, 조인 신청 등
-    console.log('알림 데이터:', data)
   }
 }
 

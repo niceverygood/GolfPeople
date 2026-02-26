@@ -47,7 +47,6 @@ let isConfigured = false
  */
 export const initializeIAP = async (userId = null) => {
   if (!isNative()) {
-    console.log('IAP: Web environment, using PortOne')
     return { success: true, native: false }
   }
   
@@ -60,7 +59,7 @@ export const initializeIAP = async (userId = null) => {
     const apiKey = platform === 'ios' ? REVENUECAT_IOS_KEY : REVENUECAT_ANDROID_KEY
     
     if (apiKey.startsWith('YOUR_')) {
-      console.warn('IAP: RevenueCat API key not configured')
+      console.error('IAP: RevenueCat API key not configured')
       return { success: false, error: 'API key not configured' }
     }
     
@@ -70,7 +69,6 @@ export const initializeIAP = async (userId = null) => {
     })
     
     isConfigured = true
-    console.log('IAP: RevenueCat initialized')
     
     return { success: true, native: true }
   } catch (e) {
@@ -87,7 +85,6 @@ export const setUserId = async (userId) => {
   
   try {
     await Purchases.logIn({ appUserID: userId })
-    console.log('IAP: User logged in:', userId)
   } catch (e) {
     console.error('IAP login error:', e)
   }
@@ -101,7 +98,6 @@ export const logoutIAP = async () => {
   
   try {
     await Purchases.logOut()
-    console.log('IAP: User logged out')
   } catch (e) {
     console.error('IAP logout error:', e)
   }
@@ -128,7 +124,7 @@ export const getProducts = async () => {
     const currentOffering = offerings.current
     
     if (!currentOffering) {
-      console.log('IAP: No offerings available')
+      // No offerings available
       return { success: false, error: 'No offerings' }
     }
     
@@ -217,7 +213,7 @@ export const restorePurchases = async () => {
   
   try {
     const customerInfo = await Purchases.restorePurchases()
-    console.log('IAP: Purchases restored', customerInfo)
+    // Purchases restored
     return { success: true, customerInfo }
   } catch (e) {
     console.error('IAP restore error:', e)

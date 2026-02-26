@@ -11,7 +11,7 @@ export const initKakao = () => {
   if (!window.Kakao.isInitialized()) {
     try {
       window.Kakao.init(KAKAO_JS_KEY)
-      console.log('Kakao SDK initialized')
+      // Kakao SDK initialized
       return true
     } catch (e) {
       console.error('Kakao SDK init error:', e)
