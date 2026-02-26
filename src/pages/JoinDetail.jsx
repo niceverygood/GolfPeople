@@ -55,7 +55,8 @@ export default function JoinDetail() {
   const isParticipant = (join?.participants || []).some(p => String(p.id || p.user?.id) === String(user?.id))
   const isMember = isHostCheck || isParticipant
   const joinStatus = join?.status || 'open'
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const isToday = join?.date === today
   const isExpired = join?.date && join.date < today
   const isClosed = joinStatus !== 'open' && joinStatus !== 'confirmed'
@@ -200,7 +201,7 @@ export default function JoinDetail() {
     }
   }
 
-  const spotsLeft = join.spotsTotal - join.spotsFilled
+  const spotsLeft = Math.max(0, (join.spotsTotal || 0) - (join.spotsFilled || 0))
 
   return (
     <motion.div

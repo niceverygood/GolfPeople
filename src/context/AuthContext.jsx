@@ -443,27 +443,24 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // 프로필 업데이트
+  // 프로필 업데이트 (전역 loading 사용 안 함 — Splash 깜빡임 방지)
   const updateProfile = async (updates) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
-    
-    setLoading(true)
+
     setError(null)
-    
+
     try {
       const { data, error } = await db.profiles.update(user.id, updates)
-      
+
       if (error) {
         throw error
       }
-      
+
       setProfile(data)
       return { data, error: null }
     } catch (err) {
       setError(err.message)
       return { data: null, error: err }
-    } finally {
-      setLoading(false)
     }
   }
 

@@ -197,6 +197,7 @@ export default function ScoreRecord() {
   }
 
   const resetForm = () => {
+    setFromJoinId(null)
     setForm({
       date: new Date().toISOString().split('T')[0],
       course_name: '',

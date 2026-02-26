@@ -225,6 +225,7 @@ export default function Store() {
         } else {
           await haptic.error()
           setPurchaseResult({ success: false, error: result.error || '결제에 실패했습니다' })
+          if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
           resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         }
         return
@@ -258,11 +259,13 @@ export default function Store() {
           setPurchaseResult({ success: true, amount: verifyResult.credited || (selectedProduct.marker_amount + selectedProduct.bonus_amount) })
         } else {
           setPurchaseResult({ success: false, error: verifyResult.error || '결제 검증에 실패했습니다' })
+          if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
           resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         }
       } else {
         if (paymentResult.error) {
           setPurchaseResult({ success: false, error: paymentResult.error })
+          if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
           resultTimerRef.current = setTimeout(() => setPurchaseResult(null), 3000)
         } else {
           setShowPayment(false)
