@@ -79,7 +79,7 @@ export default function Onboarding({ onComplete }) {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return true // 사진은 선택
+      case 0: return !!photo // 프로필 사진 필수
       case 1: return regions.length > 0 && handicap
       case 2: return styles.length > 0 && time
       default: return false
@@ -105,13 +105,21 @@ export default function Onboarding({ onComplete }) {
           // 사진이 있으면 Storage에 업로드
           if (photoFile) {
             try {
-              const { url } = await storage.uploadProfileImage(user.id, photoFile)
+              const { url, error: uploadError } = await storage.uploadProfileImage(user.id, photoFile)
+              if (uploadError) {
+                console.error('사진 업로드 에러:', uploadError)
+              }
               if (url) {
                 profileUpdate.photos = [url]
+              } else if (photo) {
+                // Storage 업로드 실패 시 base64 임시 저장 (프로필 편집에서 재업로드 가능)
+                profileUpdate.photos = [photo]
               }
             } catch (uploadErr) {
-              console.error('사진 업로드 실패:', uploadErr)
-              // 업로드 실패해도 계속 진행
+              console.error('사진 업로드 예외:', uploadErr)
+              if (photo) {
+                profileUpdate.photos = [photo]
+              }
             }
           }
 
@@ -176,9 +184,11 @@ export default function Onboarding({ onComplete }) {
                 )}
               </label>
 
-              <p className="text-gp-text-secondary text-xs mt-6 text-center">
-                나중에 추가할 수도 있어요
-              </p>
+              {!photo && (
+                <p className="text-gp-text-secondary text-xs mt-6 text-center">
+                  프로필 사진은 필수입니다
+                </p>
+              )}
             </div>
           </motion.div>
         )

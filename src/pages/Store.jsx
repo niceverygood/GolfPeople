@@ -285,7 +285,7 @@ export default function Store() {
       className="min-h-screen bg-gp-black"
     >
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-lg border-b border-gp-border">
+      <div className="sticky top-0 z-10 bg-gp-black/95 backdrop-blur-lg border-b border-gp-border safe-top">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={handleBack} className="p-2 -ml-2">
             <ChevronLeft className="w-6 h-6" />

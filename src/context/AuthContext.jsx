@@ -119,6 +119,10 @@ export const AuthProvider = ({ children }) => {
     if (isNative()) {
       // 1. 이미 열려있는 상태에서 딥링크 수신
       deepLinkUnsubscribe = app.onAppUrlOpen(async (data) => {
+        // Firebase reCAPTCHA 콜백은 무시 (전화번호 인증용, Firebase SDK가 자체 처리)
+        if (data.url.includes('firebaseauth') || data.url.includes('googleusercontent.apps') || data.url.includes('app-1-356155765246')) {
+          return
+        }
         if (data.url.includes('callback') || data.url.includes('access_token')) {
           await handleOAuthDeepLink(data.url)
         }
@@ -128,6 +132,10 @@ export const AuthProvider = ({ children }) => {
       import('@capacitor/app').then(({ App }) => {
         App.getLaunchUrl().then(async (launchUrl) => {
           if (launchUrl?.url) {
+            // Firebase reCAPTCHA 콜백은 무시
+            if (launchUrl.url.includes('firebaseauth') || launchUrl.url.includes('googleusercontent.apps') || launchUrl.url.includes('app-1-356155765246')) {
+              return
+            }
             if (launchUrl.url.includes('callback') || launchUrl.url.includes('access_token')) {
               await handleOAuthDeepLink(launchUrl.url)
             }
