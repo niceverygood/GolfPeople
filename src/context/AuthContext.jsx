@@ -21,7 +21,15 @@ export const AuthProvider = ({ children }) => {
   // OAuth 딥링크 URL에서 토큰 추출
   const handleOAuthDeepLink = async (url) => {
     setLoading(true) // 세션 설정 중에는 로딩 표시
-    
+
+    // 인앱 브라우저 닫기 (OAuth 완료 후 흰색 화면 방지)
+    try {
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.close()
+    } catch (_) {
+      // Browser 플러그인 없거나 닫기 실패 시 무시
+    }
+
     try {
       // URL에서 해시(#) 또는 쿼리(?) 이후의 토큰 추출 시도
       let tokenString = ''
@@ -30,37 +38,37 @@ export const AuthProvider = ({ children }) => {
       } else if (url.includes('?')) {
         tokenString = url.split('?')[1]
       }
-      
+
       if (!tokenString) {
         setLoading(false)
         return false
       }
-      
+
       // Intent URL 등에 포함된 부가 정보(#Intent;...) 제거
       if (tokenString.includes('#')) {
         tokenString = tokenString.split('#')[0]
       }
-      
+
       const params = new URLSearchParams(tokenString)
       const accessToken = params.get('access_token')
       const refreshToken = params.get('refresh_token')
-      
+
       if (accessToken && refreshToken) {
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken
         })
-        
+
         if (error) {
           console.error('Failed to set session:', error.message)
           setLoading(false)
           return false
         }
-        
+
         // 세션 설정 후 onAuthStateChange가 호출되면서 user 상태가 업데이트됨
         return true
       }
-      
+
       setLoading(false)
       return false
     } catch (err) {
