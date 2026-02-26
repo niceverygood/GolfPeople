@@ -143,16 +143,18 @@ src/
 - Storage 업로드 실패 시 base64 데이터로 fallback 저장 (사진 유실 방지)
 
 #### 빌드 및 배포
-- Git 커밋 5건 (`92ebcf5`~`168d255`), push 완료
+- iOS 1.0.4 빌드 9: Xcode Archive → App Store Connect 업로드 → 심사 제출 완료
+- Android 1.0.5 versionCode 7: AAB 빌드 (6.8MB) → Google Play Console 업로드 → 심사 제출 완료
+- Git 커밋 6건 (`92ebcf5`~`c2b7e75`), push 완료
 - Vercel 웹 자동 배포
 
 #### 배포 현황
 | 플랫폼 | 버전 | 상태 |
 |--------|------|------|
 | iOS | 1.0.2 | App Store 배포 완료 |
-| iOS | 1.0.4 (빌드 8) | 업로드 대기 |
+| iOS | 1.0.4 (빌드 9) | 심사 제출 완료 |
 | Android | 1.0.4 | Google Play 배포 완료 |
-| Android | 1.0.5 (versionCode 6) | 업로드 대기 |
+| Android | 1.0.5 (versionCode 7) | 심사 제출 완료 |
 | Web | 최신 | Vercel 자동 배포 완료 |
 
 ---
