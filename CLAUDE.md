@@ -128,9 +128,28 @@ src/
 | 14 | `Review.jsx` | 프로필 이미지 4곳에 onError fallback + null-safe src 추가 |
 | 15 | `storage.js` | addToArray 객체 중복 체크: id 기반 some() 사용 (기존 includes()는 원시값만) |
 
-#### 빌드 결과
-- 에러 0개, 빌드 성공 (8.62s)
-- 수정 파일 17개, +183/-73
+#### 전화번호 인증 Firebase→알리고 SMS 전환
+
+**원인**: Firebase Spark(무료) 플랜에서 실 SMS 발송 불가 (테스트 번호만 동작, 실기기 "An internal error has occurred")
+
+**DB 마이그레이션 `106_phone_verification_sms.sql`** — Supabase 적용 완료:
+- `phone_verifications` 테이블 (phone, code, expires_at, verified, attempts)
+- `send_phone_verification(p_phone)` RPC: 6자리 랜덤 코드 → 알리고 SMS API 발송 (3분 만료)
+- `verify_phone_code(p_phone, p_code)` RPC: 코드 검증 (5회 시도 제한)
+- Rate limiting: 5분 내 3회 발송 제한
+- `anon` + `authenticated` 모두 호출 가능
+
+**프론트엔드 변경:**
+- `src/lib/phoneVerification.js` 신규: Supabase RPC 래퍼 + 에러 코드별 한국어 메시지
+- `PhoneVerification.jsx`: Firebase import → 알리고 서비스 import, reCAPTCHA 제거, `verifyCode(code)` → `verifyCode(phone, code)` 변경
+
+**테스트 결과:**
+- SMS 발송: `{"success": true}` (010-4944-1503 확인)
+- 틀린 코드 입력: `{"error": "invalid_code"}` 정상 반환
+
+#### 빌드 및 커밋
+- 에러 0개, 빌드 성공 (7.27s)
+- 커밋 `a2eb04f`, 20파일, +540/-114
 
 ---
 
