@@ -161,10 +161,10 @@ export default function ChatRoom() {
     const result = await leaveChatRoom(chatId)
     if (result.success) {
       showToast.success('채팅방을 나갔습니다')
+      navigate('/chat', { replace: true })
     } else {
       showToast.error('채팅방 나가기에 실패했습니다')
     }
-    navigate('/chat', { replace: true })
   }
 
   // 메시지 길게 누르기 (자기 메시지만)

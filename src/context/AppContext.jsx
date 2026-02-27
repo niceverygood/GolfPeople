@@ -291,7 +291,11 @@ export function AppProvider({ children }) {
     const notifChannel = realtime.subscribeToNotifications(userId, (payload) => {
       const n = payload.new
       if (n) {
-        setNotifications(prev => [mapNotification(n), ...prev])
+        setNotifications(prev => {
+          // 중복 알림 방지
+          if (prev.some(existing => existing.id === n.id)) return prev
+          return [mapNotification(n), ...prev]
+        })
       }
     })
 
@@ -310,10 +314,10 @@ export function AppProvider({ children }) {
   // 액션 함수들 (Supabase 연동)
   // ==============================
 
-  // 좋아요 (functional updater로 stale closure 방지 + 불필요한 리렌더링 제거)
+  // 좋아요 (중복 방지 + functional updater로 stale closure 방지)
   const likeUser = useCallback(async (targetUserId) => {
     if (!userId) return
-    setLikedUsers(prev => [...prev, targetUserId])
+    setLikedUsers(prev => prev.includes(targetUserId) ? prev : [...prev, targetUserId])
     try {
       await db.likes.add(userId, targetUserId)
     } catch {
@@ -331,10 +335,10 @@ export function AppProvider({ children }) {
     }
   }, [userId])
 
-  // 조인 저장
+  // 조인 저장 (중복 방지)
   const saveJoin = useCallback(async (joinId) => {
     if (!userId) return
-    setSavedJoins(prev => [...prev, joinId])
+    setSavedJoins(prev => prev.includes(joinId) ? prev : [...prev, joinId])
     try {
       await db.savedJoins.add(userId, joinId)
     } catch {

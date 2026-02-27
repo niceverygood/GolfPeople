@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { supabase, auth, db, isConnected } from '../lib/supabase'
 import { isNative, app, appleSignIn } from '../lib/native'
 
-const AuthContext = createContext({})
+const AuthContext = createContext(null)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -376,10 +376,10 @@ export const AuthProvider = ({ children }) => {
       const { error } = await auth.signOut()
 
       if (error) {
-        throw error
+        console.error('signOut error:', error.message)
       }
 
-      // 세션 관련 localStorage 정리 — gp_ 접두사 키 전체 삭제
+      // 세션 관련 localStorage 정리 — gp_ 접두사 키 전체 삭제 (signOut 실패해도 실행)
       const keysToRemove = []
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
@@ -389,11 +389,15 @@ export const AuthProvider = ({ children }) => {
       }
       keysToRemove.forEach(key => localStorage.removeItem(key))
 
+      // signOut 실패해도 로컬 상태는 항상 초기화
       setUser(null)
       setProfile(null)
 
-      return { error: null }
+      return { error: error || null }
     } catch (err) {
+      // 네트워크 에러 등 예외 발생 시에도 로컬 상태 정리
+      setUser(null)
+      setProfile(null)
       setError(err.message)
       return { error: err }
     } finally {

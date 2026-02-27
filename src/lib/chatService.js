@@ -177,12 +177,13 @@ export const getMessages = async (roomId, limit = 50) => {
         )
       `)
       .eq('room_id', roomId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(limit)
 
     if (error) throw error
 
-    const messages = (data || []).map(msg => ({
+    // 최신 N개를 역순으로 가져온 후, 시간순 정렬로 복원
+    const messages = (data || []).reverse().map(msg => ({
       id: msg.id,
       text: msg.content,
       type: msg.type,

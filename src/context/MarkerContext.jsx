@@ -1,9 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase, isConnected } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { recoverPendingPurchase } from '../lib/paymentVerify'
 
-const MarkerContext = createContext({})
+const MarkerContext = createContext(null)
 
 // 기본 마커 상품 (Supabase 연결 안되어도 표시)
 const DEFAULT_PRODUCTS = [
@@ -202,7 +202,7 @@ export const MarkerProvider = ({ children }) => {
     }
     // 3회 시도 후에도 잔액 미반영이면 마지막 서버 값으로 동기화
     await refreshWalletFromServer()
-    return { success: true }
+    return { success: false, error: 'webhook_pending' }
   }, [refreshWalletFromServer, balance, user])
 
   // 앱 시작 시 서버 잔액 동기화 + 미완료 결제 복구
@@ -223,7 +223,7 @@ export const MarkerProvider = ({ children }) => {
     // 현재 잔액 조회
   }, [balance])
 
-  const value = {
+  const value = useMemo(() => ({
     balance,
     loading,
     products,
@@ -237,7 +237,8 @@ export const MarkerProvider = ({ children }) => {
     refreshWallet,
     refreshWalletFromServer,
     refreshTransactions
-  }
+  }), [balance, loading, products, prices, transactions, spendMarkers,
+       addMarkers, hasEnoughMarkers, getCost, refreshWallet, refreshWalletFromServer, refreshTransactions])
 
   return (
     <MarkerContext.Provider value={value}>

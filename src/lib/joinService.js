@@ -432,7 +432,8 @@ export const acceptJoinApplication = async (applicationId, currentUserId) => {
 
     if (appErr || !appData) return { success: false, error: 'not_found' }
 
-    if (currentUserId && appData.join?.host_id !== currentUserId) {
+    // 호스트 권한 필수 검증 (currentUserId 미전달 시에도 차단)
+    if (!currentUserId || appData.join?.host_id !== currentUserId) {
       return { success: false, error: 'not_authorized' }
     }
 
@@ -490,7 +491,8 @@ export const rejectJoinApplication = async (applicationId, currentUserId) => {
 
     if (!appData) return { success: false, error: 'not_found' }
 
-    if (currentUserId && appData.join?.host_id !== currentUserId) {
+    // 호스트 권한 필수 검증
+    if (!currentUserId || appData.join?.host_id !== currentUserId) {
       return { success: false, error: 'not_authorized' }
     }
 
@@ -590,13 +592,17 @@ export const createJoin = async (userId, joinData) => {
     if (error) throw error
 
     // 호스트를 참가자로 추가
-    await supabase
+    const { error: participantError } = await supabase
       .from('join_participants')
       .insert({
         join_id: data.id,
         user_id: userId,
         role: 'host'
       })
+
+    if (participantError) {
+      console.error('호스트 참가자 추가 실패:', participantError)
+    }
 
     return { success: true, join: data }
   } catch (e) {
