@@ -147,9 +147,39 @@ src/
 - SMS 발송: `{"success": true}` (010-4944-1503 확인)
 - 틀린 코드 입력: `{"error": "invalid_code"}` 정상 반환
 
+#### 알리고 발신번호 변경
+- `01087399771` → `07041479771`로 변경 (마이그레이션 `107_update_aligo_sender.sql`)
+- Supabase DB push 완료, 테스트 성공
+
+#### 상단 검은 빈 공간 수정 (커밋 `c3f3054`)
+- **증상**: 일부 기기에서 앱 화면 상단에 검은색 빈 공간 표시
+- **원인**: safe-area-inset-top이 이중 적용
+  - `index.css` app-container에 `padding-top: env(safe-area-inset-top)` + 각 페이지 `.safe-top` 클래스
+  - `StatusBar.setOverlaysWebView` 미설정 → 일부 기기에서 WebView가 이미 상태바 아래에 배치 → 3중 여백
+- **수정**:
+  - `index.css`: app-container에서 `padding-top: env(safe-area-inset-top)` 제거
+  - `native.js`: `StatusBar.setOverlaysWebView({ overlay: true })` 추가
+  - `capacitor.config.json`: `ios.contentInset` "automatic" → "always" 변경
+- iOS 실기기 테스트 정상 확인 (검은 빈 공간 제거됨)
+
+#### iOS 1.0.6 빌드 11 + Android 1.0.6 versionCode 9 빌드/배포
+- iOS: `MARKETING_VERSION = 1.0.6`, `CURRENT_PROJECT_VERSION = 11`
+- Android: `versionCode 9`, `versionName "1.0.6"`
+- `npm run build` + `npx cap sync` + 병렬 빌드
+- iOS: xcodebuild archive → App Store Connect 업로드 완료 (`EXPORT SUCCEEDED`)
+- Android: bundleRelease AAB 빌드 완료 (6.8MB) → Google Play Console 업로드 대기
+- 출시 노트: 전화번호 인증 안정성 + 상단 빈 공간 수정 + 이중 클릭 방지 등
+
 #### 빌드 및 커밋
-- 에러 0개, 빌드 성공 (7.27s)
-- 커밋 `a2eb04f`, 20파일, +540/-114
+- 에러 0개
+- Git 커밋 5개 (`a2eb04f`, `a537a3c`, `c3f3054`, `f80a680`), push 완료
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.6 (빌드 11) | App Store Connect 업로드 완료, 심사 제출 대기 |
+| Android | 1.0.6 (versionCode 9) | AAB 빌드 완료, Google Play 업로드 대기 |
+| Web | 최신 | Vercel 자동 배포 완료 |
 
 ---
 
