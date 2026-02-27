@@ -176,7 +176,7 @@ export const sendFriendRequest = async (fromUserId, toUserId, message = '') => {
  * - 알림 생성
  */
 export const acceptFriendRequest = async (requestId) => {
-  if (!isConnected() || !requestId) {
+  if (!isConnected() || !requestId || !isValidUUID(requestId)) {
     return { success: false }
   }
 
@@ -218,7 +218,7 @@ export const acceptFriendRequest = async (requestId) => {
  * 친구 요청 거절
  */
 export const rejectFriendRequest = async (requestId) => {
-  if (!isConnected() || !requestId) {
+  if (!isConnected() || !requestId || !isValidUUID(requestId)) {
     return { success: false }
   }
 
@@ -241,7 +241,7 @@ export const rejectFriendRequest = async (requestId) => {
  * 친구 요청 취소 (삭제)
  */
 export const cancelFriendRequest = async (requestId) => {
-  if (!isConnected() || !requestId) {
+  if (!isConnected() || !requestId || !isValidUUID(requestId)) {
     return { success: false }
   }
 

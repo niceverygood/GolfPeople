@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from './AuthContext'
 import { db, isConnected, realtime } from '../lib/supabase'
 import { getSentFriendRequests, getReceivedFriendRequests, sendFriendRequest as sendFriendRequestApi, acceptFriendRequest as acceptFriendRequestApi, rejectFriendRequest as rejectFriendRequestApi, cancelFriendRequest as cancelFriendRequestApi } from '../lib/friendService'
@@ -356,16 +356,23 @@ export function AppProvider({ children }) {
     }
   }, [userId])
 
-  // 친구 요청
+  // 친구 요청 (더블클릭 방지 플래그)
+  const sendingFriendRef = useRef(false)
   const sendFriendRequest = useCallback(async (targetUser, message = '') => {
     if (!userId) return false
+    if (sendingFriendRef.current) return false
     if (friendRequests.some(req => req.userId === targetUser.id)) return false
-    const result = await sendFriendRequestApi(userId, targetUser.id, message)
-    if (result.success) {
-      await refreshFriendRequests()
-      return true
+    sendingFriendRef.current = true
+    try {
+      const result = await sendFriendRequestApi(userId, targetUser.id, message)
+      if (result.success) {
+        await refreshFriendRequests()
+        return true
+      }
+      return false
+    } finally {
+      sendingFriendRef.current = false
     }
-    return false
   }, [userId, friendRequests, refreshFriendRequests])
 
   const cancelFriendRequest = useCallback(async (requestId) => {
@@ -404,14 +411,17 @@ export function AppProvider({ children }) {
   }, [userId, joinApplications, refreshJoinApplications])
 
   const cancelJoinApplication = useCallback(async (applicationId) => {
-    const prevApps = joinApplications
-    setJoinApplications(prev => prev.filter(a => a.id !== applicationId))
+    let snapshot = null
+    setJoinApplications(prev => {
+      snapshot = prev
+      return prev.filter(a => a.id !== applicationId)
+    })
     const result = await cancelJoinApplicationApi(applicationId, userId)
     if (!result.success) {
-      setJoinApplications(prevApps)
+      setJoinApplications(snapshot)
       showToast.error('신청 취소에 실패했습니다')
     }
-  }, [joinApplications, userId])
+  }, [userId])
 
   const acceptJoinRequest = useCallback(async (requestId) => {
     const result = await acceptJoinApplication(requestId, userId)
@@ -516,7 +526,11 @@ export function AppProvider({ children }) {
       const newHistory = { ...prev, [dateKey]: recommendations }
       const dates = Object.keys(newHistory).sort().reverse()
       if (dates.length > 14) {
-        dates.slice(14).forEach(d => delete newHistory[d])
+        const keysToKeep = dates.slice(0, 14)
+        const trimmed = {}
+        keysToKeep.forEach(d => { trimmed[d] = newHistory[d] })
+        localStorage.setItem('gp_recommendation_history', JSON.stringify(trimmed))
+        return trimmed
       }
       localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
       return newHistory

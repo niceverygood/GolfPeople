@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, ArrowRight, Check, Loader2, RefreshCw, ShieldCheck, ChevronLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { setupRecaptcha, sendVerificationCode, verifyCode, isFirebaseConfigured } from '../lib/firebase'
+import { sendVerificationCode, verifyCode } from '../lib/phoneVerification'
 import { db } from '../lib/supabase'
 
 export default function PhoneVerification() {
@@ -20,8 +20,7 @@ export default function PhoneVerification() {
   const [error, setError] = useState('')
   const [countdown, setCountdown] = useState(0)
   const codeInputRefs = useRef([])
-  const recaptchaContainerRef = useRef(null)
-  
+
   // 현재 인증된 전화번호
   const currentPhone = profile?.phone || localStorage.getItem('gp_verified_phone')
 
@@ -31,13 +30,6 @@ export default function PhoneVerification() {
       navigate('/', { replace: true })
     }
   }, [profile, navigate, isChangeMode])
-
-  // reCAPTCHA 초기화
-  useEffect(() => {
-    if (isFirebaseConfigured() && recaptchaContainerRef.current) {
-      setupRecaptcha('recaptcha-container')
-    }
-  }, [])
 
   // 카운트다운 타이머
   useEffect(() => {
@@ -63,14 +55,9 @@ export default function PhoneVerification() {
   // 인증번호 발송
   const handleSendCode = async () => {
     const phoneDigits = phoneNumber.replace(/\D/g, '')
-    
+
     if (phoneDigits.length !== 11) {
       setError('올바른 전화번호를 입력해주세요')
-      return
-    }
-
-    if (!isFirebaseConfigured()) {
-      setError('전화번호 인증 서비스가 설정되지 않았습니다')
       return
     }
 
@@ -78,21 +65,15 @@ export default function PhoneVerification() {
     setError('')
 
     const result = await sendVerificationCode(phoneDigits)
-    
+
     if (result.success) {
       setStep('code')
       setCountdown(180) // 3분
       setVerificationCode(['', '', '', '', '', ''])
     } else {
-      if (result.error.includes('too-many-requests')) {
-        setError('너무 많은 요청이 있었습니다. 잠시 후 다시 시도해주세요.')
-      } else if (result.error.includes('invalid-phone-number')) {
-        setError('유효하지 않은 전화번호입니다.')
-      } else {
-        setError(result.error || '인증번호 발송에 실패했습니다.')
-      }
+      setError(result.error || '인증번호 발송에 실패했습니다.')
     }
-    
+
     setLoading(false)
   }
 
@@ -121,7 +102,7 @@ export default function PhoneVerification() {
   // 인증코드 확인
   const handleVerifyCode = async () => {
     const code = verificationCode.join('')
-    
+
     if (code.length !== 6) {
       setError('6자리 인증코드를 입력해주세요')
       return
@@ -131,12 +112,12 @@ export default function PhoneVerification() {
     setError('')
 
     try {
-      const result = await verifyCode(code)
-      
+      const phoneDigits = phoneNumber.replace(/\D/g, '')
+      const result = await verifyCode(phoneDigits, code)
+
       if (result.success) {
         // Supabase 프로필에 전화번호 저장
         if (user) {
-          const phoneDigits = phoneNumber.replace(/\D/g, '')
           try {
             await db.profiles.update(user.id, {
               phone: phoneDigits,
@@ -146,14 +127,14 @@ export default function PhoneVerification() {
             console.error('Profile update failed:', err)
           }
         }
-        
+
         // 로컬스토리지에 인증 완료 플래그 및 전화번호 저장
         localStorage.setItem('gp_phone_verified', 'true')
         localStorage.setItem('gp_verified_phone', phoneNumber)
-        
+
         setStep('success')
         setLoading(false)
-        
+
         // 2초 후 페이지 이동
         setTimeout(() => {
           if (isChangeMode) {
@@ -164,13 +145,7 @@ export default function PhoneVerification() {
         }, 2000)
       } else {
         setLoading(false)
-        if (result.error?.includes('invalid-verification-code')) {
-          setError('인증코드가 올바르지 않습니다.')
-        } else if (result.error?.includes('code-expired')) {
-          setError('인증코드가 만료되었습니다. 다시 요청해주세요.')
-        } else {
-          setError(result.error || '인증에 실패했습니다.')
-        }
+        setError(result.error || '인증에 실패했습니다.')
       }
     } catch (err) {
       console.error('Verification error:', err)
@@ -470,8 +445,6 @@ export default function PhoneVerification() {
         </div>
       )}
 
-      {/* reCAPTCHA Container (invisible) */}
-      <div id="recaptcha-container" ref={recaptchaContainerRef} />
     </motion.div>
   )
 }

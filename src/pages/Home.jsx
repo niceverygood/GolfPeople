@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, SlidersHorizontal, Check, Bell, UserPlus, Calendar, Star, X, CheckCheck, Plus, Target, TrendingUp, TrendingDown, Minus, History, ArrowLeft, Trash2, CheckCircle, XCircle } from 'lucide-react'
@@ -61,6 +61,10 @@ export default function Home() {
     saveDailyRecommendation
   } = useApp()
   const { balance } = useMarker()
+
+  // saveDailyRecommendation ref (useEffect 의존성 안정화)
+  const saveDailyRecommendationRef = useRef(saveDailyRecommendation)
+  saveDailyRecommendationRef.current = saveDailyRecommendation
 
   // 전화번호 인증 훅
   const phoneVerify = usePhoneVerification()
@@ -233,7 +237,7 @@ export default function Home() {
       })
 
       if (targetUsers.length > 0) {
-        saveDailyRecommendation(today, dailyRecs)
+        saveDailyRecommendationRef.current(today, dailyRecs)
       }
     }
 
@@ -259,7 +263,7 @@ export default function Home() {
     })
 
     setRecommendations(newRecommendations)
-  }, [users, filteredUsers, revealedCards, recommendationHistory, saveDailyRecommendation, currentHour])
+  }, [users, filteredUsers, revealedCards, recommendationHistory, currentHour])
 
   // 카드 클릭 - 숨겨진 카드면 뒤집기, 공개된 카드면 상세로 이동
   const handleCardClick = (timeId, cardIndex) => {

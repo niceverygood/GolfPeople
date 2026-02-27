@@ -171,7 +171,11 @@ export const setBoolean = (key, value) => {
 export const addToArray = (key, item, maxLength = 100) => {
   try {
     const arr = getItem(key, [])
-    if (!arr.includes(item)) {
+    // 객체는 id 기반 중복 체크, 원시값은 includes() 사용
+    const isDuplicate = (item && typeof item === 'object' && item.id)
+      ? arr.some(existing => existing?.id === item.id)
+      : arr.includes(item)
+    if (!isDuplicate) {
       const updated = [item, ...arr].slice(0, maxLength)
       setItem(key, updated)
     }

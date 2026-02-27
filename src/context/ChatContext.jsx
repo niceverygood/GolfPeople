@@ -71,6 +71,7 @@ export function ChatProvider({ children }) {
       roomUnsubscribeRef.current = null
     }
 
+    try {
     // 메시지 로드
     const result = await getMessages(roomId)
 
@@ -138,8 +139,12 @@ export function ChatProvider({ children }) {
     } else {
       setError(result.error)
     }
-
-    setLoading(false)
+    } catch (e) {
+      console.error('enterRoom 에러:', e)
+      showToast.error('채팅방에 입장할 수 없습니다')
+    } finally {
+      setLoading(false)
+    }
   }, [user?.id])
 
   // 채팅방 퇴장
@@ -282,8 +287,8 @@ export function ChatProvider({ children }) {
     return () => {
       if (allRoomsUnsubscribeRef.current) {
         allRoomsUnsubscribeRef.current()
+        allRoomsUnsubscribeRef.current = null
       }
-      unsubscribeAll()
     }
   }, [user?.id, loadChatRooms])
 

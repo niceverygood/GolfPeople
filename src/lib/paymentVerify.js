@@ -51,7 +51,7 @@ export const verifyPortOnePayment = async (impUid, merchantUid, productId) => {
     return result
   } catch (error) {
     console.error('PortOne 검증 요청 실패:', error)
-    return { success: false, error: error.message || '네트워크 오류' }
+    return { success: false, error: '네트워크 오류가 발생했습니다' }
   }
 }
 

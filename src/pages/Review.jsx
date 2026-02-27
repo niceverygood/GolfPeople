@@ -221,9 +221,10 @@ function PendingReviewCard({ item, onWrite }) {
     <div className="bg-gp-card rounded-2xl p-4">
       <div className="flex items-center gap-3">
         <img
-          src={item.userPhoto}
+          src={item.userPhoto || '/default-profile.png'}
           alt={item.userName}
           className="w-14 h-14 rounded-full object-cover"
+          onError={(e) => { e.target.src = '/default-profile.png' }}
         />
         <div className="flex-1">
           <p className="font-semibold">{item.userName}</p>
@@ -252,9 +253,10 @@ function ReceivedReviewCard({ review }) {
     <div className="bg-gp-card rounded-2xl p-4">
       <div className="flex items-center gap-3 mb-3">
         <img
-          src={review.reviewerPhoto}
+          src={review.reviewerPhoto || '/default-profile.png'}
           alt={review.reviewerName}
           className="w-12 h-12 rounded-full object-cover"
+          onError={(e) => { e.target.src = '/default-profile.png' }}
         />
         <div className="flex-1">
           <p className="font-semibold">{review.reviewerName}</p>
@@ -300,9 +302,10 @@ function SentReviewCard({ review }) {
     <div className="bg-gp-card rounded-2xl p-4">
       <div className="flex items-center gap-3 mb-3">
         <img
-          src={review.reviewedPhoto}
+          src={review.reviewedPhoto || '/default-profile.png'}
           alt={review.reviewedName}
           className="w-12 h-12 rounded-full object-cover"
+          onError={(e) => { e.target.src = '/default-profile.png' }}
         />
         <div className="flex-1">
           <p className="font-semibold">{review.reviewedName}</p>
@@ -413,9 +416,10 @@ function WriteReviewModal({ target, userId, onClose, onComplete }) {
           {/* 평가 대상 */}
           <div className="flex items-center gap-3 bg-gp-black/30 rounded-xl p-3">
             <img
-              src={target.userPhoto}
+              src={target.userPhoto || '/default-profile.png'}
               alt={target.userName}
               className="w-14 h-14 rounded-full object-cover"
+              onError={(e) => { e.target.src = '/default-profile.png' }}
             />
             <div>
               <p className="font-semibold">{target.userName}</p>
