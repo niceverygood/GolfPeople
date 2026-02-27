@@ -106,11 +106,12 @@ export default function ProfileDetail() {
     }
   }
 
-  // 마커 확인 후 친구 요청 진행
+  // 마커 확인 후 친구 요청 모달 표시
+  // 마커 차감은 실제 요청 전송 시점으로 지연 (요청 취소/실패 시 마커 손실 방지)
   const handleConfirmMarker = async () => {
     if (isProcessing) return
 
-    // 마커 잔액 확인
+    // 마커 잔액 사전 확인 (UX용)
     if (balance < FRIEND_REQUEST_COST) {
       showToast.error(getErrorMessage('insufficient_balance'))
       setShowMarkerModal(false)
@@ -118,35 +119,35 @@ export default function ProfileDetail() {
       return
     }
 
-    setIsProcessing(true)
-
-    // 마커 차감 (서버 검증 포함)
-    const result = await useMarkers('friend_request')
-    if (!result.success) {
-      showToast.error(result.message || getErrorMessage('marker_spend_failed'))
-      if (result.error === 'insufficient_balance') {
-        navigate('/store')
-      }
-      setShowMarkerModal(false)
-      setIsProcessing(false)
-      return
-    }
-
     setShowMarkerModal(false)
-    setIsProcessing(false)
-    // 친구 요청 모달 표시
+    // 친구 요청 모달 표시 (마커 차감은 handleSendRequest에서)
     setShowRequestModal(true)
   }
 
   const handleSendRequest = async (message) => {
-    if (user) {
-      const success = await sendFriendRequest(user, message)
-      if (success) {
-        setFriendRequested(true)
-        showToast.success('친구 요청을 보냈습니다!')
-      } else {
-        showToast.error('친구 요청에 실패했습니다')
+    if (!user) {
+      setShowRequestModal(false)
+      return
+    }
+
+    // 1. 마커 차감 (서버 검증 포함)
+    const markerResult = await useMarkers('friend_request')
+    if (!markerResult.success) {
+      showToast.error(markerResult.message || getErrorMessage('marker_spend_failed'))
+      if (markerResult.error === 'insufficient_balance') {
+        setShowRequestModal(false)
+        navigate('/store')
       }
+      return
+    }
+
+    // 2. 친구 요청 전송 (마커 차감 성공 후)
+    const success = await sendFriendRequest(user, message)
+    if (success) {
+      setFriendRequested(true)
+      showToast.success('친구 요청을 보냈습니다!')
+    } else {
+      showToast.error('친구 요청에 실패했습니다')
     }
     setShowRequestModal(false)
   }

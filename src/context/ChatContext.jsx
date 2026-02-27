@@ -258,9 +258,6 @@ export function ChatProvider({ children }) {
     return result
   }, [user?.id, loadChatRooms])
 
-  // 읽지 않은 메시지 총 개수
-  const totalUnreadCount = chatRooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0)
-
   // 로그아웃 시 상태 초기화
   useEffect(() => {
     if (!user?.id) {
@@ -299,13 +296,19 @@ export function ChatProvider({ children }) {
     }
   }, [])
 
-  const value = {
+  // 읽지 않은 메시지 총 개수 (메모이제이션)
+  const memoizedUnreadCount = useMemo(
+    () => chatRooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0),
+    [chatRooms]
+  )
+
+  const value = useMemo(() => ({
     chatRooms,
     currentRoom,
     messages,
     loading,
     error,
-    totalUnreadCount,
+    totalUnreadCount: memoizedUnreadCount,
     loadChatRooms,
     enterRoom,
     leaveRoom,
@@ -315,7 +318,9 @@ export function ChatProvider({ children }) {
     loadMembers,
     editMessage,
     deleteMessage
-  }
+  }), [chatRooms, currentRoom, messages, loading, error, memoizedUnreadCount,
+       loadChatRooms, enterRoom, leaveRoom, sendMessage, startDirectChat,
+       leaveChatRoom, loadMembers, editMessage, deleteMessage])
 
   return (
     <ChatContext.Provider value={value}>

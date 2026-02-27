@@ -27,7 +27,8 @@ import MarkerIcon from '../components/icons/MarkerIcon'
 // 상품 카드 컴포넌트
 const ProductCard = ({ product, onPurchase, isSelected }) => {
   const totalMarkers = product.marker_amount + product.bonus_amount
-  const originalPrice = Math.round(product.price / (1 - product.discount_percent / 100))
+  const discountFactor = 1 - (product.discount_percent || 0) / 100
+  const originalPrice = discountFactor > 0 ? Math.round(product.price / discountFactor) : product.price
   
   return (
     <motion.button

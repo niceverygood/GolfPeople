@@ -1098,10 +1098,12 @@ function SettingsModal({ onClose }) {
 
   // 로컬 설정 (개인정보)
   const [localSettings, setLocalSettings] = useState(() => {
-    const saved = localStorage.getItem('gp_settings')
-    return saved ? JSON.parse(saved) : {
-      profilePublic: true,
-      showOnline: true,
+    try {
+      const saved = localStorage.getItem('gp_settings')
+      return saved ? JSON.parse(saved) : { profilePublic: true, showOnline: true }
+    } catch {
+      localStorage.removeItem('gp_settings')
+      return { profilePublic: true, showOnline: true }
     }
   })
 
@@ -1392,14 +1394,30 @@ function SettingsModal({ onClose }) {
 // 차단 관리 모달
 function BlockManageModal({ onClose }) {
   const [blockedUsers, setBlockedUsers] = useState(() => {
-    const saved = localStorage.getItem('gp_blocked_users')
-    return saved ? JSON.parse(saved) : []
+    try {
+      const saved = localStorage.getItem('gp_blocked_users')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      localStorage.removeItem('gp_blocked_users')
+      return []
+    }
   })
   
-  const handleUnblock = (userId) => {
+  const handleUnblock = async (userId) => {
     const newList = blockedUsers.filter(u => u.id !== userId)
     setBlockedUsers(newList)
     localStorage.setItem('gp_blocked_users', JSON.stringify(newList))
+
+    // DB에서도 차단 해제
+    try {
+      const { default: supabase, isConnected } = await import('../lib/supabase')
+      if (isConnected() && supabase) {
+        await supabase.from('blocks').delete()
+          .eq('blocked_user_id', userId)
+      }
+    } catch (e) {
+      console.error('차단 해제 DB 에러:', e)
+    }
   }
 
   return (

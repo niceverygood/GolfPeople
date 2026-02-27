@@ -70,7 +70,7 @@ export default function Friends() {
 
   // 검색 필터링
   const filteredFriends = friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (friend.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (

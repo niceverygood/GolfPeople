@@ -54,13 +54,13 @@ export default function Join() {
   // 모든 조인 필터링
   const filteredJoins = joins.filter(join => {
     if (selectedRegion === '전체') return true
-    return join.region.includes(selectedRegion)
+    return (join.region || '').includes(selectedRegion)
   })
-  
+
   // 내가 올린 조인 필터링
   const filteredMyJoins = myJoins.filter(join => {
     if (selectedRegion === '전체') return true
-    return join.region.includes(selectedRegion)
+    return (join.region || '').includes(selectedRegion)
   })
 
   // 참여중 (승인받은 조인 신청)
