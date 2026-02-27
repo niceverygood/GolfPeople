@@ -166,8 +166,8 @@ src/
 - iOS: `MARKETING_VERSION = 1.0.6`, `CURRENT_PROJECT_VERSION = 11`
 - Android: `versionCode 9`, `versionName "1.0.6"`
 - `npm run build` + `npx cap sync` + 병렬 빌드
-- iOS: xcodebuild archive → App Store Connect 업로드 완료 (`EXPORT SUCCEEDED`)
-- Android: bundleRelease AAB 빌드 완료 (6.8MB) → Google Play Console 업로드 대기
+- iOS: xcodebuild archive → App Store Connect 업로드 → 심사 제출 완료
+- Android: bundleRelease AAB 빌드 (6.8MB) → Google Play Console 업로드 → 심사 제출 완료
 - 출시 노트: 전화번호 인증 안정성 + 상단 빈 공간 수정 + 이중 클릭 방지 등
 
 #### 빌드 및 커밋
@@ -177,8 +177,8 @@ src/
 #### 배포 현황
 | 플랫폼 | 버전 | 상태 |
 |--------|------|------|
-| iOS | 1.0.6 (빌드 11) | App Store Connect 업로드 완료, 심사 제출 대기 |
-| Android | 1.0.6 (versionCode 9) | AAB 빌드 완료, Google Play 업로드 대기 |
+| iOS | 1.0.6 (빌드 11) | App Store 심사 제출 완료, 승인 대기 |
+| Android | 1.0.6 (versionCode 9) | Google Play 심사 제출 완료, 승인 대기 |
 | Web | 최신 | Vercel 자동 배포 완료 |
 
 ---
