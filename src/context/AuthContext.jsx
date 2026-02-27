@@ -144,25 +144,17 @@ export const AuthProvider = ({ children }) => {
       })
     }
 
-    // 초기 세션 확인
+    // 초기 세션 확인 — onAuthStateChange가 프로필 로드를 처리하므로 여기서는 세션만 확인
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!mounted) return
-        
-        if (session?.user) {
-          setUser(session.user)
-          // 로딩 먼저 해제
-          setLoading(false)
-          // 프로필은 백그라운드에서 로드
-          db.profiles.get(session.user.id)
-            .then(({ data }) => {
-              if (mounted && data) setProfile(data)
-            })
-            .catch(err => console.error('Profile load failed:', err))
-        } else {
+
+        if (!session?.user) {
+          // 세션 없음 — onAuthStateChange에서도 처리하지만 로딩 해제 보장
           setLoading(false)
         }
+        // session이 있으면 onAuthStateChange INITIAL_SESSION 이벤트가 처리
       } catch (err) {
         console.error('Auth initialization error:', err)
         if (mounted) {

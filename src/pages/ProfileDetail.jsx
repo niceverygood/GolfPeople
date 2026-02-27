@@ -125,10 +125,11 @@ export default function ProfileDetail() {
   }
 
   const handleSendRequest = async (message) => {
-    if (!user) {
+    if (!user || isProcessing) {
       setShowRequestModal(false)
       return
     }
+    setIsProcessing(true)
 
     // 1. 마커 차감 (서버 검증 포함)
     const markerResult = await useMarkers('friend_request')
@@ -138,6 +139,7 @@ export default function ProfileDetail() {
         setShowRequestModal(false)
         navigate('/store')
       }
+      setIsProcessing(false)
       return
     }
 
@@ -150,6 +152,7 @@ export default function ProfileDetail() {
       showToast.error('친구 요청에 실패했습니다')
     }
     setShowRequestModal(false)
+    setIsProcessing(false)
   }
 
   const [showReportModal, setShowReportModal] = useState(false)

@@ -90,6 +90,50 @@ src/
 
 ---
 
+## 2026-02-27 (금) 작업일지
+
+### 전체 코드 리뷰 2차 수행 + HIGH 4건 + MEDIUM 15건 수정 (17파일, +183/-73)
+
+#### 리뷰 수행
+- 3개 에이전트 병렬 실행: Context/Service (11건) + Pages (12건) + Utils/기타 (12건)
+- 전체 ~30개 소스 파일 정밀 분석
+- 발견: **HIGH 4건 + MEDIUM 15건** (이전 `540abaa` 커밋 이후 잔존 이슈)
+
+#### HIGH 4건
+
+| # | 파일 | 버그 | 수정 |
+|---|------|------|------|
+| 1 | `ChatContext.jsx` | cleanup에서 `unsubscribeAll()` 호출 → 활성 채팅방 구독 파괴 | allRooms 구독만 해제 + enterRoom try-catch |
+| 2 | `AuthContext.jsx` | `initAuth()`에서 중복 프로필 fetch → onAuthStateChange와 경쟁 | 중복 fetch 제거, INITIAL_SESSION 이벤트에 위임 |
+| 3 | `Profile.jsx` | BlockManageModal 차단 해제 시 `user_id` 필터 없음 → 타인 차단 삭제 가능 | `.eq('user_id', currentUserId)` 추가 |
+| 4 | `Home.jsx` | saveDailyRecommendation useEffect 의존성 → 무한 루프 위험 | useRef로 안정화, 의존성 배열에서 제거 |
+
+#### MEDIUM 15건
+
+| # | 파일 | 수정 |
+|---|------|------|
+| 1 | `AppContext.jsx` | sendFriendRequest 더블클릭 방지 (sendingFriendRef) |
+| 2 | `AppContext.jsx` | cancelJoinApplication 롤백용 snapshot 캡처 (functional updater) |
+| 3 | `AppContext.jsx` | saveDailyRecommendation 14일 트림 immutable (in-place delete 제거) |
+| 4 | `friendService.js` | accept/reject/cancel에 UUID 검증 추가 |
+| 5 | `ProfileDetail.jsx` | handleSendRequest isProcessing 더블클릭 방지 |
+| 6 | `ChatRoom.jsx` | 메시지 수 증가 시에만 스크롤 (편집/삭제 시 스크롤 방지) |
+| 7 | `ScoreRecord.jsx` | DB 에러 체크 후 throw + handleDelete 에러 토스트 |
+| 8 | `ScoreRecord.jsx` | handleSubmit user null guard 추가 |
+| 9 | `RoundingHistory.jsx` | today 계산 UTC → 로컬 날짜 |
+| 10 | `Saved.jsx` | rejoin_chat_room RPC 에러 처리 |
+| 11 | `errorHandler.js` | parseSupabaseError raw 메시지 노출 방지 |
+| 12 | `paymentVerify.js` | catch 블록 error.message 노출 제거 |
+| 13 | `ScoreStats.jsx` | 월별 평균 차트가 기간 필터 무시 → filteredScores 기반 filteredMonthly로 변경 |
+| 14 | `Review.jsx` | 프로필 이미지 4곳에 onError fallback + null-safe src 추가 |
+| 15 | `storage.js` | addToArray 객체 중복 체크: id 기반 some() 사용 (기존 includes()는 원시값만) |
+
+#### 빌드 결과
+- 에러 0개, 빌드 성공 (8.62s)
+- 수정 파일 17개, +183/-73
+
+---
+
 ## 2026-02-26 (목) 작업일지
 
 ### iOS 1.0.4 + Android 1.0.5 빌드 + CRITICAL/HIGH 7건 수정 + 알림톡 디버깅
@@ -142,19 +186,60 @@ src/
 #### 온보딩 프로필 이미지 base64 fallback 추가
 - Storage 업로드 실패 시 base64 데이터로 fallback 저장 (사진 유실 방지)
 
+#### 전체 코드 리뷰 28건 수정 — 커밋 `a83752b` (14파일, +178/-118)
+
+**HIGH 8건:**
+| # | 파일 | 버그 | 수정 |
+|---|------|------|------|
+| 1 | AppContext.jsx | 친구요청 이중매핑 (r.to_user_id → undefined) | 서비스 매핑 데이터 스프레드 사용 |
+| 2 | Profile.jsx:314 | profile.region → undefined | profile.regions?.join(', ') |
+| 3 | Profile.jsx:377 | profile.time → undefined | profile.times?.join(', ') |
+| 4 | AuthContext.jsx:450 | updateProfile 전역 loading → Splash 깜빡임 | 전역 loading 제거 |
+| 5 | App.jsx:85-123 | [profile] 의존성 → 네이티브 초기화 반복 | [] 분리 + profile 별도 useEffect |
+| 6 | joinService.js:546 | query.eq() 반환값 미할당 → 인가 우회 | query = query.eq(...) |
+| 7 | joinService.js:getJoinDetail | raw DB 데이터 미매핑 | camelCase 매핑 추가 |
+| 8 | MarkerContext.jsx:addMarkers | 파라미터 무시 → 잔액 미반영 | 웹훅 대기 3회 재시도 |
+
+**MEDIUM 12건:**
+| # | 파일 | 수정 |
+|---|------|------|
+| 1 | Profile.jsx EditProfileModal | { ...profile } shallow copy (부모 prop 변경 방지) |
+| 2 | Profile.jsx REGION_DATA | Onboarding과 전체 지역 동기화 (강원 7→18개 등) |
+| 3 | Home.jsx 핸디캡 필터 | user.handicap \|\| '' null guard |
+| 4 | Home.jsx blockedUserIds | useMemo [] → useState + visibility/storage 리스너 |
+| 5 | Home.jsx handleCardClick | nested state immutable 업데이트 |
+| 6 | ChatList.jsx 검색 | (partnerName \|\| '') null-safety |
+| 7 | JoinDetail.jsx spotsLeft | Math.max(0, ...) 음수 방지 |
+| 8 | Onboarding.jsx 사진 | 리사이즈 base64 → Blob → File 변환 후 업로드 |
+| 9 | Profile.jsx 알림 토글 | try-catch + 실패 시 이전값 롤백 + error toast |
+| 10 | Store.jsx timer | clearTimeout 추가 (4곳) |
+| 11 | Home.jsx 날짜 | UTC → getLocalToday() 로컬 날짜 |
+| 12 | Home.jsx 지역 필터 | user.region \|\| '' null guard |
+
+**LOW 8건:**
+| # | 파일 | 수정 |
+|---|------|------|
+| 1 | Home.jsx | visibilitychange 리스너 변수 참조로 클린업 |
+| 2 | Home.jsx | filteredUsers useMemo에 blockedUserIds 의존성 추가 |
+| 3 | JoinDetail.jsx | toISOString UTC → 로컬 날짜 계산 |
+| 4 | ScoreRecord.jsx | resetForm에서 fromJoinId null 초기화 |
+| 5 | Friends.jsx | 미사용 showMenu state 제거 |
+| 6 | AppContext.jsx | like/save functional updater로 stale closure 방지 |
+| 7 | ChatRoom.jsx | hiddenMessages useMemo → useState (즉시 반영) |
+| 8 | Home.jsx | PastRecommendations D-day T00:00:00 파싱 |
+
 #### 빌드 및 배포
-- iOS 1.0.4 빌드 9: Xcode Archive → App Store Connect 업로드 → 심사 제출 완료
-- Android 1.0.5 versionCode 7: AAB 빌드 (6.8MB) → Google Play Console 업로드 → 심사 제출 완료
-- Git 커밋 6건 (`92ebcf5`~`c2b7e75`), push 완료
+- iOS 1.0.4 빌드 9: 심사 제출 완료 (이전)
+- Android 1.0.5 versionCode 8: AAB 빌드 (6.8MB) → Google Play Console 제출 완료
+- iOS 1.0.5 빌드 10: 버전 준비 완료 (Xcode Archive 대기)
+- Git 커밋 8건 (`92ebcf5`~`21b5ece`), push 완료
 - Vercel 웹 자동 배포
 
 #### 배포 현황
 | 플랫폼 | 버전 | 상태 |
 |--------|------|------|
-| iOS | 1.0.2 | App Store 배포 완료 |
-| iOS | 1.0.4 (빌드 9) | 심사 제출 완료 |
-| Android | 1.0.4 | Google Play 배포 완료 |
-| Android | 1.0.5 (versionCode 7) | 심사 제출 완료 |
+| iOS | 1.0.5 (빌드 10) | App Store 심사 승인 + 배포 완료 (02-27) |
+| Android | 1.0.5 (versionCode 8) | Google Play 심사 승인 + 배포 완료 (02-27) |
 | Web | 최신 | Vercel 자동 배포 완료 |
 
 ---
@@ -362,12 +447,12 @@ src/
 |---------|------|------|
 | ✅ | iOS 1.0.2 App Store 배포 완료 | 02-25 배포 |
 | ✅ | Android 1.0.4 Google Play 배포 완료 | 02-25 배포 |
-| 🟡 | iOS 1.0.4 (빌드 8) App Store Connect 업로드 + 심사 제출 | 02-26 빌드 완료 |
-| 🟡 | Android 1.0.5 (versionCode 6) Google Play 업로드 | 02-26 빌드 완료 |
+| ✅ | iOS 1.0.5 App Store 심사 승인 + 배포 완료 | 02-27 승인 |
+| ✅ | Android 1.0.5 Google Play 심사 승인 + 배포 완료 | 02-27 승인 |
 | ✅ | CRITICAL/HIGH 7건 수정 (더블클릭 방지, 호스트 검증, 오프라인 체크) | 완료 (02-26) |
 | ✅ | OAuth 콜백 자동 리다이렉트 개선 | 완료 (02-26) |
 | ✅ | 알림톡 service_role 호출 수정 | 완료 (02-26) |
-| 🔴 | 시드 데이터 삭제 (테스트 프로필 15명 + 조인 5개 + 채팅 12건) | 심사 통과 후 |
+| ✅ | 시드 데이터 삭제 (테스트 프로필 15명 + 조인 5개 + 채팅 12건) | 완료 (02-27) |
 | ✅ | 카카오 알림톡 연동 (알리고 + DB 직접 발송) | 완료 |
 | ✅ | 채팅 기능 대폭 개선 (멤버/나가기/수정/삭제/재입장) | 완료 |
 | ✅ | 조인 UX 정비 (4탭/매칭/자동거절) | 완료 |

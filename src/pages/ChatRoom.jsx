@@ -50,10 +50,14 @@ export default function ChatRoom() {
     }
   }, [chatId, enterRoom, leaveRoom])
 
-  // 새 메시지 시 스크롤
+  // 새 메시지 시에만 스크롤 (수정/삭제 시에는 스크롤하지 않음)
+  const prevMsgCountRef = useRef(messages.length)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (messages.length > prevMsgCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    prevMsgCountRef.current = messages.length
+  }, [messages.length])
 
   const handleSend = async () => {
     if (!messageInput.trim() || sending) return

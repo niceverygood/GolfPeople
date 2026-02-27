@@ -87,6 +87,25 @@ export default function ScoreStats() {
 
   const displayStats = calculateStats()
 
+  // 월별 평균 — filteredScores 기반으로 계산
+  const filteredMonthly = (() => {
+    const monthlyMap = {}
+    filteredScores.forEach(s => {
+      const month = s.date?.slice(0, 7) // "YYYY-MM"
+      if (!month) return
+      if (!monthlyMap[month]) monthlyMap[month] = { total: 0, count: 0 }
+      monthlyMap[month].total += s.total_score
+      monthlyMap[month].count++
+    })
+    return Object.entries(monthlyMap)
+      .map(([month, data]) => ({
+        month,
+        avgScore: Math.round(data.total / data.count),
+        count: data.count,
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+  })()
+
   const getScoreColor = (score, par = 72) => {
     const diff = score - par
     if (diff <= -5) return 'text-purple-400'
@@ -266,20 +285,20 @@ export default function ScoreStats() {
               </div>
             </div>
 
-            {/* 월별 평균 */}
-            {stats?.monthlyData && stats.monthlyData.length > 1 && (
+            {/* 월별 평균 — 기간 필터 적용 */}
+            {filteredMonthly.length > 1 && (
               <div className="px-4 py-4">
                 <h2 className="text-sm font-medium text-gp-text-secondary mb-3">월별 평균</h2>
                 <div className="bg-gp-gray/20 rounded-2xl p-4">
                   <div className="space-y-3">
-                    {stats.monthlyData.slice(-6).map((month) => {
-                      const [year, m] = month.month.split('-')
+                    {filteredMonthly.slice(-6).map((month) => {
+                      const [, m] = month.month.split('-')
                       const label = `${m}월`
-                      const maxAvg = Math.max(...stats.monthlyData.map(d => d.avgScore))
-                      const minAvg = Math.min(...stats.monthlyData.map(d => d.avgScore))
+                      const maxAvg = Math.max(...filteredMonthly.map(d => d.avgScore))
+                      const minAvg = Math.min(...filteredMonthly.map(d => d.avgScore))
                       const range = maxAvg - minAvg || 1
                       const width = ((maxAvg - month.avgScore) / range) * 60 + 40
-                      
+
                       return (
                         <div key={month.month} className="flex items-center gap-3">
                           <span className="text-xs text-gp-text-secondary w-8">{label}</span>
@@ -288,8 +307,8 @@ export default function ScoreStats() {
                               className="h-full rounded-full flex items-center justify-end px-2"
                               style={{
                                 width: `${width}%`,
-                                backgroundColor: month.avgScore <= 72 ? '#4ADE80' : 
-                                                month.avgScore <= 85 ? '#D4AF37' : 
+                                backgroundColor: month.avgScore <= 72 ? '#4ADE80' :
+                                                month.avgScore <= 85 ? '#D4AF37' :
                                                 month.avgScore <= 95 ? '#FB923C' : '#EF4444'
                               }}
                             >

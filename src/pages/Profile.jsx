@@ -545,7 +545,7 @@ export default function Profile() {
       {/* 차단 관리 모달 */}
       <AnimatePresence>
         {showBlockModal && (
-          <BlockManageModal onClose={() => setShowBlockModal(false)} />
+          <BlockManageModal onClose={() => setShowBlockModal(false)} currentUserId={user?.id} />
         )}
       </AnimatePresence>
       
@@ -1392,7 +1392,7 @@ function SettingsModal({ onClose }) {
 }
 
 // 차단 관리 모달
-function BlockManageModal({ onClose }) {
+function BlockManageModal({ onClose, currentUserId }) {
   const [blockedUsers, setBlockedUsers] = useState(() => {
     try {
       const saved = localStorage.getItem('gp_blocked_users')
@@ -1413,6 +1413,7 @@ function BlockManageModal({ onClose }) {
       const { default: supabase, isConnected } = await import('../lib/supabase')
       if (isConnected() && supabase) {
         await supabase.from('blocks').delete()
+          .eq('user_id', currentUserId)
           .eq('blocked_user_id', userId)
       }
     } catch (e) {

@@ -47,7 +47,10 @@ export default function RoundingHistory() {
     load()
   }, [user?.id])
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = (() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  })()
 
   const filteredJoins = joins.filter(j => {
     if (filter === 'upcoming') return ['open', 'confirmed', 'in_progress'].includes(j.status)

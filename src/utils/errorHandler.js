@@ -85,7 +85,8 @@ export const parseSupabaseError = (error) => {
     if (error.message.includes('JWT')) return ERROR_MESSAGES.session_expired
   }
 
-  return error.message || ERROR_MESSAGES.unknown
+  // raw Supabase 에러 메시지 노출 방지 (테이블명, 제약조건 등)
+  return ERROR_MESSAGES.unknown
 }
 
 /**

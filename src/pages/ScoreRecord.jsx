@@ -111,6 +111,11 @@ export default function ScoreRecord() {
   }
 
   const handleSubmit = async () => {
+    if (!user?.id) {
+      showToast.error('로그인이 필요합니다')
+      return
+    }
+
     // 입력값 검증
     const courseValidation = validateRequired(form.course_name, '코스명')
     if (!courseValidation.valid) {
@@ -146,10 +151,15 @@ export default function ScoreRecord() {
         ...(fromJoinId && !editingScore ? { join_id: fromJoinId } : {}),
       }
 
+      let result
       if (editingScore) {
-        await db.scores.update(editingScore.id, scoreData)
+        result = await db.scores.update(editingScore.id, scoreData)
       } else {
-        await db.scores.create(scoreData)
+        result = await db.scores.create(scoreData)
+      }
+
+      if (result?.error) {
+        throw result.error
       }
 
       await loadScores()
@@ -189,9 +199,14 @@ export default function ScoreRecord() {
 
   const handleDelete = async (scoreId) => {
     if (!confirm('이 기록을 삭제하시겠습니까?')) return
-    
+
     haptic.impact('medium')
-    await db.scores.delete(scoreId)
+    const { error } = await db.scores.delete(scoreId)
+    if (error) {
+      console.error('스코어 삭제 실패:', error)
+      showToast.error('삭제에 실패했습니다')
+      return
+    }
     await loadScores()
     await loadStats()
   }
