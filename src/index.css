@@ -70,7 +70,6 @@ body {
   position: relative;
   background: var(--gp-black);
   overflow: hidden;
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* 카드 스와이프 효과 */
