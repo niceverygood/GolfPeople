@@ -448,7 +448,12 @@ export const initializeNative = async () => {
     return
   }
   
-  // 상태바 설정
+  // 상태바 설정 — overlay 모드로 WebView 위에 겹치게
+  try {
+    await StatusBar.setOverlaysWebView({ overlay: true })
+  } catch (e) {
+    // setOverlaysWebView not available
+  }
   await statusBar.setDark()
   
   // 스플래시 숨기기 (앱 로드 완료 후)
