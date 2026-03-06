@@ -645,7 +645,23 @@ export const realtime = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: `to_user_id=eq.${userId}` }, callback)
       .subscribe()
   },
-  
+
+  subscribeToJoins: (callback) => {
+    if (!supabase) return null
+    return supabase
+      .channel('joins:all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'joins' }, callback)
+      .subscribe()
+  },
+
+  subscribeToJoinApplications: (userId, callback) => {
+    if (!supabase) return null
+    return supabase
+      .channel(`join_applications:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'join_applications' }, callback)
+      .subscribe()
+  },
+
   unsubscribe: (channel) => {
     if (supabase && channel) supabase.removeChannel(channel)
   },
