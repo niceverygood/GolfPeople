@@ -232,12 +232,12 @@ function AuthenticatedApp({ isOnboarded, onOnboardingComplete }) {
               <Route path="/auth/callback/native" element={<AuthCallbackNative />} />
             </Routes>
           </AnimatePresence>
-
-          {showTabBar && <TabBar />}
-
-          <ToastContainer />
-          <OfflineBanner />
         </div>
+
+        {showTabBar && <TabBar />}
+
+        <ToastContainer />
+        <OfflineBanner />
         </ChatProvider>
       </MarkerProvider>
     </AppProvider>

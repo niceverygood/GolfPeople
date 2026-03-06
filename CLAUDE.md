@@ -90,6 +90,51 @@ src/
 
 ---
 
+## 2026-03-03 (월) 작업일지
+
+### QA 테스트 + 버그 2건 수정 + 1.0.7 빌드/심사 제출 + 골프장 부킹 연동 조사
+
+#### QA 체크리스트 작성
+- `~/Desktop/골프피플_QA_체크리스트.md` 생성
+- 12개 카테고리: 인증/홈/조인/채팅/프로필/알림톡/결제/스코어/라운딩/UI/보안/네이티브
+- 120+ 테스트 항목 + E2E 시나리오 4개
+
+#### 버그 수정 2건
+
+**1. 하단 탭바 잘림 (일부 iPhone 기종)**
+- **증상**: 홈 인디케이터가 있는 iPhone에서 TabBar 라벨이 잘려 보임
+- **원인**: `capacitor.config.json`의 `contentInset: "always"` 설정에서 네이티브가 safe-area를 처리 → CSS `env(safe-area-inset-bottom)`이 0 반환 → `.safe-bottom` 패딩 없음
+- **수정**: `src/index.css` `.safe-bottom`에 `max(34px, env(safe-area-inset-bottom, 34px))` 적용 — 최소 34px 보장
+
+**2. 재가입 시 이전 추천 데이터 잔존**
+- **증상**: Supabase에서 프로필 직접 삭제 후 재가입하면 `gp_past_cards` 등 이전 추천 데이터 표시
+- **원인**: localStorage는 기기 로컬 저장소라 DB 삭제와 무관하게 유지
+- **수정**: `src/context/AuthContext.jsx`에 user ID 변경 감지 — `gp_user_id` 저장 후 다른 유저 로그인 시 `gp_*` 키 전체 삭제
+
+#### iOS 1.0.7 빌드 12 + Android 1.0.7 versionCode 10
+- iOS: `MARKETING_VERSION = 1.0.7`, `CURRENT_PROJECT_VERSION = 12`
+- Android: `versionCode 10`, `versionName "1.0.7"`
+- `npm run build` + `npx cap sync` + 병렬 빌드
+- iOS App Store Connect 업로드 + 심사 제출 완료
+- Android AAB (6.8MB) Google Play Console 업로드 + 심사 제출 완료
+
+#### 골프장 실시간 부킹 연동 가능성 조사
+- **xgolf.com**: robots.txt 크롤링 불허 (`Disallow: /`), 제휴 API 프로그램 존재하나 계약 필요
+- **greenit.co.kr**: 골프장 ERP 솔루션, 예약 데이터는 "골라가" 앱에서만 제공
+- **개별 골프장 사이트**: 대부분 로그인 필수 또는 Cloudflare 차단
+- **Golfzon County**: 공개 API 존재 (인증 불필요), 하지만 20개 골프장만 (비공식)
+- **Double Eagle (dbegl.com)**: 282개 골프장, robots.txt 크롤링 허용, 하지만 **취소티만** 제공 (전체 예약 현황 아님)
+- **결론**: 제휴 없이 전체 예약 현황 연동 불가 → 대표 보고 후 부킹 연동 기능 미추진 확정
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.7 (빌드 12) | App Store 심사 제출 완료, 승인 대기 |
+| Android | 1.0.7 (versionCode 10) | Google Play 심사 제출 완료, 승인 대기 |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+---
+
 ## 2026-02-27 (금) 작업일지
 
 ### 전체 코드 리뷰 2차 수행 + HIGH 4건 + MEDIUM 15건 수정 (17파일, +183/-73)
