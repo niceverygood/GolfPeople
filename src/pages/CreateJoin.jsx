@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import Portal from '../components/Portal'
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Trophy, Search, X, Check, ChevronRight, UserPlus, Heart } from 'lucide-react'
 import golfCourses from '../data/golfCourses.json'
 import { useApp } from '../context/AppContext'
@@ -388,7 +389,7 @@ export default function CreateJoin() {
 
               {/* 골프장 검색 모달 */}
               {showCourseSearch && (
-                <GolfCourseSearchModal
+                <Portal><GolfCourseSearchModal
                   courses={filteredCourses}
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
@@ -399,7 +400,7 @@ export default function CreateJoin() {
                     setShowCourseSearch(false)
                   }}
                   onClose={() => setShowCourseSearch(false)}
-                />
+                /></Portal>
               )}
             </motion.div>
           )}
@@ -851,7 +852,7 @@ function GolfCourseSearchModal({ courses, searchQuery, setSearchQuery, selectedR
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-gp-black"
+      className="fixed inset-0 z-[60] bg-gp-black"
     >
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2 safe-top">

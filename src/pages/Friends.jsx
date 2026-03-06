@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { useChat } from '../context/ChatContext'
 import * as friendService from '../lib/friendService'
 import VerificationBadges from '../components/VerificationBadges'
+import Portal from '../components/Portal'
 import { showToast } from '../utils/errorHandler'
 
 export default function Friends() {
@@ -106,7 +107,7 @@ export default function Friends() {
       </div>
 
       {/* 친구 목록 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pb-tab">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-gp-gold border-t-transparent rounded-full animate-spin" />
@@ -149,46 +150,50 @@ export default function Friends() {
       {/* 친구 삭제 확인 모달 */}
       <AnimatePresence>
         {showRemoveModal && (
-          <>
+          <Portal>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-50"
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5"
+              style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
               onClick={() => setShowRemoveModal(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-gp-card rounded-2xl p-6 z-50"
             >
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                  <UserX className="w-8 h-8 text-red-400" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">친구 삭제</h3>
-                <p className="text-gp-text-secondary text-sm mb-6">
-                  {showRemoveModal.name}님을 친구 목록에서<br />삭제하시겠습니까?
-                </p>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="w-full bg-gp-card rounded-2xl p-6"
+                style={{ maxWidth: 'min(384px, 90vw)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <UserX className="w-8 h-8 text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">친구 삭제</h3>
+                  <p className="text-gp-text-secondary text-sm mb-6">
+                    {showRemoveModal.name}님을 친구 목록에서<br />삭제하시겠습니까?
+                  </p>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowRemoveModal(null)}
-                    className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={() => handleRemoveFriend(showRemoveModal.id)}
-                    className="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold"
-                  >
-                    삭제
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowRemoveModal(null)}
+                      className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFriend(showRemoveModal.id)}
+                      className="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </>
+          </Portal>
         )}
       </AnimatePresence>
     </div>

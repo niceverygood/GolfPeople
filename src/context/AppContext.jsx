@@ -38,25 +38,33 @@ export function AppProvider({ children }) {
   // === 알림 ===
   const [notifications, setNotifications] = useState([])
 
-  // === 로컬 전용 (localStorage) ===
-  const [pastCards, setPastCards] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gp_past_cards')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      localStorage.removeItem('gp_past_cards')
-      return []
+  // === 로컬 전용 (localStorage, 유저별 분리) ===
+  const pastCardsKey = userId ? `gp_past_cards_${userId}` : null
+  const recHistoryKey = userId ? `gp_recommendation_history_${userId}` : null
+
+  const [pastCards, setPastCards] = useState([])
+  const [recommendationHistory, setRecommendationHistory] = useState({})
+
+  // userId 변경 시 해당 유저의 localStorage 로드
+  useEffect(() => {
+    if (!userId) {
+      setPastCards([])
+      setRecommendationHistory({})
+      return
     }
-  })
-  const [recommendationHistory, setRecommendationHistory] = useState(() => {
     try {
-      const saved = localStorage.getItem('gp_recommendation_history')
-      return saved ? JSON.parse(saved) : {}
+      const saved = localStorage.getItem(`gp_past_cards_${userId}`)
+      setPastCards(saved ? JSON.parse(saved) : [])
     } catch {
-      localStorage.removeItem('gp_recommendation_history')
-      return {}
+      setPastCards([])
     }
-  })
+    try {
+      const saved = localStorage.getItem(`gp_recommendation_history_${userId}`)
+      setRecommendationHistory(saved ? JSON.parse(saved) : {})
+    } catch {
+      setRecommendationHistory({})
+    }
+  }, [userId])
 
   // === currentUser (하위 호환) ===
   const currentUser = profile ? mapProfileToUser(profile) : null
@@ -510,18 +518,20 @@ export function AppProvider({ children }) {
   // 프로필 업데이트 (하위 호환)
   const updateProfile = useCallback(() => {}, [])
 
-  // 지난 카드 (localStorage)
+  // 지난 카드 (localStorage, 유저별)
   const addPastCard = useCallback((user) => {
+    if (!userId) return
     setPastCards(prev => {
       const filtered = prev.filter(c => c.id !== user.id)
       const updated = [{ ...user, viewedAt: new Date().toISOString() }, ...filtered]
-      localStorage.setItem('gp_past_cards', JSON.stringify(updated.slice(0, 50)))
+      localStorage.setItem(`gp_past_cards_${userId}`, JSON.stringify(updated.slice(0, 50)))
       return updated
     })
-  }, [])
+  }, [userId])
 
-  // 추천 기록 (localStorage)
+  // 추천 기록 (localStorage, 유저별)
   const saveDailyRecommendation = useCallback((dateKey, recommendations) => {
+    if (!userId) return
     setRecommendationHistory(prev => {
       const newHistory = { ...prev, [dateKey]: recommendations }
       const dates = Object.keys(newHistory).sort().reverse()
@@ -529,24 +539,23 @@ export function AppProvider({ children }) {
         const keysToKeep = dates.slice(0, 14)
         const trimmed = {}
         keysToKeep.forEach(d => { trimmed[d] = newHistory[d] })
-        localStorage.setItem('gp_recommendation_history', JSON.stringify(trimmed))
+        localStorage.setItem(`gp_recommendation_history_${userId}`, JSON.stringify(trimmed))
         return trimmed
       }
-      localStorage.setItem('gp_recommendation_history', JSON.stringify(newHistory))
+      localStorage.setItem(`gp_recommendation_history_${userId}`, JSON.stringify(newHistory))
       return newHistory
     })
-  }, [])
+  }, [userId])
 
-  // 매칭 불가능한 오래된 추천 히스토리 정리 + 빈 히스토리 시드 생성
+  // 매칭 불가능한 오래된 추천 히스토리 정리
   useEffect(() => {
-    if (users.length === 0) return
+    if (users.length === 0 || !userId) return
     const userIdSet = new Set(users.map(u => u.id))
 
     setRecommendationHistory(prev => {
       let changed = false
       const cleaned = { ...prev }
 
-      // 1) 매칭 불가 날짜 삭제
       Object.entries(cleaned).forEach(([date, recs]) => {
         if (!recs) return
         const allIds = Object.values(recs).flat()
@@ -557,57 +566,12 @@ export function AppProvider({ children }) {
         }
       })
 
-      // 2) 유효한 과거 데이터가 없으면 최근 7일분 시드 생성
-      const today = new Date().toISOString().split('T')[0]
-      const pastDates = Object.keys(cleaned).filter(d => d !== today)
-      if (pastDates.length === 0 && users.length >= 2) {
-        const userIds = users.map(u => u.id)
-        const timeSlots = ['noon', 'afternoon', 'evening', 'night']
-
-        for (let i = 1; i <= 7; i++) {
-          const d = new Date()
-          d.setDate(d.getDate() - i)
-          const dateKey = d.toISOString().split('T')[0]
-          const dateSeed = dateKey.split('-').reduce((sum, n) => sum * 100 + parseInt(n), 0)
-
-          const dayRecs = {}
-          const usedIds = new Set()
-          timeSlots.forEach((slot, slotIdx) => {
-            // 간단한 시드 기반 셔플
-            let s = dateSeed + slotIdx * 7919
-            const shuffled = [...userIds]
-            for (let j = shuffled.length - 1; j > 0; j--) {
-              s = (s * 1103515245 + 12345) & 0x7fffffff
-              const k = s % (j + 1)
-              ;[shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]]
-            }
-            const picked = []
-            for (const id of shuffled) {
-              if (picked.length >= 2) break
-              if (!usedIds.has(id)) {
-                picked.push(id)
-                usedIds.add(id)
-              }
-            }
-            if (picked.length < 2) {
-              for (const id of shuffled) {
-                if (picked.length >= 2) break
-                if (!picked.includes(id)) picked.push(id)
-              }
-            }
-            dayRecs[slot] = picked
-          })
-          cleaned[dateKey] = dayRecs
-        }
-        changed = true
-      }
-
       if (changed) {
-        localStorage.setItem('gp_recommendation_history', JSON.stringify(cleaned))
+        localStorage.setItem(`gp_recommendation_history_${userId}`, JSON.stringify(cleaned))
       }
       return changed ? cleaned : prev
     })
-  }, [users])
+  }, [users, userId])
 
   const value = useMemo(() => ({
     // 데이터

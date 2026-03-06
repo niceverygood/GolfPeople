@@ -4,6 +4,7 @@
  */
 
 import React from 'react'
+import Portal from './Portal'
 
 /**
  * 로딩 스피너
@@ -37,12 +38,14 @@ export const Spinner = ({ size = 'md', color = 'gold', className = '' }) => {
  */
 export const FullScreenLoading = ({ message = '로딩 중...' }) => {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gp-black/80 backdrop-blur-sm">
+    <Portal>
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gp-black/80 backdrop-blur-sm">
       <Spinner size="lg" color="gold" />
       {message && (
         <p className="mt-4 text-gp-text-secondary">{message}</p>
       )}
     </div>
+    </Portal>
   )
 }
 

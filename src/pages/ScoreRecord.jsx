@@ -9,6 +9,7 @@ import golfCourses from '../data/golfCourses.json'
 import { showToast } from '../utils/errorHandler'
 import { validateRequired, validateGolfScore } from '../utils/validation'
 import { ButtonLoading } from '../components/LoadingSpinner'
+import Portal from '../components/Portal'
 
 // 날씨 옵션
 const WEATHER_OPTIONS = [
@@ -278,7 +279,7 @@ export default function ScoreRecord() {
         </div>
       </div>
 
-      <div className="pb-24 overflow-y-auto">
+      <div className="pb-tab overflow-y-auto">
         {/* 통계 요약 */}
         {stats && (
           <div className="px-4 py-6 border-b border-gp-gray/20">
@@ -438,11 +439,11 @@ export default function ScoreRecord() {
       {/* 스코어 입력 모달 */}
       <AnimatePresence>
         {showAddModal && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 flex items-end"
+            className="fixed inset-0 z-[60] bg-black/80 flex items-end"
             onClick={() => setShowAddModal(false)}
           >
             <motion.div
@@ -646,7 +647,7 @@ export default function ScoreRecord() {
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
     </motion.div>

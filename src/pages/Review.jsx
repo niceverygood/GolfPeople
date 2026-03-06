@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Star, X, Check, ChevronRight, Clock, MessageCircle, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import Portal from '../components/Portal'
 import { showToast } from '../utils/errorHandler'
 import {
   REVIEW_TAGS,
@@ -189,7 +190,7 @@ export default function Review() {
       {/* 리뷰 작성 모달 */}
       <AnimatePresence>
         {showReviewModal && selectedTarget && (
-          <WriteReviewModal
+          <Portal><WriteReviewModal
             target={selectedTarget}
             userId={user?.id}
             onClose={() => {
@@ -197,7 +198,7 @@ export default function Review() {
               setSelectedTarget(null)
             }}
             onComplete={handleReviewComplete}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
     </div>
@@ -393,7 +394,7 @@ function WriteReviewModal({ target, userId, onClose, onComplete }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/80 flex items-end"
+      className="fixed inset-0 z-[60] bg-black/80 flex items-end"
       onClick={onClose}
     >
       <motion.div

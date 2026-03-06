@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Portal from '../components/Portal'
 import { 
   ChevronLeft, 
   Coins, 
@@ -389,11 +390,11 @@ export default function Store() {
       {/* 결제 모달 */}
       <AnimatePresence>
         {showPayment && selectedProduct && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center"
+            className="fixed inset-0 z-[60] bg-black/80 flex items-end justify-center"
             onClick={() => !purchasing && setShowPayment(false)}
           >
             <motion.div
@@ -539,18 +540,18 @@ export default function Store() {
                 </>
               )}
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
 
       {/* 거래 내역 모달 */}
       <AnimatePresence>
         {showHistory && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center"
+            className="fixed inset-0 z-[60] bg-black/80 flex items-end justify-center"
             onClick={() => setShowHistory(false)}
           >
             <motion.div
@@ -581,7 +582,7 @@ export default function Store() {
                 )}
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
     </motion.div>

@@ -103,7 +103,7 @@ export default function RoundingHistory() {
         </div>
       </div>
 
-      <div className="pb-24 overflow-y-auto">
+      <div className="pb-tab overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-gp-gold border-t-transparent rounded-full animate-spin" />

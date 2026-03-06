@@ -2,6 +2,7 @@ import UIKit
 import Capacitor
 import FirebaseCore
 import FirebaseAuth
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -10,6 +11,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
+
+        // WKWebView 캐시 완전 삭제 (모든 웹 데이터)
+        let dataStore = WKWebsiteDataStore.default()
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+        let sinceDate = Date(timeIntervalSince1970: 0)
+        dataStore.removeData(ofTypes: dataTypes, modifiedSince: sinceDate) {
+            print("WKWebView cache cleared")
+        }
+
         return true
     }
 

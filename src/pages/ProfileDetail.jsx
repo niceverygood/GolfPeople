@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle, Star } from 'lucide-react'
+import { ChevronLeft, MapPin, Trophy, Clock, Shield, UserPlus, Heart, MoreVertical, Flag, Ban, TrendingUp, TrendingDown, Minus, Target, MessageCircle, Star, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useMarker } from '../context/MarkerContext'
 import { useAuth } from '../context/AuthContext'
@@ -14,6 +14,7 @@ import VerificationBadges from '../components/VerificationBadges'
 import MarkerIcon from '../components/icons/MarkerIcon'
 import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
+import Portal from '../components/Portal'
 
 // 친구 요청 마커 비용
 const FRIEND_REQUEST_COST = 3
@@ -326,21 +327,17 @@ export default function ProfileDetail() {
         </div>
       </div>
       
-      {/* 큰 사진 */}
-      <div className="relative h-96 flex-shrink-0">
-        <img
-          src={user.photos?.[0] || '/default-profile.png'}
-          alt={user.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-gp-black via-transparent to-transparent" />
-      </div>
+      {/* safe-area 상단 여백 (노치/상태바 뒤에 사진이 숨지 않도록) */}
+      <div className="w-full bg-gp-black safe-top flex-shrink-0" />
+
+      {/* 프로필 사진 (스와이프) */}
+      <ProfilePhotoCarousel photos={user.photos} name={user.name} />
       
       {/* 상세 정보 */}
       <div className="px-6 pb-8 -mt-20 relative flex-1">
         {/* 기본 정보 */}
         <div className="mb-4">
-          <h2 className="text-3xl font-bold mb-2">{user.name}, {user.age}</h2>
+          <h2 className="text-3xl font-bold mb-2">{user.name}</h2>
           <VerificationBadges user={user} scoreStats={user.scoreStats} rating={userRating} />
         </div>
         
@@ -530,95 +527,99 @@ export default function ProfileDetail() {
       {/* 친구 요청 모달 */}
       <AnimatePresence>
         {showRequestModal && user && (
-          <FriendRequestModal
+          <Portal><FriendRequestModal
             user={user}
             onClose={() => setShowRequestModal(false)}
             onSend={handleSendRequest}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
       
       {/* 마커 확인 모달 */}
       <AnimatePresence>
         {showMarkerModal && (
-          <>
+          <Portal>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-50"
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5"
+              style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
               onClick={() => setShowMarkerModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-gp-card rounded-2xl p-6 z-50"
             >
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center mx-auto mb-4">
-                  <MarkerIcon className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">친구 요청</h3>
-                <p className="text-gp-text-secondary text-sm mb-4">
-                  친구 요청을 보내시겠습니까?
-                </p>
-                
-                <div className="bg-gp-black/30 rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gp-text-secondary">필요 마커</span>
-                    <span className="font-bold text-gp-gold flex items-center gap-1">
-                      <MarkerIcon className="w-4 h-4" />
-                      {FRIEND_REQUEST_COST}개
-                    </span>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="w-full bg-gp-card rounded-2xl p-6"
+                style={{ maxWidth: 'min(384px, 90vw)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-gp-gold/20 flex items-center justify-center mx-auto mb-4">
+                    <MarkerIcon className="w-8 h-8" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gp-text-secondary">보유 마커</span>
-                    <span className={`font-bold flex items-center gap-1 ${balance < FRIEND_REQUEST_COST ? 'text-red-400' : 'text-white'}`}>
-                      <MarkerIcon className="w-4 h-4" />
-                      {balance}개
-                    </span>
-                  </div>
-                </div>
-                
-                {balance < FRIEND_REQUEST_COST && (
-                  <p className="text-red-400 text-sm mb-4">
-                    마커가 부족합니다
+                  <h3 className="text-lg font-bold mb-2">친구 요청</h3>
+                  <p className="text-gp-text-secondary text-sm mb-4">
+                    친구 요청을 보내시겠습니까?
                   </p>
-                )}
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowMarkerModal(false)}
-                    className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
-                  >
-                    취소
-                  </button>
-                  {balance < FRIEND_REQUEST_COST ? (
-                    <button
-                      onClick={() => {
-                        setShowMarkerModal(false)
-                        navigate('/store')
-                      }}
-                      className="flex-1 py-3 rounded-xl btn-gold font-semibold"
-                    >
-                      충전하기
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleConfirmMarker}
-                      className="flex-1 py-3 rounded-xl btn-gold font-semibold"
-                    >
-                      요청하기
-                    </button>
+
+                  <div className="bg-gp-black/30 rounded-xl p-4 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gp-text-secondary">필요 마커</span>
+                      <span className="font-bold text-gp-gold flex items-center gap-1">
+                        <MarkerIcon className="w-4 h-4" />
+                        {FRIEND_REQUEST_COST}개
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gp-text-secondary">보유 마커</span>
+                      <span className={`font-bold flex items-center gap-1 ${balance < FRIEND_REQUEST_COST ? 'text-red-400' : 'text-white'}`}>
+                        <MarkerIcon className="w-4 h-4" />
+                        {balance}개
+                      </span>
+                    </div>
+                  </div>
+
+                  {balance < FRIEND_REQUEST_COST && (
+                    <p className="text-red-400 text-sm mb-4">
+                      마커가 부족합니다
+                    </p>
                   )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowMarkerModal(false)}
+                      className="flex-1 py-3 rounded-xl bg-gp-border text-gp-text-secondary font-medium"
+                    >
+                      취소
+                    </button>
+                    {balance < FRIEND_REQUEST_COST ? (
+                      <button
+                        onClick={() => {
+                          setShowMarkerModal(false)
+                          navigate('/store')
+                        }}
+                        className="flex-1 py-3 rounded-xl btn-gold font-semibold"
+                      >
+                        충전하기
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleConfirmMarker}
+                        className="flex-1 py-3 rounded-xl btn-gold font-semibold"
+                      >
+                        요청하기
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </>
+          </Portal>
         )}
       </AnimatePresence>
-      
+
       {/* 전화번호 인증 모달 */}
       <PhoneVerifyModal
         isOpen={phoneVerify.showModal}
@@ -629,18 +630,168 @@ export default function ProfileDetail() {
       {/* 신고 모달 */}
       <AnimatePresence>
         {showReportModal && (
-          <ReportModal
+          <Portal><ReportModal
             userName={user?.name}
             onSubmit={handleSubmitReport}
             onClose={() => setShowReportModal(false)}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
     </motion.div>
   )
 }
 
-// 친구 요청 모달
+// 프로필 사진 캐러셀 (스와이프 + 인디케이터 + 그라데이션 + 전체화면 뷰어)
+function ProfilePhotoCarousel({ photos, name }) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [fullscreen, setFullscreen] = useState(false)
+  const touchStartX = useRef(0)
+  const touchEndX = useRef(0)
+
+  const photoList = photos?.length > 0 ? photos : ['/default-profile.png']
+
+  const handleSwipe = (setIdx, length) => {
+    const diff = touchStartX.current - touchEndX.current
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) setIdx(i => Math.min(i + 1, length - 1))
+      if (diff < 0) setIdx(i => Math.max(i - 1, 0))
+    }
+  }
+
+  return (
+    <>
+      <div
+        className="relative w-full flex-shrink-0 overflow-hidden"
+        style={{ height: '60vh', maxHeight: '480px', minHeight: '320px' }}
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+        onTouchMove={(e) => { touchEndX.current = e.touches[0].clientX }}
+        onTouchEnd={() => handleSwipe(setCurrentIndex, photoList.length)}
+        onClick={() => setFullscreen(true)}
+      >
+        <div
+          className="flex h-full transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {photoList.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`${name} ${i + 1}`}
+              className="w-full h-full object-cover flex-shrink-0"
+              draggable={false}
+            />
+          ))}
+        </div>
+        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none" style={{ height: '35%' }} />
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-gp-black via-gp-black/70 to-transparent pointer-events-none" style={{ height: '40%' }} />
+        {photoList.length > 1 && (
+          <div className="absolute top-4 inset-x-0 flex justify-center gap-1.5 z-10 px-8">
+            {photoList.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 rounded-full flex-1 transition-colors ${i === currentIndex ? 'bg-white' : 'bg-white/30'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 전체화면 사진 뷰어 */}
+      <AnimatePresence>
+        {fullscreen && (
+          <FullscreenPhotoViewer
+            photos={photoList}
+            initialIndex={currentIndex}
+            onClose={() => setFullscreen(false)}
+            onIndexChange={setCurrentIndex}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
+// 전체화면 사진 뷰어
+function FullscreenPhotoViewer({ photos, initialIndex, onClose, onIndexChange }) {
+  const [index, setIndex] = useState(initialIndex)
+  const touchStartX = useRef(0)
+  const touchEndX = useRef(0)
+
+  const go = (dir) => {
+    setIndex(i => {
+      const next = i + dir
+      if (next < 0 || next >= photos.length) return i
+      onIndexChange?.(next)
+      return next
+    })
+  }
+
+  return (
+    <Portal>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[70] bg-black flex flex-col"
+        style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
+      >
+        {/* 상단 바 */}
+        <div className="flex items-center justify-between px-4 pt-4 safe-top shrink-0">
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+          {photos.length > 1 && (
+            <span className="text-white/70 text-sm">{index + 1} / {photos.length}</span>
+          )}
+          <div className="w-10" />
+        </div>
+
+        {/* 사진 */}
+        <div
+          className="flex-1 flex items-center justify-center overflow-hidden"
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+          onTouchMove={(e) => { touchEndX.current = e.touches[0].clientX }}
+          onTouchEnd={() => {
+            const diff = touchStartX.current - touchEndX.current
+            if (Math.abs(diff) > 50) go(diff > 0 ? 1 : -1)
+          }}
+        >
+          <div
+            className="flex h-full w-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${index * 100}%)` }}
+          >
+            {photos.map((src, i) => (
+              <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-4">
+                <img
+                  src={src}
+                  alt={`${i + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 하단 인디케이터 */}
+        {photos.length > 1 && (
+          <div className="flex justify-center gap-2 pb-6 safe-bottom shrink-0">
+            {photos.map((_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full transition-colors ${i === index ? 'bg-white' : 'bg-white/30'}`}
+              />
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </Portal>
+  )
+}
+
 function FriendRequestModal({ user, onClose, onSend }) {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -657,7 +808,7 @@ function FriendRequestModal({ user, onClose, onSend }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <motion.div
@@ -729,7 +880,7 @@ function ReportModal({ userName, onSubmit, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <motion.div

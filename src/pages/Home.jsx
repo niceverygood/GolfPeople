@@ -11,6 +11,7 @@ import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { getTimeAgo } from '../utils/formatTime'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
 import VerificationBadges from '../components/VerificationBadges'
+import Portal from '../components/Portal'
 
 // 로컬 날짜 (한국 시간 기준 YYYY-MM-DD)
 const getLocalToday = () => {
@@ -304,7 +305,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-auto pb-24">
+    <div className="flex-1 flex flex-col h-full overflow-auto pb-tab">
       {/* 헤더 */}
       <div className="px-6 pt-4 pb-4 safe-top sticky top-0 bg-gp-black/90 backdrop-blur-lg z-10">
         <div className="flex items-start justify-between mb-4">
@@ -759,8 +760,9 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
   const activeFilters = Object.entries(localFilters).flatMap(([key, values]) => values)
 
   return (
+    <Portal>
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -770,7 +772,7 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* 모달 컨텐츠 */}
       <motion.div
         className="relative w-full bg-gp-black rounded-t-3xl overflow-hidden max-h-[85vh] max-w-lg mx-auto"
@@ -922,6 +924,7 @@ function FilterModal({ filters, setFilters, onClose, matchCount }) {
         </div>
       </motion.div>
     </motion.div>
+    </Portal>
   )
 }
 
@@ -995,13 +998,14 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
   }
   
   const unreadCount = notifications.filter(n => !n.isRead).length
-  
+
   return (
+    <Portal>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60"
+      className="fixed inset-0 z-[60] bg-black/60"
       onClick={onClose}
     >
       <motion.div
@@ -1126,5 +1130,6 @@ function NotificationModal({ notifications, onClose, onMarkAsRead, onMarkAllAsRe
         </div>
       </motion.div>
     </motion.div>
+    </Portal>
   )
 }

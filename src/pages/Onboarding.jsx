@@ -33,8 +33,7 @@ const TIMES = ['평일 오전', '평일 오후', '주말 오전', '주말 오후
 export default function Onboarding({ onComplete }) {
   const { user, updateProfile } = useAuth()
   const [step, setStep] = useState(0)
-  const [photo, setPhoto] = useState(null)
-  const [photoFile, setPhotoFile] = useState(null) // 원본 파일 (업로드용)
+  const [photos, setPhotos] = useState([]) // 여러 장 base64
   const [selectedProvince, setSelectedProvince] = useState('') // 선택된 시/도
   const [regions, setRegions] = useState([]) // 선택된 지역들 (다중)
   const [handicap, setHandicap] = useState('')
@@ -53,25 +52,29 @@ export default function Onboarding({ onComplete }) {
   }
 
   const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      try {
-        const { resizeImage } = await import('../utils/imageResize')
-        const resized = await resizeImage(file)
-        setPhoto(resized)
-        // 리사이즈된 base64를 Blob으로 변환하여 업로드용으로 저장
-        const res = await fetch(resized)
-        const blob = await res.blob()
-        const resizedFile = new File([blob], file.name, { type: blob.type || 'image/jpeg' })
-        setPhotoFile(resizedFile)
-      } catch (err) {
-        console.error('이미지 리사이즈 에러:', err)
-        setPhotoFile(file) // 리사이즈 실패 시 원본 사용
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    if (photos.length + files.length > 6) {
+      showToast.error('사진은 최대 6장까지 가능해요')
+      return
+    }
+    try {
+      const { resizeImage } = await import('../utils/imageResize')
+      const resizedArr = await Promise.all(files.map(f => resizeImage(f)))
+      setPhotos(prev => [...prev, ...resizedArr])
+    } catch (err) {
+      console.error('이미지 리사이즈 에러:', err)
+      // 리사이즈 실패 시 원본 base64
+      for (const file of files) {
         const reader = new FileReader()
-        reader.onloadend = () => setPhoto(reader.result)
+        reader.onloadend = () => setPhotos(prev => [...prev, reader.result])
         reader.readAsDataURL(file)
       }
     }
+  }
+
+  const handlePhotoDelete = (index) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index))
   }
 
   const toggleStyle = (style) => {
@@ -84,7 +87,7 @@ export default function Onboarding({ onComplete }) {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return !!photo // 프로필 사진 필수
+      case 0: return photos.length > 0 // 프로필 사진 최소 1장 필수
       case 1: return regions.length > 0 && handicap
       case 2: return styles.length > 0 && time
       default: return false
@@ -107,25 +110,23 @@ export default function Onboarding({ onComplete }) {
             times: [time],
           }
 
-          // 사진이 있으면 Storage에 업로드
-          if (photoFile) {
-            try {
-              const { url, error: uploadError } = await storage.uploadProfileImage(user.id, photoFile)
-              if (uploadError) {
-                console.error('사진 업로드 에러:', uploadError)
-              }
-              if (url) {
-                profileUpdate.photos = [url]
-              } else if (photo) {
-                // Storage 업로드 실패 시 base64 임시 저장 (프로필 편집에서 재업로드 가능)
-                profileUpdate.photos = [photo]
-              }
-            } catch (uploadErr) {
-              console.error('사진 업로드 예외:', uploadErr)
-              if (photo) {
-                profileUpdate.photos = [photo]
-              }
-            }
+          // 사진들 Storage에 업로드
+          if (photos.length > 0) {
+            const uploadResults = await Promise.allSettled(
+              photos.map(async (photoBase64) => {
+                try {
+                  const res = await fetch(photoBase64)
+                  const blob = await res.blob()
+                  const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
+                  const { url, error: uploadError } = await storage.uploadProfileImage(user.id, file)
+                  if (uploadError || !url) return photoBase64 // fallback to base64
+                  return url
+                } catch {
+                  return photoBase64 // fallback to base64
+                }
+              })
+            )
+            profileUpdate.photos = uploadResults.map(r => r.status === 'fulfilled' ? r.value : photos[0])
           }
 
           const { error } = await updateProfile(profileUpdate)
@@ -133,7 +134,7 @@ export default function Onboarding({ onComplete }) {
         }
 
         // 로컬스토리지에도 프로필 저장
-        const profileLocal = { photo, regions, handicap, styles, time }
+        const profileLocal = { photos, regions, handicap, styles, time }
         localStorage.setItem('gp_profile', JSON.stringify(profileLocal))
         setIsSaving(false)
         onComplete()
@@ -160,38 +161,44 @@ export default function Onboarding({ onComplete }) {
             <div className="flex-1 flex flex-col items-center justify-center">
               <h2 className="text-2xl font-bold mb-2 text-center">프로필 사진을 올려주세요</h2>
               <p className="text-gp-text-secondary text-center mb-8">
-                골프치는 모습이면 더 좋아요 ⛳
+                골프치는 모습이면 더 좋아요 ⛳ (최대 6장)
               </p>
 
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-                {photo ? (
-                  <div className="relative">
-                    <img
-                      src={photo}
-                      alt="프로필"
-                      className="w-48 h-64 object-cover rounded-3xl"
+              <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+                {photos.map((p, i) => (
+                  <div key={i} className="relative aspect-[3/4] rounded-2xl overflow-hidden">
+                    <img src={p} alt={`사진 ${i + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => handlePhotoDelete(i)}
+                      className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center"
+                    >
+                      <span className="text-white text-xs font-bold">✕</span>
+                    </button>
+                    {i === 0 && (
+                      <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-gp-gold rounded-full">
+                        <span className="text-[10px] font-bold text-gp-black">대표</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {photos.length < 6 && (
+                  <label className="cursor-pointer aspect-[3/4] rounded-2xl bg-gp-card border-2 border-dashed border-gp-border flex flex-col items-center justify-center gap-2 hover:border-gp-gold transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="hidden"
                     />
-                    <div className="absolute inset-0 bg-black/20 rounded-3xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Camera className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-48 h-64 rounded-3xl bg-gp-card border-2 border-dashed border-gp-border flex flex-col items-center justify-center gap-3 hover:border-gp-gold transition-colors">
-                    <Camera className="w-12 h-12 text-gp-text-secondary" />
-                    <span className="text-gp-text-secondary text-sm">탭하여 업로드</span>
-                  </div>
+                    <Camera className="w-8 h-8 text-gp-text-secondary" />
+                    <span className="text-gp-text-secondary text-[10px]">추가</span>
+                  </label>
                 )}
-              </label>
+              </div>
 
-              {!photo && (
+              {photos.length === 0 && (
                 <p className="text-gp-text-secondary text-xs mt-6 text-center">
-                  프로필 사진은 필수입니다
+                  프로필 사진은 최소 1장 필수입니다
                 </p>
               )}
             </div>

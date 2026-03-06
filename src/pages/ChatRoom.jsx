@@ -7,6 +7,7 @@ import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
 import { formatChatTime } from '../utils/formatTime'
 import { showToast } from '../utils/errorHandler'
+import Portal from '../components/Portal'
 
 // 메시지 sanitize 함수 (XSS 방지)
 const sanitizeMessage = (text) => {
@@ -554,22 +555,22 @@ export default function ChatRoom() {
       {/* 신고 모달 */}
       <AnimatePresence>
         {showReportModal && (
-          <ReportModal
+          <Portal><ReportModal
             userName={chat?.partnerName}
             onSubmit={handleSubmitReport}
             onClose={() => setShowReportModal(false)}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
 
       {/* 멤버 목록 모달 */}
       <AnimatePresence>
         {showMembers && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+            className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
             onClick={() => setShowMembers(false)}
           >
             <motion.div
@@ -611,18 +612,18 @@ export default function ChatRoom() {
                 닫기
               </button>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
 
       {/* 메시지 액션 모달 (수정/삭제) */}
       <AnimatePresence>
         {selectedMessage && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
             onClick={() => setSelectedMessage(null)}
           >
             <motion.div
@@ -654,7 +655,7 @@ export default function ChatRoom() {
                 모두에게서 삭제
               </button>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
 
@@ -710,11 +711,11 @@ export default function ChatRoom() {
       {/* 채팅방 나가기 확인 모달 */}
       <AnimatePresence>
         {showLeaveConfirm && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
             onClick={() => setShowLeaveConfirm(false)}
           >
             <motion.div
@@ -743,7 +744,7 @@ export default function ChatRoom() {
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
     </motion.div>
@@ -767,7 +768,7 @@ function ReportModal({ userName, onSubmit, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <motion.div
