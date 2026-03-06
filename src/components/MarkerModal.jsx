@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { X, AlertCircle } from 'lucide-react'
+import Portal from './Portal'
 import MarkerIcon from './icons/MarkerIcon'
 
 // 마커 부족 모달
@@ -13,13 +14,15 @@ export function InsufficientMarkerModal({ isOpen, onClose, requiredAmount, curre
   }
 
   return (
+    <Portal>
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5"
+          style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
           onClick={onClose}
         >
           <motion.div
@@ -27,7 +30,8 @@ export function InsufficientMarkerModal({ isOpen, onClose, requiredAmount, curre
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={e => e.stopPropagation()}
-            className="bg-gp-card rounded-2xl p-6 mx-6 max-w-sm w-full"
+            className="bg-gp-card rounded-2xl p-6 w-full"
+            style={{ maxWidth: 'min(384px, 90vw)' }}
           >
             {/* 아이콘 */}
             <div className="flex justify-center mb-4">
@@ -38,7 +42,7 @@ export function InsufficientMarkerModal({ isOpen, onClose, requiredAmount, curre
 
             {/* 제목 */}
             <h3 className="text-xl font-bold text-center mb-2">마커가 부족해요</h3>
-            
+
             {/* 설명 */}
             <p className="text-gp-text-secondary text-center mb-4">
               {actionName}에 마커 {requiredAmount}개가 필요해요
@@ -81,19 +85,22 @@ export function InsufficientMarkerModal({ isOpen, onClose, requiredAmount, curre
         </motion.div>
       )}
     </AnimatePresence>
+    </Portal>
   )
 }
 
 // 마커 사용 확인 모달
 export function ConfirmMarkerModal({ isOpen, onClose, onConfirm, requiredAmount, currentBalance, actionName, loading }) {
   return (
+    <Portal>
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5"
+          style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
           onClick={onClose}
         >
           <motion.div
@@ -101,7 +108,8 @@ export function ConfirmMarkerModal({ isOpen, onClose, onConfirm, requiredAmount,
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={e => e.stopPropagation()}
-            className="bg-gp-card rounded-2xl p-6 mx-6 max-w-sm w-full"
+            className="bg-gp-card rounded-2xl p-6 w-full"
+            style={{ maxWidth: 'min(384px, 90vw)' }}
           >
             {/* 아이콘 */}
             <div className="flex justify-center mb-4">
@@ -112,7 +120,7 @@ export function ConfirmMarkerModal({ isOpen, onClose, onConfirm, requiredAmount,
 
             {/* 제목 */}
             <h3 className="text-xl font-bold text-center mb-2">{actionName}</h3>
-            
+
             {/* 설명 */}
             <p className="text-gp-text-secondary text-center mb-4">
               마커 {requiredAmount}개를 사용합니다
@@ -157,6 +165,7 @@ export function ConfirmMarkerModal({ isOpen, onClose, onConfirm, requiredAmount,
         </motion.div>
       )}
     </AnimatePresence>
+    </Portal>
   )
 }
 

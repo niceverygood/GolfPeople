@@ -14,6 +14,7 @@ import { showToast, getErrorMessage } from '../utils/errorHandler'
 import { shareJoinToKakao } from '../lib/kakao'
 import { getJoinDetail, confirmJoin, startRounding } from '../lib/joinService'
 import { formatJoinDate } from '../utils/formatTime'
+import Portal from '../components/Portal'
 
 export default function JoinDetail() {
   const { id } = useParams()
@@ -481,7 +482,7 @@ export default function JoinDetail() {
       {/* 공유 모달 */}
       <AnimatePresence>
         {showShareModal && (
-          <ShareModal join={join} onClose={() => setShowShareModal(false)} />
+          <Portal><ShareModal join={join} onClose={() => setShowShareModal(false)} /></Portal>
         )}
       </AnimatePresence>
       
@@ -529,7 +530,7 @@ function ApplyModal({ join, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <motion.div
@@ -678,7 +679,7 @@ function ShareModal({ join, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <motion.div

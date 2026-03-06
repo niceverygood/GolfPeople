@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, ShieldCheck, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import Portal from './Portal'
 
 export default function PhoneVerifyModal({ isOpen, onClose, message }) {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function PhoneVerifyModal({ isOpen, onClose, message }) {
   if (!isOpen) return null
 
   return (
+    <Portal>
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -78,6 +80,7 @@ export default function PhoneVerifyModal({ isOpen, onClose, message }) {
         </motion.div>
       </motion.div>
     </AnimatePresence>
+    </Portal>
   )
 }
 

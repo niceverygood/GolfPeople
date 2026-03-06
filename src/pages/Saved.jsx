@@ -336,7 +336,7 @@ export default function Saved() {
       )}
 
       {/* 컨텐츠 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pb-tab">
         <AnimatePresence mode="wait">
           {/* 관심 탭 */}
           {activeTab === 'saved' && (

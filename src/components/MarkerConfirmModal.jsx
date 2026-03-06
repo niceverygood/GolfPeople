@@ -4,6 +4,7 @@
  */
 
 import React from 'react'
+import Portal from './Portal'
 import MarkerIcon from './icons/MarkerIcon'
 
 // 액션별 설정
@@ -66,7 +67,11 @@ const MarkerConfirmModal = ({
   const remainingBalance = balance - cost
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <Portal>
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center px-5"
+      style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', position: 'fixed' }}
+    >
       {/* 배경 오버레이 */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -74,7 +79,7 @@ const MarkerConfirmModal = ({
       />
 
       {/* 모달 컨텐츠 */}
-      <div className="relative bg-white rounded-2xl p-6 mx-4 w-full max-w-sm shadow-xl animate-scale-in">
+      <div className="relative bg-white rounded-2xl p-6 w-full shadow-xl animate-scale-in" style={{ maxWidth: 'min(384px, 90vw)' }}>
         {/* 아이콘 */}
         <div className="flex justify-center mb-4">
           <div className={`w-16 h-16 ${config.iconBg} rounded-full flex items-center justify-center text-3xl shadow-lg`}>
@@ -138,6 +143,7 @@ const MarkerConfirmModal = ({
         </div>
       </div>
     </div>
+    </Portal>
   )
 }
 

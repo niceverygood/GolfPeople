@@ -11,6 +11,7 @@ import { usePhoneVerification } from '../hooks/usePhoneVerification'
 import { getSimpleTimeAgo, formatJoinDate } from '../utils/formatTime'
 import { STORAGE_KEYS, getItem, setItem } from '../utils/storage'
 import { showToast, getErrorMessage } from '../utils/errorHandler'
+import Portal from '../components/Portal'
 import golfCourses from '../data/golfCourses.json'
 
 // 골프장 데이터에서 지역 자동 추출
@@ -242,7 +243,7 @@ export default function Join() {
       </div>
 
       {/* 조인 리스트 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pb-tab">
         <AnimatePresence mode="wait">
           {/* 모든 조인 */}
           {activeTab === 'all' && (
@@ -372,7 +373,7 @@ export default function Join() {
       {/* FAB: 조인 만들기 */}
       <Link
         to="/join/create"
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full btn-gold flex items-center justify-center shadow-lg shadow-gp-gold/30"
+        className="fixed right-6 w-14 h-14 rounded-full btn-gold flex items-center justify-center shadow-lg shadow-gp-gold/30 z-40 bottom-above-tab"
       >
         <Plus className="w-6 h-6" />
       </Link>
@@ -380,11 +381,11 @@ export default function Join() {
       {/* 삭제 확인 모달 */}
       <AnimatePresence>
         {showDeleteConfirm && (
-          <motion.div
+          <Portal><motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
             onClick={() => setShowDeleteConfirm(null)}
           >
             <motion.div
@@ -398,7 +399,7 @@ export default function Join() {
               <p className="text-gp-text-secondary mb-6">
                 정말 이 조인을 삭제하시겠습니까? 삭제된 조인은 복구할 수 없습니다.
               </p>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(null)}
@@ -414,7 +415,7 @@ export default function Join() {
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div></Portal>
         )}
       </AnimatePresence>
       

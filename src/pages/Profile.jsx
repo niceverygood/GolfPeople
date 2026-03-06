@@ -16,6 +16,7 @@ import { getLikedByCount, getReceivedApplicationCount } from '../lib/profileStat
 import { getCompletedRoundingCount } from '../lib/joinService'
 import VerificationBadges from '../components/VerificationBadges'
 import { showToast } from '../utils/errorHandler'
+import Portal from '../components/Portal'
 import MarkerIcon from '../components/icons/MarkerIcon'
 
 // 지역 데이터 (Onboarding과 동일)
@@ -195,25 +196,23 @@ export default function Profile() {
     setIsSaving(true)
 
     try {
-      // base64 사진을 Supabase Storage에 업로드
-      const uploadedPhotos = []
-      let uploadFailed = false
-      for (const photo of (updatedProfile.photos || [])) {
-        if (photo.startsWith('data:')) {
-          const res = await fetch(photo)
-          const blob = await res.blob()
-          const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' })
-          const { url, error } = await storage.uploadProfileImage(user.id, file)
-          if (error || !url) {
-            uploadFailed = true
-            uploadedPhotos.push(photo) // 업로드 실패 시 base64 유지
-          } else {
-            uploadedPhotos.push(url)
+      // base64 사진을 Supabase Storage에 병렬 업로드
+      const photos = updatedProfile.photos || []
+      const uploadResults = await Promise.allSettled(
+        photos.map(async (photo) => {
+          if (photo.startsWith('data:')) {
+            const res = await fetch(photo)
+            const blob = await res.blob()
+            const file = new File([blob], `photo.jpg`, { type: 'image/jpeg' })
+            const { url, error } = await storage.uploadProfileImage(user.id, file)
+            if (error || !url) return photo // 실패 시 base64 유지
+            return url
           }
-        } else {
-          uploadedPhotos.push(photo)
-        }
-      }
+          return photo
+        })
+      )
+      const uploadedPhotos = uploadResults.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+      const uploadFailed = uploadResults.some(r => r.status === 'rejected')
       if (uploadFailed) {
         showToast.error('일부 사진 업로드에 실패했습니다')
       }
@@ -258,7 +257,7 @@ export default function Profile() {
   const displayPhoto = authProfile?.photos?.[0] || authProfile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || profile?.photos?.[0] || profile?.photo
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto pb-24">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto pb-tab">
       {/* 헤더 배경 */}
       <div className="relative h-40 bg-gradient-to-br from-gp-gold/20 to-gp-green-dark/20 flex-shrink-0">
         <div className="absolute inset-0 bg-gp-black/50" />
@@ -526,40 +525,40 @@ export default function Profile() {
       {/* 프로필 수정 모달 */}
       <AnimatePresence>
         {showEditModal && (
-          <EditProfileModal
+          <Portal><EditProfileModal
             profile={profile}
             onClose={() => setShowEditModal(false)}
             onSave={handleProfileUpdate}
             isSaving={isSaving}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
-      
+
       {/* 설정 모달 */}
       <AnimatePresence>
         {showSettingsModal && (
-          <SettingsModal onClose={() => setShowSettingsModal(false)} />
+          <Portal><SettingsModal onClose={() => setShowSettingsModal(false)} /></Portal>
         )}
       </AnimatePresence>
-      
+
       {/* 차단 관리 모달 */}
       <AnimatePresence>
         {showBlockModal && (
-          <BlockManageModal onClose={() => setShowBlockModal(false)} currentUserId={user?.id} />
+          <Portal><BlockManageModal onClose={() => setShowBlockModal(false)} currentUserId={user?.id} /></Portal>
         )}
       </AnimatePresence>
-      
+
       {/* 로그아웃 확인 모달 */}
       <AnimatePresence>
         {showLogoutConfirm && (
-          <ConfirmModal
+          <Portal><ConfirmModal
             title="로그아웃"
             message="정말 로그아웃 하시겠습니까?"
             confirmText="로그아웃"
             confirmColor="red"
             onConfirm={handleLogout}
             onCancel={() => setShowLogoutConfirm(false)}
-          />
+          /></Portal>
         )}
       </AnimatePresence>
     </div>
@@ -730,7 +729,7 @@ function EditProfileModal({ profile, onClose, onSave, isSaving }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-gp-black flex flex-col"
+      className="fixed inset-0 z-[60] bg-gp-black flex flex-col"
     >
       {/* 헤더 */}
       <div className="shrink-0 flex items-center justify-between p-4 border-b border-gp-border bg-gp-black safe-top">
@@ -1212,7 +1211,7 @@ function SettingsModal({ onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-gp-black flex flex-col"
+      className="fixed inset-0 z-[60] bg-gp-black flex flex-col"
     >
       {/* 헤더 */}
       <div className="shrink-0 flex items-center justify-between p-4 border-b border-gp-border bg-gp-black safe-top">
@@ -1426,7 +1425,7 @@ function BlockManageModal({ onClose, currentUserId }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-gp-black flex flex-col"
+      className="fixed inset-0 z-[60] bg-gp-black flex flex-col"
     >
       {/* 헤더 */}
       <div className="shrink-0 flex items-center justify-between p-4 border-b border-gp-border bg-gp-black safe-top">
@@ -1488,7 +1487,7 @@ function ConfirmModal({ title, message, confirmText, confirmColor, onConfirm, on
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
       onClick={onCancel}
     >
       <motion.div

@@ -165,7 +165,7 @@ export default function ScoreStats() {
         </div>
       </div>
 
-      <div className="pb-24 overflow-y-auto">
+      <div className="pb-tab overflow-y-auto">
         {/* 기간 필터 */}
         <div className="px-4 py-4 border-b border-gp-gray/20">
           <div className="flex gap-2">

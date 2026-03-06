@@ -27,7 +27,13 @@
   -webkit-touch-callout: none;
 }
 
-html, body, #root {
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -37,6 +43,7 @@ body {
   background: var(--gp-black);
   color: var(--gp-text);
   overscroll-behavior: none;
+  overflow: visible;
 }
 
 /* 스크롤바 숨기기 (모바일 앱 느낌) */
@@ -49,9 +56,18 @@ body {
   scrollbar-width: none;
 }
 
-/* 앱 컨테이너 — 반응형 max-width */
+/* 탭바 높이 — 모든 기종 동적 대응 */
 :root {
+  --tab-bar-content: 60px;
+  --safe-area-bottom: 34px;
+  --tab-bar-height: calc(var(--tab-bar-content) + var(--safe-area-bottom));
   --app-max-width: 100%;
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  :root {
+    --safe-area-bottom: max(34px, env(safe-area-inset-bottom, 34px));
+  }
 }
 @media (min-width: 640px) {
   :root { --app-max-width: 540px; }
@@ -69,7 +85,6 @@ body {
   height: 100%;
   position: relative;
   background: var(--gp-black);
-  overflow: hidden;
 }
 
 /* 카드 스와이프 효과 */
@@ -118,12 +133,19 @@ body {
   border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-/* 하단 세이프 영역 — 3단계 fallback: 1) max() 미지원 시 고정값, 2) env() 반환값과 비교, 3) constant() 구형 iOS */
+/* 하단 세이프 영역 — CSS 변수 기반 */
 .safe-bottom {
-  padding-bottom: 34px;
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom, 34px);
-  padding-bottom: max(34px, env(safe-area-inset-bottom, 34px));
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* 탭바가 있는 페이지의 컨텐츠 하단 여백 */
+.pb-tab {
+  padding-bottom: calc(var(--tab-bar-height) + 8px);
+}
+
+/* 탭바 위에 떠야 하는 FAB/버튼의 bottom 위치 */
+.bottom-above-tab {
+  bottom: calc(var(--tab-bar-height) + 24px);
 }
 
 /* 상단 세이프 영역 */

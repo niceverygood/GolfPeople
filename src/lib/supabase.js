@@ -605,11 +605,12 @@ export const storage = {
   uploadProfileImage: async (userId, file) => {
     if (!supabase) return { url: null, error: new Error('Supabase not connected') }
     const fileExt = file.name.split('.').pop()
-    const fileName = `${userId}/${Date.now()}.${fileExt}`
-    
+    const uniqueId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const fileName = `${userId}/${uniqueId}.${fileExt}`
+
     const { error } = await supabase.storage
       .from('avatars')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      .upload(fileName, file, { cacheControl: '3600', upsert: true })
     
     if (error) return { url: null, error }
     
