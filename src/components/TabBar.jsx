@@ -17,9 +17,9 @@ export default function TabBar() {
   const { totalUnreadCount } = useChat()
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="max-w-app mx-auto">
-        <div className="glass border-t border-gp-border safe-bottom">
+        <div className="glass border-t border-gp-border">
           <div className="flex items-center justify-around py-2">
             {tabs.map((tab) => {
               const isActive = location.pathname === tab.path
@@ -63,6 +63,8 @@ export default function TabBar() {
               )
             })}
           </div>
+          {/* 홈 인디케이터 영역 — safe area 보장 */}
+          <div className="safe-bottom" />
         </div>
       </div>
     </div>

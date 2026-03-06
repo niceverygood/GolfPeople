@@ -95,6 +95,20 @@ export const AuthProvider = ({ children }) => {
         if (!mounted) return
         
         if (session?.user) {
+          // 다른 유저로 로그인된 경우 localStorage 초기화 (DB 직접 삭제 후 재가입 등)
+          const prevUserId = localStorage.getItem('gp_user_id')
+          if (prevUserId && prevUserId !== session.user.id) {
+            const keysToRemove = []
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i)
+              if (key && key.startsWith('gp_') && key !== 'gp_user_id') {
+                keysToRemove.push(key)
+              }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key))
+          }
+          localStorage.setItem('gp_user_id', session.user.id)
+
           setUser(session.user)
           // 로딩 먼저 해제
           setLoading(false)
