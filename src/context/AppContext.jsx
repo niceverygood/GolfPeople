@@ -292,7 +292,7 @@ export function AppProvider({ children }) {
     }
   }, [userId])
 
-  // === 실시간 알림 구독 ===
+  // === 실시간 구독 (알림 + 친구요청 + 조인 + 조인신청) ===
   useEffect(() => {
     if (!userId || !isConnected()) return
 
@@ -300,7 +300,6 @@ export function AppProvider({ children }) {
       const n = payload.new
       if (n) {
         setNotifications(prev => {
-          // 중복 알림 방지
           if (prev.some(existing => existing.id === n.id)) return prev
           return [mapNotification(n), ...prev]
         })
@@ -308,15 +307,40 @@ export function AppProvider({ children }) {
     })
 
     const friendChannel = realtime.subscribeToFriendRequests(userId, () => {
-      // 친구 요청 변경 시 새로고침
       refreshFriendRequests()
+    })
+
+    const joinsChannel = realtime.subscribeToJoins(() => {
+      refreshJoins()
+    })
+
+    const joinAppsChannel = realtime.subscribeToJoinApplications(userId, () => {
+      refreshJoinApplications()
     })
 
     return () => {
       realtime.unsubscribe(notifChannel)
       realtime.unsubscribe(friendChannel)
+      realtime.unsubscribe(joinsChannel)
+      realtime.unsubscribe(joinAppsChannel)
     }
-  }, [userId, refreshFriendRequests])
+  }, [userId, refreshFriendRequests, refreshJoins, refreshJoinApplications])
+
+  // === 탭 전환(포그라운드 복귀) 시 데이터 새로고침 ===
+  useEffect(() => {
+    if (!userId) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshJoins()
+        refreshNotifications()
+        refreshJoinApplications()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [userId, refreshJoins, refreshNotifications, refreshJoinApplications])
 
   // ==============================
   // 액션 함수들 (Supabase 연동)
