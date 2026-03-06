@@ -90,6 +90,53 @@ src/
 
 ---
 
+## 2026-03-06 (목) 작업일지
+
+### iOS 모달 잘림 근본 수정 + 멀티사진 + 추천카드 유저별 분리 + Android 스플래시 + 1.0.8 빌드
+
+#### iOS 모달 잘림 근본 수정 (전체 앱)
+- **원인**: `body { overflow: hidden }` → iOS WKWebView에서 `position: fixed` 요소가 잘림
+- **수정 3가지**:
+  1. `index.css`: body `overflow: hidden` 제거 → `#root`에만 적용, body는 `overflow: visible`
+  2. 전체 모달에 Portal 컴포넌트 적용 (`createPortal(children, document.body)`)
+  3. 모달 센터링 패턴 변경: `fixed left-1/2 top-1/2 -translate` → `fixed inset-0 flex items-center justify-center` + `100vw`/`100dvh` inline styles
+  4. `AppDelegate.swift`에 WKWebView 캐시 클리어 추가
+- **적용 파일**: ProfileDetail, ChatRoom, Profile, JoinDetail, Store, Review, ScoreRecord, Join, CreateJoin, Friends, MarkerConfirmModal, MarkerModal
+
+#### 프로필 멀티사진 (최대 6장)
+- **온보딩**: 단일 사진 → 3열 그리드, 최대 6장, "대표" 뱃지, 삭제 버튼
+- **업로드**: `Promise.allSettled` 병렬 업로드 + 개별 실패 fallback
+- **프로필 상세**: `ProfilePhotoCarousel` 스와이프 뷰어 + 바 인디케이터
+- **전체화면 뷰어**: `FullscreenPhotoViewer` Portal 렌더링, 스와이프, X 닫기, 카운터
+
+#### 프로필 상세 UI 개선
+- 나이 표시 제거 (수집하지 않는 데이터)
+- 프로필 사진 상단 safe-area 검은 여백 추가 (노치 뒤에 사진 숨김 방지)
+- 그라디언트: 고정 `h-32` → 비율 기반 (상단 35%, 하단 40%)
+
+#### 추천카드/열람기록 유저별 분리
+- **원인**: `gp_past_cards`, `gp_recommendation_history` localStorage 키가 유저 구분 없이 공유
+- **수정**: `gp_past_cards_{userId}`, `gp_recommendation_history_{userId}`로 분리
+- 가짜 7일분 시드 데이터 자동 생성 로직 제거 (신규 유저에게 빈 히스토리)
+- userId 변경 시 state 초기화
+
+#### Android 스플래시 이미지 교체
+- **원인**: `drawable/splash.png`(GP 로고)는 정상이나, `drawable-port-xxhdpi/` 등 10개 해상도별 폴더에 Capacitor 기본 파란색 X 아이콘이 남아있음
+- **수정**: Pillow로 10개 폴더(port 5 + land 5) 전부 GP 로고(검정 배경 + 중앙 아이콘)로 교체
+
+#### 1.0.8 빌드
+- iOS: `MARKETING_VERSION = 1.0.8`, `CURRENT_PROJECT_VERSION = 13` — iPhone 설치 완료
+- Android: `versionCode 11`, `versionName "1.0.8"` — AAB 빌드 완료, Play Console 내부 테스트 대기
+
+#### 배포 현황
+| 플랫폼 | 버전 | 상태 |
+|--------|------|------|
+| iOS | 1.0.8 (빌드 13) | iPhone 개발 빌드 설치 완료, 스토어 제출 대기 |
+| Android | 1.0.8 (versionCode 11) | AAB 빌드 완료, 내부 테스트 업로드 대기 |
+| Web | 최신 | Vercel 자동 배포 완료 |
+
+---
+
 ## 2026-03-03 (월) 작업일지
 
 ### QA 테스트 + 버그 2건 수정 + 1.0.7 빌드/심사 제출 + 골프장 부킹 연동 조사
