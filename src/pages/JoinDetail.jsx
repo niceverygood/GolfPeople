@@ -318,6 +318,42 @@ export default function JoinDetail() {
           </div>
         </div>
 
+        {/* 우리팀 정보 */}
+        {join.ourTeam?.length > 0 && (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">우리팀</h3>
+            <div className="flex flex-wrap gap-2">
+              {join.ourTeam.map((member, i) => (
+                <span key={i} className="px-3 py-1.5 bg-gp-card rounded-lg text-sm">
+                  {member.isHost ? '👑 ' : ''}{member.gender} · {member.ageRange}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 원하는 상대 조건 */}
+        {join.wantedConditions?.length > 0 && (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">원하는 상대</h3>
+            <div className="space-y-2">
+              {join.wantedConditions.map((cond, i) => (
+                <div key={i} className="bg-gp-card rounded-xl p-3">
+                  <span className="text-xs text-gp-gold mb-1 block">{i + 1}번째 모집</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(cond.genders || []).map(g => (
+                      <span key={g} className="px-2 py-0.5 bg-gp-border rounded text-xs">{g}</span>
+                    ))}
+                    {(cond.ageRanges || []).map(a => (
+                      <span key={a} className="px-2 py-0.5 bg-gp-border rounded text-xs">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 설명 */}
         <div className="mb-6">
           <h3 className="font-semibold mb-3">소개</h3>

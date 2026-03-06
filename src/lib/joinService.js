@@ -34,6 +34,9 @@ export const getJoins = async (filters = {}) => {
         styles,
         description,
         meeting_type,
+        our_team,
+        wanted_conditions,
+        recruit_count,
         status,
         created_at,
         host:host_id (
@@ -77,6 +80,9 @@ export const getJoins = async (filters = {}) => {
       style: j.styles || [], // JoinCard 호환 alias
       description: j.description,
       meetingType: j.meeting_type,
+      ourTeam: j.our_team || [],
+      wantedConditions: j.wanted_conditions || [],
+      recruitCount: j.recruit_count || 0,
       status: j.status,
       createdAt: j.created_at,
       hostId: j.host?.id,
@@ -584,6 +590,9 @@ export const createJoin = async (userId, joinData) => {
         styles: joinData.styles || [],
         description: joinData.description,
         meeting_type: joinData.meetingType,
+        our_team: joinData.ourTeam || [],
+        wanted_conditions: joinData.wantedConditions || [],
+        recruit_count: joinData.recruitCount || 0,
         status: 'open'
       })
       .select()
@@ -724,6 +733,9 @@ export const getJoinDetail = async (joinId) => {
       style: data.styles || [],
       description: data.description,
       meetingType: data.meeting_type,
+      ourTeam: data.our_team || [],
+      wantedConditions: data.wanted_conditions || [],
+      recruitCount: data.recruit_count || 0,
       status: data.status,
       createdAt: data.created_at,
       hostId: data.host?.id,
