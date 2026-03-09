@@ -133,15 +133,28 @@ export default function Saved() {
     await cancelFriendRequest(requestId)
   }
 
-  // 조인 신청 수락
+  // 조인 신청 수락 (더블클릭 방지)
+  const [processingJoinId, setProcessingJoinId] = useState(null)
   const handleAcceptJoinRequest = async (applicationId) => {
-    await acceptJoinRequest(applicationId)
-    await loadChatRooms()
+    if (processingJoinId) return
+    setProcessingJoinId(applicationId)
+    try {
+      await acceptJoinRequest(applicationId)
+      await loadChatRooms()
+    } finally {
+      setProcessingJoinId(null)
+    }
   }
 
-  // 조인 신청 거절
+  // 조인 신청 거절 (더블클릭 방지)
   const handleRejectJoinRequest = async (applicationId) => {
-    await rejectJoinRequest(applicationId)
+    if (processingJoinId) return
+    setProcessingJoinId(applicationId)
+    try {
+      await rejectJoinRequest(applicationId)
+    } finally {
+      setProcessingJoinId(null)
+    }
   }
 
   // 조인 신청 취소
@@ -473,6 +486,7 @@ export default function Saved() {
                       onReject={() => handleRejectJoinRequest(request.id)}
                       onProfileClick={(userId) => navigate(`/user/${userId}`)}
                       onJoinClick={() => request.joinId && navigate(`/join/${request.joinId}`)}
+                      isProcessing={processingJoinId === request.id}
                     />
                   ))
                 )}
@@ -1000,7 +1014,7 @@ function SentJoinCard({ application, onCancel, onClick }) {
 }
 
 // 내가 받은 조인 신청 카드 (대기중)
-function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick, onJoinClick }) {
+function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick, onJoinClick, isProcessing = false }) {
   const timeAgo = getTimeAgo(request.createdAt)
   
   return (
@@ -1057,15 +1071,17 @@ function ReceivedJoinCard({ request, onAccept, onReject, onProfileClick, onJoinC
         <div className="flex gap-2">
           <button
             onClick={onReject}
-            className="flex-1 py-2 rounded-xl bg-gp-border text-gp-text-secondary text-sm font-medium hover:bg-red-500/20 hover:text-red-400 transition-all"
+            disabled={isProcessing}
+            className="flex-1 py-2 rounded-xl bg-gp-border text-gp-text-secondary text-sm font-medium hover:bg-red-500/20 hover:text-red-400 transition-all disabled:opacity-50"
           >
             거절
           </button>
           <button
             onClick={onAccept}
-            className="flex-1 py-2 rounded-xl btn-gold text-sm font-semibold"
+            disabled={isProcessing}
+            className="flex-1 py-2 rounded-xl btn-gold text-sm font-semibold disabled:opacity-50"
           >
-            수락
+            {isProcessing ? '처리 중...' : '수락'}
           </button>
         </div>
       )}

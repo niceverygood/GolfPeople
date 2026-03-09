@@ -37,7 +37,7 @@ const TABS = [
 
 export default function Join() {
   const navigate = useNavigate()
-  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests, joinApplications, cancelJoinApplication, currentUser } = useApp()
+  const { joins, savedJoins, saveJoin, unsaveJoin, myJoins, deleteMyJoin, receivedJoinRequests, joinApplications, cancelJoinApplication, acceptJoinRequest, rejectJoinRequest, currentUser } = useApp()
   const { balance, spendMarkers } = useMarker()
 
   // 전화번호 인증 훅
@@ -51,6 +51,34 @@ export default function Join() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showMarkerConfirm, setShowMarkerConfirm] = useState(null) // { userId }
   const [isProcessing, setIsProcessing] = useState(false)
+  const [processingAppId, setProcessingAppId] = useState(null)
+
+  // 내 조인 탭에서 신청 수락/거절 (더블클릭 방지)
+  const handleAcceptApp = async (appId) => {
+    if (processingAppId) return
+    setProcessingAppId(appId)
+    try {
+      await acceptJoinRequest(appId)
+      showToast.success('신청을 수락했습니다')
+    } catch {
+      showToast.error('수락에 실패했습니다')
+    } finally {
+      setProcessingAppId(null)
+    }
+  }
+
+  const handleRejectApp = async (appId) => {
+    if (processingAppId) return
+    setProcessingAppId(appId)
+    try {
+      await rejectJoinRequest(appId)
+      showToast.success('신청을 거절했습니다')
+    } catch {
+      showToast.error('거절에 실패했습니다')
+    } finally {
+      setProcessingAppId(null)
+    }
+  }
 
   // 모든 조인 필터링
   const filteredJoins = joins.filter(join => {
@@ -351,7 +379,7 @@ export default function Join() {
                 />
               ) : (
                 filteredMyJoins.map((join, index) => {
-                  const pendingCount = receivedJoinRequests.filter(req => req.joinId === join.id && req.status === 'pending').length
+                  const pendingApps = receivedJoinRequests.filter(req => req.joinId === join.id && req.status === 'pending')
                   return (
                     <MyJoinCard
                       key={join.id}
@@ -360,7 +388,12 @@ export default function Join() {
                       onDelete={() => setShowDeleteConfirm(join.id)}
                       onEdit={() => navigate(`/join/create?edit=${join.id}`)}
                       onClick={() => handleJoinClick(join.id)}
-                      pendingCount={pendingCount}
+                      pendingCount={pendingApps.length}
+                      pendingApps={pendingApps}
+                      onAcceptApp={handleAcceptApp}
+                      onRejectApp={handleRejectApp}
+                      processingAppId={processingAppId}
+                      onProfileClick={handleProfileClick}
                     />
                   )
                 })
@@ -547,7 +580,7 @@ function JoinCard({ join, index, isSaved, onSave, onClick, onProfileClick, pendi
 }
 
 // 내가 올린 조인 카드
-function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0 }) {
+function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0, pendingApps = [], onAcceptApp, onRejectApp, processingAppId, onProfileClick }) {
   const [showMenu, setShowMenu] = useState(false)
 
   return (
@@ -699,6 +732,60 @@ function MyJoinCard({ join, index, onDelete, onEdit, onClick, pendingCount = 0 }
           </span>
         </div>
       </div>
+
+      {/* 대기중인 신청 목록 (인라인 수락/거절) */}
+      {pendingApps.length > 0 && (
+        <div className="border-t border-gp-border">
+          <div className="px-4 pt-3 pb-1">
+            <p className="text-xs text-gp-text-secondary font-medium">대기중인 신청</p>
+          </div>
+          {pendingApps.map((app) => (
+            <div key={app.id} className="px-4 py-2.5 flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onProfileClick && onProfileClick(app.userId)
+                }}
+                className="flex-shrink-0"
+              >
+                <img
+                  src={app.userPhoto || '/default-profile.png'}
+                  alt={app.userName}
+                  className="w-10 h-10 rounded-full object-cover hover:ring-2 hover:ring-gp-gold transition-all"
+                />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{app.userName}</p>
+                <p className="text-xs text-gp-text-secondary truncate">
+                  {app.userRegion}{app.userHandicap ? ` · ${app.userHandicap}` : ''}
+                </p>
+              </div>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRejectApp && onRejectApp(app.id)
+                  }}
+                  disabled={processingAppId === app.id}
+                  className="px-3 py-1.5 rounded-lg bg-gp-border text-gp-text-secondary text-xs font-medium hover:bg-red-500/20 hover:text-red-400 transition-all disabled:opacity-50"
+                >
+                  거절
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAcceptApp && onAcceptApp(app.id)
+                  }}
+                  disabled={processingAppId === app.id}
+                  className="px-3 py-1.5 rounded-lg btn-gold text-xs font-semibold disabled:opacity-50"
+                >
+                  {processingAppId === app.id ? '처리중' : '수락'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   )
 }
