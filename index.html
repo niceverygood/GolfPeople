@@ -25,11 +25,12 @@
     <div id="root">
       <div id="initial-splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0A0A0A;display:flex;align-items:center;justify-content:center;z-index:9999;">
         <div style="text-align:center;">
-          <img src="/android-chrome-512.png" alt="" width="80" height="80" style="border-radius:20px;margin:0 auto 24px;" />
-          <div style="width:28px;height:28px;margin:0 auto;border:2px solid #D4AF37;border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;"></div>
+          <img id="initial-splash-logo" src="/android-chrome-512.png" alt="" width="80" height="80" style="border-radius:20px;margin:0 auto 24px;" />
+          <div id="initial-splash-spinner" style="width:28px;height:28px;margin:0 auto;border:2px solid #D4AF37;border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;"></div>
         </div>
       </div>
       <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      <script>if(/Android/i.test(navigator.userAgent)){var s=document.getElementById('initial-splash');if(s)s.style.display='none';}</script>
     </div>
     <!-- 포트원 V1 SDK (KG이니시스 호환) -->
     <script src="https://cdn.iamport.kr/v1/iamport.js"></script>

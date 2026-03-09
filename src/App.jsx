@@ -77,7 +77,9 @@ function AppContent() {
   const location = useLocation()
   const { user, profile, loading: authLoading, isAuthenticated } = useAuth()
 
-  const [showSplash, setShowSplash] = useState(true)
+  // Android는 시스템 스플래시가 있으므로 React 스플래시 스킵
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  const [showSplash, setShowSplash] = useState(!isAndroid)
   const [isOnboarded, setIsOnboarded] = useState(false)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [profileTimeout, setProfileTimeout] = useState(false)
@@ -93,7 +95,7 @@ function AppContent() {
     // 인앱 결제 초기화 (게스트 모드로 우선 초기화)
     initializeIAP()
 
-    // 스플래시 화면 2초 후 종료
+    // 스플래시 화면: Android는 useState(false)로 이미 스킵, iOS/Web은 2초 표시
     const timer = setTimeout(() => setShowSplash(false), 2000)
 
     // 온보딩 여부 체크 (로컬스토리지)
@@ -162,18 +164,20 @@ function AppContent() {
     setIsOnboarded(true)
   }
 
-  // 1. 스플래시 화면
+  // 1. 스플래시 화면 (Android: 시스템 스플래시가 대체하므로 스킵)
   if (showSplash) {
     return <Splash />
   }
 
-  // 2. 인증 로딩 중
+  // 2. 인증 로딩 중 (Android: 검정 배경만, iOS/Web: 스플래시)
   if (authLoading) {
-    return <Splash /> // 로딩 중에도 스플래시 표시
+    if (isAndroid) return <div className="fixed inset-0 bg-gp-black" />
+    return <Splash />
   }
 
   // 2.5. 로그인됐지만 프로필 아직 로딩 중 — 온보딩 판단 전 대기 (최대 5초)
   if (isAuthenticated && !profile && !isOnboarded && !profileTimeout) {
+    if (isAndroid) return <div className="fixed inset-0 bg-gp-black" />
     return <Splash />
   }
 
