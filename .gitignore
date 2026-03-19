@@ -57,3 +57,7 @@ ios/App/App/GoogleService-Info.plist
 *.keystore
 *.jks
 android/app/signing.properties
+
+# Claude work logs
+CLAUDE.md
+CLAUDE_archive.md
