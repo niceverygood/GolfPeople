@@ -45,7 +45,7 @@ const KakaoIcon = () => (
 )
 
 // 스토어 URL
-const APP_STORE_URL = 'https://apps.apple.com/app/id6741108498'
+const APP_STORE_URL = 'https://apps.apple.com/app/id6756899821'
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.golfpeople.app'
 
 export default function Login() {
