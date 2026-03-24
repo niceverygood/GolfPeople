@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { isIOS, appleSignIn } from '../lib/native'
+import { isIOS, isNative, appleSignIn } from '../lib/native'
 
 // Apple 아이콘 SVG
 const AppleIcon = () => (
@@ -44,11 +44,16 @@ const KakaoIcon = () => (
   </svg>
 )
 
+// 스토어 URL
+const APP_STORE_URL = 'https://apps.apple.com/app/id6741108498'
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.golfpeople.app'
+
 export default function Login() {
   const { signInWithGoogle, signInWithKakao, signInWithApple, loading, error } = useAuth()
   const navigate = useNavigate()
   const [loginError, setLoginError] = useState('')
   const showAppleLogin = isIOS() // iOS에서만 Apple 로그인 표시
+  const showStoreButtons = !isNative() // 웹 브라우저에서만 스토어 버튼 표시
 
   const handleGoogleLogin = async () => {
     setLoginError('')
@@ -172,6 +177,51 @@ export default function Login() {
           </motion.p>
         )}
       </motion.div>
+
+      {/* 앱 다운로드 버튼 (웹 브라우저에서만) */}
+      {showStoreButtons && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-10 w-full max-w-sm"
+        >
+          <p className="text-gp-text-secondary text-sm text-center mb-4">앱으로 더 편하게 이용하세요</p>
+          <div className="flex gap-3 justify-center">
+            <a
+              href={APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 py-3 px-5 bg-gp-dark border border-gp-border rounded-xl hover:border-gp-gold/50 transition-all"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+              <div className="text-left">
+                <div className="text-[10px] text-gp-text-secondary leading-none">Download on the</div>
+                <div className="text-sm font-semibold text-white leading-tight">App Store</div>
+              </div>
+            </a>
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 py-3 px-5 bg-gp-dark border border-gp-border rounded-xl hover:border-gp-gold/50 transition-all"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+                <path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.384.22-.72.61-.92z" fill="#4285F4"/>
+                <path d="M17.114 8.683l-3.32 3.32 3.32 3.32 3.725-2.15a.995.995 0 000-1.744l-3.725-2.746z" fill="#FBBC04"/>
+                <path d="M3.61 1.814L13.793 12l3.32-3.317L5.888 1.29c-.42-.243-.93-.24-1.35.008l-.928.516z" fill="#34A853"/>
+                <path d="M3.61 22.186L17.114 15.32 13.793 12 3.61 22.186z" fill="#EA4335"/>
+              </svg>
+              <div className="text-left">
+                <div className="text-[10px] text-gp-text-secondary leading-none">GET IT ON</div>
+                <div className="text-sm font-semibold text-white leading-tight">Google Play</div>
+              </div>
+            </a>
+          </div>
+        </motion.div>
+      )}
 
       {/* 하단 안내 */}
       <motion.div
